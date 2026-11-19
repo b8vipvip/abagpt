@@ -60,7 +60,7 @@ export function CommandPalette({
         })
         .catch((error) => {
           setResults([]);
-          setStatus(`搜索失败：${error instanceof Error ? error.message : String(error)}`);
+          setStatus(localizeUiError(error, "搜索失败，请稍后重试。"));
         });
     }, 200);
     return () => clearTimeout(timer);
