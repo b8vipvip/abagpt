@@ -6,7 +6,7 @@ export default defineConfig({
   webServer: [
     {
       command: "node tests/browser/server.mjs",
-      url: "http://127.0.0.1:8787/mirror/playground",
+      url: "http://127.0.0.1:8787/api/health",
       reuseExistingServer: false,
       timeout: 120_000,
     },
