@@ -47,10 +47,10 @@ var widgetRoot=null;
 function buildWidget(){
   var root=document.createElement('div');
   root.id='mirror-launcher';
-  root.innerHTML='<button type="button" class="mirror-row"><span class="mirror-dot"></span><span>Mirror controls</span></button>'
-    +'<div class="mirror-panel"><strong>Mirror controls</strong><p>Connect with a sessionToken. <a class="mirror-session-link" href="https://chatgpt.com/api/auth/session" target="_blank" rel="noopener noreferrer">Get it from ChatGPT</a>. The credential stays encrypted on this server and is never inserted into ChatGPT page scripts.</p><label>sessionToken</label><textarea autocomplete="off" spellcheck="false" placeholder="Paste sessionToken"></textarea><div class="mirror-actions"><button class="mirror-save">Save &amp; reload</button><a class="mirror-play" href="/mirror/playground" target="_blank" rel="noopener noreferrer">API tester</a><a class="mirror-docs" href="/mirror/api-docs" target="_blank" rel="noopener noreferrer">API docs</a></div><div class="mirror-status"></div><div class="mirror-egress">Egress: checking…</div></div>';
+  root.innerHTML='<button type="button" class="mirror-row"><span class="mirror-dot"></span><span>Mirror 控制台</span></button>'
+    +'<div class="mirror-panel"><strong>Mirror 控制台</strong><p>使用 sessionToken 连接。 <a class="mirror-session-link" href="https://chatgpt.com/api/auth/session" target="_blank" rel="noopener noreferrer">从 ChatGPT 获取</a>. 凭证会在此服务器上加密保存，绝不会注入 ChatGPT 页面脚本。</p><label>会话令牌（sessionToken）</label><textarea autocomplete="off" spellcheck="false" placeholder="粘贴 sessionToken"></textarea><div class="mirror-actions"><button class="mirror-save">保存并刷新</button><a class="mirror-play" href="/mirror/playground" target="_blank" rel="noopener noreferrer">API 测试台</a><a class="mirror-docs" href="/mirror/api-docs" target="_blank" rel="noopener noreferrer">API 文档</a></div><div class="mirror-status"></div><div class="mirror-egress">出站网络：检查中…</div></div>';
   var decoder=document.createElement('button');
-  decoder.type='button';decoder.className='mirror-docs';decoder.textContent='Decoder challenges';
+  decoder.type='button';decoder.className='mirror-docs';decoder.textContent='解码挑战';
   decoder.onclick=function(){root.querySelector('.mirror-panel').classList.remove('open');window.dispatchEvent(new Event('mirror:decoder-open'));};
   root.querySelector('.mirror-actions').appendChild(decoder);
   return root;
@@ -89,12 +89,12 @@ function wireWidget(root){
   })(apiLinks[li]);
   root.querySelector('.mirror-save').onclick=async function(){
     var token=area.value.trim();if(!token)return;
-    status.textContent='Verifying…';
+    status.textContent='正在验证…';
     try{
       var r=await fetch('/api/session',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({sessionToken:token})});
       var b=await r.json();
-      if(!r.ok)throw Error(b.error||'Could not connect');
-      area.value='';status.textContent='Connected. Reloading…';location.reload();
+      if(!r.ok)throw Error(b.error||'无法连接');
+      area.value='';status.textContent='连接成功，正在刷新…';location.reload();
     }catch(e){status.textContent=e.message||String(e);}
   };
   fetch('/api/session').then(function(r){return r.json();}).then(function(s){
@@ -102,10 +102,10 @@ function wireWidget(root){
   }).catch(function(){});
   fetch('/api/health').then(function(r){return r.json();}).then(function(h){
     var e=h&&h.egress,el=root.querySelector('.mirror-egress');
-    if(!e){el.textContent='Egress: unavailable';return;}
-    el.textContent=e.mode==='warp'&&e.verified?'Egress: WARP verified':'Egress: direct';
+    if(!e){el.textContent='出站网络：不可用';return;}
+    el.textContent=e.mode==='warp'&&e.verified?'出站网络：WARP 已验证':'出站网络：直连';
     el.style.color=e.required&&!e.verified?'#f0a28a':'#aaa';
-  }).catch(function(){root.querySelector('.mirror-egress').textContent='Egress: unavailable';});
+  }).catch(function(){root.querySelector('.mirror-egress').textContent='出站网络：不可用';});
 }
 function isReallyVisible(el){
   if(el.offsetParent===null)return false;
