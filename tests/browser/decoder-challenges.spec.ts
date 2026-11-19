@@ -39,6 +39,40 @@ test.describe("browser / official UI decoder challenges", () => {
   });
   test.afterEach(async () => { await app.close(); });
 
+  test("localizes upstream Log in buttons while preserving the Mirror session-token entry flow", async ({ page }) => {
+    await page.getByRole("button", { name: "关闭解码挑战" }).click();
+    await page.locator('[data-testid="accounts-profile-button"]').evaluate(el => el.remove());
+    await page.locator("aside > div").evaluate(el => {
+      const button = document.createElement("button");
+      button.id = "sidebar-login";
+      button.textContent = "Log in";
+      el.appendChild(button);
+    });
+    await page.evaluate(() => {
+      const header = document.createElement("header");
+      header.id = "page-header";
+      const button = document.createElement("button");
+      button.id = "header-login";
+      button.textContent = "Log in";
+      header.appendChild(button);
+      document.body.appendChild(header);
+    });
+
+    const sidebarLogin = page.locator("#sidebar-login");
+    const headerLogin = page.locator("#header-login");
+    await expect(sidebarLogin).toHaveText("登录");
+    await expect(headerLogin).toHaveText("登录");
+    await expect(sidebarLogin).toHaveAttribute("aria-label", "登录");
+    await expect(headerLogin).toHaveAttribute("aria-label", "登录");
+    await expect(sidebarLogin).toHaveAttribute("data-mirror-intercepted", "1");
+    await expect(headerLogin).toHaveAttribute("data-mirror-intercepted", "1");
+
+    await sidebarLogin.click();
+    await expect(page.locator("#mirror-launcher .mirror-panel")).toHaveClass(/open/);
+    await headerLogin.click();
+    await expect(page.locator("#mirror-launcher .mirror-panel")).toHaveClass(/open/);
+  });
+
   for (const format of ["loaf", "pngspeak", "gptgif", "gptgif-v4"]) {
     test(`${format}: create, insert exact prompt, and preserve the draft`, async ({ page }) => {
       await page.getByRole("combobox", { name: "格式", exact: true }).selectOption(format);
