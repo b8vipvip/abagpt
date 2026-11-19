@@ -17,12 +17,13 @@ const tools = [{ type: 'function', function: { name: 'read_file', parameters: { 
 
 test.describe('server / tool bridge route', () => {
   test.after(() => rmSync(dir, { recursive: true, force: true }));
-  async function request(stream, text, messages = [{ role: 'user', content: 'Read a.txt' }]) {
+  async function request(stream, text, messages = [{ role: 'user', content: 'Read a.txt' }], options = {}) {
     const app = await buildApp({ worker: true });
+    options.onApp?.(app);
     test.mock.method(globalThis, 'fetch', stubBackend('tool-bridge-test'));
-    test.mock.method(ChatGptBackendClient.prototype, 'sendMessage', async () => ({
+    test.mock.method(ChatGptBackendClient.prototype, 'sendMessage', options.sendMessage ?? (async () => ({
       conversationId: 'upstream-test', messageId: 'assistant-test', userMessageId: 'user-test', status: 'done', events: [], text,
-    }));
+    })));
     try {
       return await app.inject({ method: 'POST', url: '/v1/chat/completions', headers: { authorization: 'Bearer fixture-mirror-key' },
         payload: { messages, tools, stream, stream_options: { include_usage: true }, reasoning_effort: 'high' } });
@@ -34,6 +35,50 @@ test.describe('server / tool bridge route', () => {
     assert.equal(response.json().choices[0].finish_reason, 'tool_calls');
     assert.equal(response.json().choices[0].message.tool_calls[0].function.name, 'read_file');
   });
+  test('streams a structured SSE error when the model returns invalid bridge JSON', async () => {
+    const response = await request(true, 'not json');
+    assert.equal(response.statusCode, 200, response.body);
+    assert.match(response.body, /valid tool-bridge JSON object/);
+    assert.match(response.body, /data: \\[DONE\\]/);
+  });
+
+  test('emits a keepalive chunk while a streamed tool-bridge response is pending', async () => {
+    const originalSetInterval = globalThis.setInterval;
+    const originalClearInterval = globalThis.clearInterval;
+    let heartbeat;
+    let release;
+    let markStarted;
+    const gate = new Promise((resolve) => { release = resolve; });
+    const started = new Promise((resolve) => { markStarted = resolve; });
+    try {
+      const pending = request(true, '{"content":"done"}', undefined, {
+        onApp() {
+          globalThis.setInterval = (callback) => { heartbeat = callback; return 123; };
+          globalThis.clearInterval = () => {};
+        },
+        sendMessage: async () => {
+          markStarted();
+          await gate;
+          return {
+            conversationId: 'upstream-test', messageId: 'assistant-test', userMessageId: 'user-test',
+            status: 'done', events: [], text: '{"content":"done"}',
+          };
+        },
+      });
+      await started;
+      assert.equal(typeof heartbeat, 'function');
+      heartbeat();
+      release();
+      const response = await pending;
+      assert.equal(response.statusCode, 200, response.body);
+      assert.match(response.body, /"delta":\\{\\}/);
+      heartbeat();
+    } finally {
+      globalThis.setInterval = originalSetInterval;
+      globalThis.clearInterval = originalClearInterval;
+    }
+  });
+
   test('streams a function request and accepts the following tool result', async () => {
     const response = await request(true, '{"tool_calls":[{"name":"read_file","arguments":{"path":"a.txt"}}]}');
     assert.equal(response.statusCode, 200, response.body);
