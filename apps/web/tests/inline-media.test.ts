@@ -47,6 +47,6 @@ test.describe("web / inline media", () => {
     rerender(React.createElement(InlineMediaPreview, { text: "![art](https://cdn.test/art.gif) [archive](https://cdn.test/pack.loaf)" }));
     assert.ok(screen.getByRole("img", { name: "art" }));
     assert.equal(screen.getByRole("link", { name: "📄 archive" }).getAttribute("download"), "archive");
-    assert.equal(screen.getByLabelText("Detected files and images").children.length, 2);
+    assert.equal(screen.getByLabelText("检测到的文件和图片").children.length, 2);
   });
 });
