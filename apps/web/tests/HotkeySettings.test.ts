@@ -30,20 +30,20 @@ function renderSettings(opts: {
 test("shows the default combo for a shortcut with no override, and no reset button", () => {
   renderSettings();
   assert.ok(screen.getByText("Cmd/Ctrl+K"));
-  assert.equal(screen.queryByRole("button", { name: "Reset to default" }), null);
+  assert.equal(screen.queryByRole("button", { name: "恢复默认" }), null);
 });
 
 test("shows an override's combo and offers Reset to default", () => {
   renderSettings({ hotkeys: { commandPalette: "mod+shift+p" } });
   assert.ok(screen.getByText("Cmd/Ctrl+Shift+P"));
-  assert.ok(screen.getByRole("button", { name: "Reset to default" }));
+  assert.ok(screen.getByRole("button", { name: "恢复默认" }));
 });
 
 test("clicking Change opens a recording field; pressing a combo saves it and reports the new binding", () => {
   let saved: Record<string, string> | null = null;
   renderSettings({ onSave: (next) => { saved = next; } });
-  fireEvent.click(screen.getByRole("button", { name: "Change" }));
-  const field = screen.getByLabelText("Press a key combo for Quick-open conversation search");
+  fireEvent.click(screen.getByRole("button", { name: "修改" }));
+  const field = screen.getByLabelText("请为“快速搜索并打开会话”按下快捷键组合");
   fireEvent.keyDown(field, { key: "p", ctrlKey: true, shiftKey: true });
   assert.deepEqual(saved, { commandPalette: "mod+shift+p" });
   assert.ok(screen.getByText(/set to Cmd\/Ctrl\+Shift\+P/));
@@ -52,38 +52,38 @@ test("clicking Change opens a recording field; pressing a combo saves it and rep
 test("recording ignores bare modifier keypresses and waits for a real key", () => {
   let saved: Record<string, string> | null = null;
   renderSettings({ onSave: (next) => { saved = next; } });
-  fireEvent.click(screen.getByRole("button", { name: "Change" }));
-  const field = screen.getByLabelText("Press a key combo for Quick-open conversation search");
+  fireEvent.click(screen.getByRole("button", { name: "修改" }));
+  const field = screen.getByLabelText("请为“快速搜索并打开会话”按下快捷键组合");
   fireEvent.keyDown(field, { key: "Control", ctrlKey: true });
   assert.equal(saved, null);
   // Still recording - the field is still there.
-  assert.ok(screen.getByLabelText("Press a key combo for Quick-open conversation search"));
+  assert.ok(screen.getByLabelText("请为“快速搜索并打开会话”按下快捷键组合"));
 });
 
 test("Escape while recording cancels without saving", () => {
   let saved: Record<string, string> | null = null;
   renderSettings({ onSave: (next) => { saved = next; } });
-  fireEvent.click(screen.getByRole("button", { name: "Change" }));
-  const field = screen.getByLabelText("Press a key combo for Quick-open conversation search");
+  fireEvent.click(screen.getByRole("button", { name: "修改" }));
+  const field = screen.getByLabelText("请为“快速搜索并打开会话”按下快捷键组合");
   fireEvent.keyDown(field, { key: "Escape" });
   assert.equal(saved, null);
-  assert.equal(screen.queryByLabelText("Press a key combo for Quick-open conversation search"), null);
-  assert.ok(screen.getByRole("button", { name: "Change" }));
+  assert.equal(screen.queryByLabelText("请为“快速搜索并打开会话”按下快捷键组合"), null);
+  assert.ok(screen.getByRole("button", { name: "修改" }));
 });
 
 test("blurring the recording field cancels it", () => {
   renderSettings();
-  fireEvent.click(screen.getByRole("button", { name: "Change" }));
-  const field = screen.getByLabelText("Press a key combo for Quick-open conversation search");
+  fireEvent.click(screen.getByRole("button", { name: "修改" }));
+  const field = screen.getByLabelText("请为“快速搜索并打开会话”按下快捷键组合");
   fireEvent.blur(field);
-  assert.equal(screen.queryByLabelText("Press a key combo for Quick-open conversation search"), null);
+  assert.equal(screen.queryByLabelText("请为“快速搜索并打开会话”按下快捷键组合"), null);
 });
 
 test("recording a plain (no-modifier) key still records a combo", () => {
   let saved: Record<string, string> | null = null;
   renderSettings({ onSave: (next) => { saved = next; } });
-  fireEvent.click(screen.getByRole("button", { name: "Change" }));
-  const field = screen.getByLabelText("Press a key combo for Quick-open conversation search");
+  fireEvent.click(screen.getByRole("button", { name: "修改" }));
+  const field = screen.getByLabelText("请为“快速搜索并打开会话”按下快捷键组合");
   fireEvent.keyDown(field, { key: "/" });
   assert.deepEqual(saved, { commandPalette: "/" });
 });
@@ -91,8 +91,8 @@ test("recording a plain (no-modifier) key still records a combo", () => {
 test("recording captures alt and meta modifiers too", () => {
   let saved: Record<string, string> | null = null;
   renderSettings({ onSave: (next) => { saved = next; } });
-  fireEvent.click(screen.getByRole("button", { name: "Change" }));
-  const field = screen.getByLabelText("Press a key combo for Quick-open conversation search");
+  fireEvent.click(screen.getByRole("button", { name: "修改" }));
+  const field = screen.getByLabelText("请为“快速搜索并打开会话”按下快捷键组合");
   fireEvent.keyDown(field, { key: "e", metaKey: true, altKey: true });
   assert.deepEqual(saved, { commandPalette: "mod+alt+e" });
 });
@@ -100,15 +100,15 @@ test("recording captures alt and meta modifiers too", () => {
 test("Reset to default removes the override and reports the reset", () => {
   let saved: Record<string, string> | null = null;
   renderSettings({ hotkeys: { commandPalette: "mod+shift+p" }, onSave: (next) => { saved = next; } });
-  fireEvent.click(screen.getByRole("button", { name: "Reset to default" }));
+  fireEvent.click(screen.getByRole("button", { name: "恢复默认" }));
   assert.deepEqual(saved, {});
-  assert.ok(screen.getByText(/reset to default/));
+  assert.ok(screen.getByText(/已恢复默认设置/));
 });
 
 test("Change and Reset buttons are disabled when the panel is disabled", () => {
   renderSettings({ hotkeys: { commandPalette: "mod+shift+p" }, disabled: true });
-  assert.equal((screen.getByRole("button", { name: "Change" }) as HTMLButtonElement).disabled, true);
-  assert.equal((screen.getByRole("button", { name: "Reset to default" }) as HTMLButtonElement).disabled, true);
+  assert.equal((screen.getByRole("button", { name: "修改" }) as HTMLButtonElement).disabled, true);
+  assert.equal((screen.getByRole("button", { name: "恢复默认" }) as HTMLButtonElement).disabled, true);
 });
 
 test("DEFAULT_HOTKEYS is used as a fallback source for the initial display", () => {
