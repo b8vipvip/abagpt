@@ -4,10 +4,10 @@ import type { PlaygroundAttachment } from "./playground-history.js";
 type FormatId = "loaf" | "pngspeak" | "gptgif" | "gptgif-v4";
 
 const FORMAT_LABELS: Record<FormatId, string> = {
-  loaf: "LoaF (text archive)",
-  pngspeak: "PngSpeak (real PNG)",
-  gptgif: "gptgif original (real GIF)",
-  "gptgif-v4": "gptgif v4 (real GIF, self-calibrating)",
+  loaf: "LoaF（文本归档）",
+  pngspeak: "PngSpeak（PNG 图片）",
+  gptgif: "gptgif 原版（GIF 动图）",
+  "gptgif-v4": "gptgif v4（GIF 动图，自动校准）",
 };
 
 const FORMAT_EXTENSIONS: Record<FormatId, string> = {
@@ -71,7 +71,7 @@ export function ConversionTools({
   onAttach: (attachment: PlaygroundAttachment) => void;
 }) {
   const [format, setFormat] = useState<FormatId>("pngspeak");
-  const [inputText, setInputText] = useState("A secret message, hidden in plain sight.");
+  const [inputText, setInputText] = useState("一条隐藏在明处的秘密消息。");
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
   const [artifact, setArtifact] = useState<Artifact | null>(null);
@@ -103,7 +103,7 @@ export function ConversionTools({
 
   async function encode(dataBase64: string) {
     setBusy(true);
-    setStatus("Encoding…");
+    setStatus("正在编码…");
     setArtifact(null);
     try {
       const res =
@@ -111,9 +111,9 @@ export function ConversionTools({
           ? await postJson("/api/convert/loaf/encode", { entries: [{ name: "message.txt", contentBase64: dataBase64 }] })
           : await postJson(`/api/convert/${format}/encode`, { dataBase64 });
       setArtifact(normalizeEncodeResult(res, dataBase64));
-      setStatus(`Encoded ${res.bytes} bytes as ${FORMAT_LABELS[format]}.`);
+      setStatus(`编码完成：${FORMAT_LABELS[format]}，共 ${res.bytes} 字节。`);
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Encoding failed");
+      setStatus(error instanceof Error ? error.message : "编码失败");
     } finally {
       setBusy(false);
     }
@@ -121,7 +121,7 @@ export function ConversionTools({
 
   async function decode() {
     setBusy(true);
-    setStatus("Decoding…");
+    setStatus("正在解码…");
     setDecodedResult(null);
     try {
       const res =
@@ -129,15 +129,15 @@ export function ConversionTools({
           ? await (async () => {
               const decoded = await postJson("/api/convert/loaf/decode", { loaf: decodeInput.trim() });
               const first = decoded.entries?.[0];
-              if (!first) throw new Error("That LoaF archive has no entries.");
+              if (!first) throw new Error("该 LoaF 归档中没有文件条目。");
               return { dataBase64: first.contentBase64, bytes: first.bytes };
             })()
           : await postJson(`/api/convert/${format}/decode`, { dataBase64: decodeInput.trim() });
       setDecodedResult({ text: tryFromBase64(res.dataBase64), dataBase64: res.dataBase64, bytes: res.bytes });
-      setStatus(`Decoded ${res.bytes} bytes.`);
+      setStatus(`解码完成，共 ${res.bytes} 字节。`);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Decoding failed.";
-      setStatus(format === "gptgif" ? `${message} (gptgif's original format has no fixed alphabet -- see the hint below.)` : message);
+      const message = error instanceof Error ? error.message : "解码失败。";
+      setStatus(format === "gptgif" ? `${message} （gptgif 原版格式没有固定字母表，请参阅下方说明。）` : message);
     } finally {
       setBusy(false);
     }
@@ -145,14 +145,14 @@ export function ConversionTools({
 
   async function runFun(kind: "mystery" | "fortune") {
     setBusy(true);
-    setStatus(kind === "mystery" ? "Picking a random format…" : "Reading a fortune…");
+    setStatus(kind === "mystery" ? "正在随机选择编码格式…" : "正在读取幸运签…");
     try {
       if (kind === "mystery") {
         const sourceText = inputText || "hello";
         const res = await fetch(`/api/convert/mystery?text=${encodeURIComponent(sourceText)}`).then((r) => r.json());
         const mime = res.format === "loaf" ? "text/plain" : res.format === "pngspeak" ? "image/png" : "image/gif";
         setFunResult({
-          label: `Mystery format: ${res.format} -- ${res.surprise}`,
+          label: `神秘格式：${res.format} — ${res.surprise}`,
           // The mystery endpoint returns the artifact only, but we know the
           // plaintext we sent it, so a decode-prompt can still be built.
           artifact: {
@@ -173,11 +173,11 @@ export function ConversionTools({
         // No sourceDataBase64 here: the fortune text is a server-side random
         // pick that's never sent back to the client, so there's nothing to
         // rebuild a decode-prompt from -- the prompt button stays disabled.
-        setFunResult({ label: "Your fortune, hidden inside a PngSpeak PNG:", artifact: { format: "pngspeak", bytes: buffer.byteLength, dataBase64: btoa(binary), mime: "image/png", extension: FORMAT_EXTENSIONS.pngspeak, isImage: true } });
+        setFunResult({ label: "你的幸运签藏在一张 PngSpeak PNG 图片中：", artifact: { format: "pngspeak", bytes: buffer.byteLength, dataBase64: btoa(binary), mime: "image/png", extension: FORMAT_EXTENSIONS.pngspeak, isImage: true } });
       }
-      setStatus("Ready");
+      setStatus("就绪");
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "That didn't work");
+      setStatus(error instanceof Error ? error.message : "操作未成功");
     } finally {
       setBusy(false);
     }
@@ -186,7 +186,7 @@ export function ConversionTools({
   async function buildChatPrompt(art: Artifact) {
     return withPromptSource(art.sourceDataBase64, async () => {
       setBusy(true);
-      setStatus("Building a chat prompt…");
+      setStatus("正在生成对话提示词…");
       try {
         const res = await postJson("/api/convert/gpt-prompt", {
           dataBase64: art.sourceDataBase64,
@@ -194,9 +194,9 @@ export function ConversionTools({
           filename: `message.${art.extension}`,
         });
         onInsertText(res.prompt);
-        setStatus("Prompt inserted into the current chat message below.");
+        setStatus("已将提示词插入下方当前对话消息。");
       } catch (error) {
-        setStatus(error instanceof Error ? error.message : "Could not build a prompt");
+        setStatus(error instanceof Error ? error.message : "无法生成提示词");
       } finally {
         setBusy(false);
       }
@@ -205,7 +205,7 @@ export function ConversionTools({
 
   function attach(art: Artifact) {
     onAttach({ name: `mirror-convert.${art.extension}`, mimeType: art.mime, dataUrl: `data:${art.mime};base64,${art.dataBase64}` });
-    setStatus("Attached to the current chat message below.");
+    setStatus("已添加到下方当前对话消息的附件中。");
   }
 
   const artifactDataUrl = artifact ? `data:${artifact.mime};base64,${artifact.dataBase64}` : null;
@@ -213,11 +213,10 @@ export function ConversionTools({
   return (
     <div className="conversion-tools">
       <p className="field-hint">
-        Encode text or a file into one of Mirror's ported steganographic formats, then drop the result straight into the
-        chat on the left -- as a real attachment, or as a ready-to-paste decoding prompt.
+        将文本或文件编码为 Mirror 移植的隐写格式，然后将结果直接放入左侧对话中：可以作为真实附件添加，也可以作为可直接粘贴的解码提示词。
       </p>
       <label>
-        <span>Format</span>
+        <span>格式</span>
         <select value={format} onChange={(event) => { setFormat(event.target.value as FormatId); setArtifact(null); }} disabled={busy}>
           {(Object.keys(FORMAT_LABELS) as FormatId[]).map((id) => (
             <option key={id} value={id}>
@@ -227,11 +226,11 @@ export function ConversionTools({
         </select>
       </label>
       <label>
-        <span>Text to encode</span>
+        <span>要编码的文本</span>
         <textarea value={inputText} onChange={(event) => setInputText(event.target.value)} disabled={busy} />
       </label>
       <label className="attach-button">
-        📎 Or pick a file to encode instead
+        📎 或选择文件进行编码
         <input
           type="file"
           disabled={busy}
@@ -246,7 +245,7 @@ export function ConversionTools({
       </label>
       <div className="conversion-actions">
         <button disabled={busy || !inputText.trim()} onClick={() => void encode(toBase64(inputText))}>
-          Encode
+          编码
         </button>
       </div>
       {status && <p role="status">{status}</p>}
@@ -254,31 +253,31 @@ export function ConversionTools({
         <div className="conversion-result">
           {artifact.isImage && (
             <a href={artifactDataUrl} target="_blank" rel="noreferrer">
-              <img className="conversion-preview-image" src={artifactDataUrl} alt={`Encoded ${FORMAT_LABELS[artifact.format]} artifact`} />
+              <img className="conversion-preview-image" src={artifactDataUrl} alt={`已编码的 ${FORMAT_LABELS[artifact.format]} 文件`} />
             </a>
           )}
           <div className="conversion-result-actions">
             <a href={artifactDataUrl} download={`mirror-convert.${artifact.extension}`}>
-              ⬇ Download
+              ⬇ 下载
             </a>
             <button disabled={blocked} onClick={() => void buildChatPrompt(artifact)}>
-              💬 Insert decode-prompt into chat
+              💬 将解码提示词插入对话
             </button>
             <button disabled={blocked || !chatModeActive} title={!chatModeActive ? "Switch to Chat mode to attach files" : undefined} onClick={() => attach(artifact)}>
-              📎 Attach to chat
+              📎 添加到对话附件
             </button>
           </div>
         </div>
       )}
 
       <hr />
-      <p className="field-hint">Mostly-useless fun buttons, because we can:</p>
+      <p className="field-hint">一些实用性不高但有趣的小功能：</p>
       <div className="conversion-actions">
         <button disabled={busy} onClick={() => void runFun("mystery")}>
-          🎁 Mystery encode
+          🎁 神秘编码
         </button>
         <button disabled={busy} onClick={() => void runFun("fortune")}>
-          🥠 Fortune cookie
+          🥠 幸运签
         </button>
       </div>
       {funResult && (
@@ -288,13 +287,13 @@ export function ConversionTools({
           <div className="conversion-result-actions">
             <button
               disabled={blocked || funResult.artifact.sourceDataBase64 === undefined}
-              title={funResult.artifact.sourceDataBase64 === undefined ? "This fortune's plaintext is a server-side surprise; there's nothing to build a decode-prompt from." : undefined}
+              title={funResult.artifact.sourceDataBase64 === undefined ? "这条幸运签的原文由服务器随机生成，客户端无法获取，因此不能据此生成解码提示词。" : undefined}
               onClick={() => void buildChatPrompt(funResult.artifact)}
             >
-              💬 Insert decode-prompt into chat
+              💬 将解码提示词插入对话
             </button>
             <button disabled={blocked || !chatModeActive} onClick={() => attach(funResult.artifact)}>
-              📎 Attach to chat
+              📎 添加到对话附件
             </button>
           </div>
         </div>
@@ -302,12 +301,12 @@ export function ConversionTools({
 
       <hr />
       <label>
-        <span>Decode (paste base64 bytes, or a full .loaf line for LoaF)</span>
-        <textarea value={decodeInput} onChange={(event) => setDecodeInput(event.target.value)} disabled={busy} placeholder="Paste the dataBase64/.loaf text from an encode above" />
+        <span>解码（粘贴 Base64 字节；LoaF 格式也可粘贴完整 .loaf 行）</span>
+        <textarea value={decodeInput} onChange={(event) => setDecodeInput(event.target.value)} disabled={busy} placeholder="粘贴上方编码结果中的 dataBase64 或 .loaf 文本" />
       </label>
       <div className="conversion-actions">
         <button disabled={busy || !decodeInput.trim()} onClick={() => void decode()}>
-          Decode
+          解码
         </button>
       </div>
       {decodedResult && (
@@ -315,24 +314,22 @@ export function ConversionTools({
           {decodedResult.text !== null ? (
             <pre>{decodedResult.text}</pre>
           ) : (
-            <p>Decoded {decodedResult.bytes} bytes that aren't valid UTF-8 text (probably a binary file, or the wrong format was selected).</p>
+            <p>已解码出 {decodedResult.bytes} 字节，但内容不是有效的 UTF-8 文本（可能是二进制文件，或选择了错误的格式）。</p>
           )}
           <div className="conversion-result-actions">
             {decodedResult.text !== null && (
               <button disabled={blocked} onClick={() => onInsertText(decodedResult.text!)}>
-                💬 Insert decoded text into chat
+                💬 将解码文本插入对话
               </button>
             )}
             <a href={`data:application/octet-stream;base64,${decodedResult.dataBase64}`} download="decoded.bin">
-              ⬇ Download decoded bytes
+              ⬇ 下载 decoded bytes
             </a>
           </div>
         </div>
       )}
       <p className="field-hint">
-        For the original gptgif format, self-decoding needs a calibrated cluster map (the format doesn't have a fixed
-        alphabet) -- use <code>/api/convert/gptgif/calibrate</code> directly, or ask a model to work it out from the
-        decode-prompt above.
+        gptgif 原版格式需要经过校准的簇映射才能自行解码（该格式没有固定字母表）。请直接使用 <code>/api/convert/gptgif/calibrate</code> ，也可以让模型根据上方的解码提示词推导解码方法。
       </p>
     </div>
   );
