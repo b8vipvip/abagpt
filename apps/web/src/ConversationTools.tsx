@@ -40,7 +40,7 @@ export function ConversationTools({
     const response = await fetch(url, init);
     if (!response.ok)
       throw new Error(
-        `History request returned HTTP ${response.status}. Reload and try again.`,
+        `历史记录接口返回 HTTP ${response.status}。请刷新后重试。`,
       );
     return response.json();
   }
@@ -51,7 +51,7 @@ export function ConversationTools({
         `/api/conversations/search?q=${encodeURIComponent(query)}`,
       );
       setItems(result.items);
-      setStatus(`${result.items.length} local matches (maximum 100)`);
+      setStatus(`找到 ${result.items.length} 条本地匹配记录（最多 100 条）`);
     } catch (error) {
       setStatus(String(error));
     }
@@ -64,7 +64,7 @@ export function ConversationTools({
           `/api/conversations/${encodeURIComponent(conversationId)}/branches`,
         ),
       );
-      setStatus("Branches loaded");
+      setStatus("会话分支已加载");
     } catch (error) {
       setStatus(String(error));
     }
@@ -82,7 +82,7 @@ export function ConversationTools({
       );
       onSelect(result.id);
       setBranches(null);
-      setStatus("Branch selected; the next turn will use this parent.");
+      setStatus("已选择此分支；下一轮对话将以该节点为父节点。");
     } catch (error) {
       setStatus(String(error));
     }
@@ -94,9 +94,9 @@ export function ConversationTools({
 
   return (
     <details className="utility-panel">
-      <summary>Local search, branches, and export</summary>
+      <summary>本地搜索、会话分支与导出</summary>
       <label>
-        Search local history
+        搜索本地历史记录
         <input
           value={query}
           maxLength={200}
@@ -127,7 +127,7 @@ export function ConversationTools({
           {branches?.selected === conversationId && (
             <>
               <p>
-                Next parent: <code>{branches.parent}</code>
+                下一轮父节点： <code>{branches.parent}</code>
               </p>
               <ul>
                 {branches.items.map((item) => (
@@ -157,8 +157,8 @@ export function ConversationTools({
                       <span>
                         {node.role} · {node.status}
                       </span>{" "}
-                      · <code>{node.upstreamNodeId ?? "No upstream node"}</code>
-                      {isNextParent && <strong> (next parent)</strong>}
+                      · <code>{node.upstreamNodeId ?? "无上游节点"}</code>
+                      {isNextParent && <strong>（下一轮父节点）</strong>}
                       {node.role === "assistant" && node.upstreamNodeId && (
                         <button
                           disabled={disabled}
@@ -179,7 +179,7 @@ export function ConversationTools({
               checked={attachments}
               onChange={(event) => setAttachments(event.target.checked)}
             />
-            Include attachment references (no file bytes)
+            包含附件引用（不包含文件内容）
           </label>
           <label>
             <input
@@ -187,7 +187,7 @@ export function ConversationTools({
               checked={metadata}
               onChange={(event) => setMetadata(event.target.checked)}
             />
-            Include IDs, model, and message metadata
+            包含 ID、模型和消息元数据
           </label>
           <a href={`${base}&format=json`} download>
             Export JSON
@@ -197,9 +197,7 @@ export function ConversationTools({
             Export Markdown
           </a>
           <p>
-            Exports contain conversation text. Attachment references exclude
-            signed URLs and raw events. An export is an archive, not a resumable
-            import.
+            导出文件包含对话文本。附件引用不包含签名 URL 和原始事件。导出文件仅用于归档，不能用于恢复会话。
           </p>
         </>
       )}
