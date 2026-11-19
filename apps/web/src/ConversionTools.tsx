@@ -63,7 +63,7 @@ async function postJson(url: string, body: unknown): Promise<any> {
       : value && typeof value === "object" && typeof value.message === "string"
         ? value.message
         : `HTTP ${res.status}`;
-    throw new Error(message);
+    throw new Error(`${message} (HTTP ${res.status})`);
   }
   return json;
 }
