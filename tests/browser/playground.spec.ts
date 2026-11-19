@@ -108,6 +108,9 @@ test("API documentation is localized without changing the OpenAPI contract", asy
  await page.goto(`${serverBase}/mirror/api-docs`);
  await expect(page.locator(".swagger-ui.swagger-container")).toContainText("授权");
  await expect(page.locator(".swagger-ui.swagger-container")).toContainText("创建聊天补全");
+ await page.locator(".opblock-summary").filter({ hasText: "创建聊天补全" }).first().click();
+ await expect(page.locator(".swagger-ui.swagger-container")).toContainText("请求参数");
+ await expect(page.locator(".swagger-ui.swagger-container")).toContainText("试用");
 });
 test("mobile API documentation stays readable without horizontal page overflow", async ({ page }) => {
  await page.setViewportSize({ width: 390, height: 844 });
