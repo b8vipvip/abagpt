@@ -97,6 +97,7 @@ test("an untrusted Host header is rejected with 421 before anything else runs", 
     headers: { host: "evil.example.com" },
   });
   assert.equal(res.statusCode, 421);
+  assert.equal(JSON.parse(res.body).error, "请求主机名不受信任。");
 });
 
 test("a mutating cross-origin request is rejected with 403 and a specific message", async () => {
@@ -752,7 +753,7 @@ test("POST /api/chat reports a friendly message when the turn is aborted, and th
       });
       assert.equal(res.statusCode, 200); // the stream itself always opens 200; failure rides inside an SSE "error" frame
       assert.match(res.body, /event: error/);
-      assert.ok(!res.body.includes("生成已停止。" ));
+      assert.ok(!res.body.includes("生成已停止。"));
     },
   ));
 
@@ -827,7 +828,7 @@ test("GPT listing deduplicates entries shared by bootstrap and sidebar", async (
   });
 });
 
-for (const [error, expected] of [[new DOMException("aborted", "AbortError"), "生成已停止。" ], ["plain failure", "plain failure"]]) {
+for (const [error, expected] of [[new DOMException("aborted", "AbortError"), "生成已停止。"], ["plain failure", "plain failure"]]) {
   test(`chat stream exposes a useful error for ${expected}`, async () => {
     useSession(`error-${expected}`);
     await withFetch(async () => { throw error; }, async () => {
