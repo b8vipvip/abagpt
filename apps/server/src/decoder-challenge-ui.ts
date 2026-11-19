@@ -53,10 +53,10 @@ function status(text,verdict){field('status').textContent=text;field('status').d
 function localizeError(error){
   var message=error&&error.message?String(error.message):String(error||'');
   if(/[\u3400-\u9fff]/.test(message))return message;
-  if(/failed to fetch|networkerror|network request failed|load failed|offline/i.test(message))return '网络连接失败，请检查服务器地址和网络后重试。';
+  if(/failed to fetch|networkerror|network request failed|load failed|offline|econnrefused|econnreset|err_network/i.test(message))return '网络连接失败，请检查服务器地址和网络后重试。';
   var match=message.match(/(?:HTTP\s*)?([45]\d{2})\b/i);
   if(match){
-    var labels={'400':'请求参数无效，请检查输入内容。','401':'身份验证失败，请重新连接 ChatGPT 会话。','403':'当前账号没有执行此操作的权限。','404':'挑战不存在或已过期，请重新生成。','409':'挑战状态已变化，请重新加载后重试。','422':'输入内容无法处理，请检查答案格式。','429':'请求过于频繁，请稍后再试。','500':'服务器内部发生错误，请稍后重试。','502':'上游服务暂时不可用，请检查网络或 WARP 连接。','503':'服务暂时不可用，请稍后重试。','504':'请求处理超时，请稍后重试。'};
+    var labels={'400':'请求参数无效，请检查输入内容。','401':'身份验证失败，请重新连接 ChatGPT 会话。','403':'当前账号没有执行此操作的权限。','404':'挑战不存在或已过期，请重新生成。','409':'挑战状态已变化，请重新加载后重试。','413':'请求内容过大，请缩小输入后重试。','415':'不支持此内容类型，请检查请求格式。','421':'请求主机名未获信任，请检查服务器地址。','422':'输入内容无法处理，请检查答案格式。','428':'ChatGPT 要求完成交互式验证，请先完成验证后重试。','431':'请求标头过大，请检查客户端配置后重试。','429':'请求过于频繁，请稍后再试。','500':'服务器内部发生错误，请稍后重试。','502':'上游服务暂时不可用，请检查网络或 WARP 连接。','503':'服务暂时不可用，请稍后重试。','504':'请求处理超时，请稍后重试。'};
     return labels[match[1]]||'服务器请求失败，请稍后重试。';
   }
   return '操作失败，请检查网络和 ChatGPT 会话后重试。';

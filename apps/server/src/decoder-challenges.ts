@@ -38,7 +38,7 @@ export function registerDecoderChallengeRoutes(app: FastifyInstance, scope: () =
       if (challenge.expiresAt <= Date.now() || challenge.scope !== owner) challenges.delete(id);
     }
     // Refuse at capacity rather than silently evicting another open challenge.
-    if (challenges.size >= 64) return reply.code(429).send({ error: "Challenge shelf is full. Try again after an older challenge expires." });
+    if (challenges.size >= 64) return reply.code(429).send({ error: "挑战列表已满。请等待较早的挑战过期后再试。" });
     const id = randomUUID();
     const expected = body.payload === "text"
       ? Buffer.from(`Mirror decoder expedition\nDiscovery: ${randomBytes(16).toString("hex")}\nKeep every byte: café, stars ✨, and this final newline.\n`, "utf8")
@@ -65,9 +65,10 @@ export function registerDecoderChallengeRoutes(app: FastifyInstance, scope: () =
     for (const id of ids) {
       const challenge = challenges.get(id);
       if (!challenge || challenge.scope !== scope() || challenge.expiresAt <= Date.now()) {
-        return reply.code(404).send({ error: "Challenge expired or unavailable. Generate a new one." });
+        return reply.code(404).send({ error: "挑战已过期或不可用，请重新生成。" });
       }
       const format = formats[challenge.format];
+      const kitFormatLabel = { loaf: "LoaF", pngspeak: "PngSpeak", gptgif: "gptgif 原版", "gptgif-v4": "gptgif v4" }[challenge.format];
       const prefix = `${challenge.format}-${id}`;
       // The separate guide is for the user: independent-mode prompts still
       // withhold it. No kit includes the expected plaintext or answer bytes.
@@ -75,7 +76,7 @@ export function registerDecoderChallengeRoutes(app: FastifyInstance, scope: () =
         { name: `${prefix}/decoder-${id}.${format.extension}`, content: challenge.artifact },
         { name: `${prefix}/prompt.txt`, content: Buffer.from(challenge.prompt) },
         { name: `${prefix}/format-guide.txt`, content: Buffer.from(decoderGuides[challenge.format]) },
-        { name: `${prefix}/README.txt`, content: Buffer.from(`${format.label} decoder challenge ${id}\n\nPaste prompt.txt into ChatGPT, or attach prompt.txt and ask GPT to solve the challenge described inside it.\nThe prompt includes an exact compressed copy of the encoded artifact. The separate artifact file is also included for inspection.\nformat-guide.txt is an optional hint for you. Do not give it to GPT if you want the independent challenge.\nCheck the marked answer in Mirror controls > Decoder challenges; select this challenge from Recent challenges.\nThe answer key expires ${new Date(challenge.expiresAt).toISOString()}, or on Mirror restart/session change. The kit remains usable for independent decoding after expiry.\nNo answer key is included.\n`) },
+        { name: `${prefix}/README.txt`, content: Buffer.from(`${kitFormatLabel} 解码挑战 ${id}\n\n请将 prompt.txt 粘贴到 ChatGPT，或将 prompt.txt 作为附件发送给 GPT，并要求它解决其中描述的挑战。\n提示词中包含经过压缩的编码文件完整副本。压缩包也单独提供，供你检查。\nformat-guide.txt 是可选提示。如果你希望 GPT 独立完成挑战，请不要把它提供给 GPT。\n请在 Mirror 控制台 > 解码挑战中检查带标记的答案，并从“最近的挑战”中选择本挑战。\n答案密钥将于 ${new Date(challenge.expiresAt).toISOString()} 过期，或在 Mirror 重启／会话变更时失效。过期后，压缩包仍可用于独立解码。\n压缩包不包含答案密钥。\n`) },
       );
     }
     // LoaF already produces a standard gzip-compressed USTAR archive before
@@ -87,7 +88,7 @@ export function registerDecoderChallengeRoutes(app: FastifyInstance, scope: () =
     const { id } = ChallengeParams.parse(req.params);
     const challenge = challenges.get(id);
     if (!challenge || challenge.scope !== scope() || challenge.expiresAt <= Date.now()) {
-      return reply.code(404).send({ error: "Challenge expired or unavailable. Generate a new one." });
+      return reply.code(404).send({ error: "挑战已过期或不可用，请重新生成。" });
     }
     const format = formats[challenge.format];
     return reply.header("cache-control", "no-store").header("content-disposition", `attachment; filename="decoder-${id}.${format.extension}"`).type(format.mime).send(challenge.artifact);
@@ -97,7 +98,7 @@ export function registerDecoderChallengeRoutes(app: FastifyInstance, scope: () =
     const { hex } = ChallengeAnswer.parse(req.body);
     const challenge = challenges.get(id);
     if (!challenge || challenge.scope !== scope() || challenge.expiresAt <= Date.now()) {
-      return reply.code(404).send({ error: "Challenge expired or unavailable. Generate a new one." });
+      return reply.code(404).send({ error: "挑战已过期或不可用，请重新生成。" });
     }
     const actual = Buffer.from(hex, "hex");
     const expected = challenge.expected;

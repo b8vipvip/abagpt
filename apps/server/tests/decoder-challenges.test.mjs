@@ -98,7 +98,11 @@ test.describe("server / decoder challenges", () => {
   });
   test("missing, expired, and changed-session challenges are unavailable", async t => {
     const f = fixture(t), missing = "00000000-0000-4000-8000-000000000000";
-    for (const read of [f.artifact, id => f.verify(id, "00")]) assert.equal((await read(missing)).statusCode, 404);
+    for (const read of [f.artifact, id => f.verify(id, "00")]) {
+      const response = await read(missing);
+      assert.equal(response.statusCode, 404);
+      assert.equal(response.json().error, "挑战已过期或不可用，请重新生成。");
+    }
     const first = (await f.create()).json();
     f.setScope("account:1");
     for (const read of [f.artifact, id => f.verify(id, "00")]) assert.equal((await read(first.id)).statusCode, 404);
@@ -114,7 +118,9 @@ test.describe("server / decoder challenges", () => {
     const f = fixture(t);
     const first = (await f.create()).json();
     for (let i = 1; i < 64; i++) assert.equal((await f.create()).statusCode, 200);
-    assert.equal((await f.create()).statusCode, 429);
+    const full = await f.create();
+    assert.equal(full.statusCode, 429);
+    assert.equal(full.json().error, "挑战列表已满。请等待较早的挑战过期后再试。");
     assert.equal((await f.artifact(first.id)).statusCode, 200);
   });
   test("downloads an independently readable kit for every format without answer keys", async t => {
@@ -133,7 +139,8 @@ test.describe("server / decoder challenges", () => {
       assert.deepEqual(group.find(e => e.name.endsWith(c.filename)).content, (await f.artifact(c.id)).rawPayload);
       assert.equal(group.find(e => e.name.endsWith("/prompt.txt")).content.toString(), c.prompt);
       assert.ok(group.find(e => e.name.endsWith("/format-guide.txt")).content.length > 0);
-      assert.match(group.find(e => e.name.endsWith("/README.txt")).content.toString(), /No answer key/);
+      assert.match(group.find(e => e.name.endsWith("/README.txt")).content.toString(), /请将 prompt\.txt 粘贴到 ChatGPT/);
+      assert.match(group.find(e => e.name.endsWith("/README.txt")).content.toString(), /压缩包不包含答案密钥/);
       assert.ok(!c.prompt.includes("FORMAT GUIDE"));
     }
     const missing = "00000000-0000-4000-8000-000000000000";
