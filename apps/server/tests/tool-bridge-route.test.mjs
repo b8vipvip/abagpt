@@ -13,9 +13,15 @@ const store = await import('../dist/store.js');
 store.saveVerifiedSession('fixture-session', 'tool-bridge-test');
 store.updateMintedToken('fixture-access', Date.now() + 3600000, null);
 const { buildApp } = await import('../dist/index.js');
+const { toolBridgeErrorMessage } = await import('../dist/openai.js');
 const tools = [{ type: 'function', function: { name: 'read_file', parameters: { type: 'object', properties: { path: { type: 'string' } } } } }];
 
 test.describe('server / tool bridge route', () => {
+  test('formats Error and non-Error tool-bridge failures', () => {
+    assert.equal(toolBridgeErrorMessage(new Error('fixture failure')), 'fixture failure');
+    assert.equal(toolBridgeErrorMessage('primitive failure'), 'Tool bridge failed');
+  });
+
   test.after(() => rmSync(dir, { recursive: true, force: true }));
   async function request(stream, text, messages = [{ role: 'user', content: 'Read a.txt' }], options = {}) {
     const app = await buildApp({ worker: true });
