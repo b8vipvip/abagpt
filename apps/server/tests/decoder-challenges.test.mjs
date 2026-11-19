@@ -138,7 +138,9 @@ test.describe("server / decoder challenges", () => {
       assert.equal(group.length, 4);
       assert.deepEqual(group.find(e => e.name.endsWith(c.filename)).content, (await f.artifact(c.id)).rawPayload);
       assert.equal(group.find(e => e.name.endsWith("/prompt.txt")).content.toString(), c.prompt);
-      assert.ok(group.find(e => e.name.endsWith("/format-guide.txt")).content.length > 0);
+      const guide = group.find(e => e.name.endsWith("/format-guide.txt")).content.toString();
+      assert.match(guide, /LoaF 是一行 ASCII 文本|PngSpeak 将字节存储|原版 gptgif|gptgif v4 是/);
+      assert.doesNotMatch(guide, /LoaF is one ASCII line|PngSpeak stores bytes|Original gptgif stores|gptgif v4 is a/);
       assert.match(group.find(e => e.name.endsWith("/README.txt")).content.toString(), /请将 prompt\.txt 粘贴到 ChatGPT/);
       assert.match(group.find(e => e.name.endsWith("/README.txt")).content.toString(), /压缩包不包含答案密钥/);
       assert.ok(!c.prompt.includes("FORMAT GUIDE"));
