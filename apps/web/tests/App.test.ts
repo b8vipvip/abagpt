@@ -583,6 +583,7 @@ test("a non-ok response from the run endpoint surfaces the status and body as an
   ]);
   fireEvent.click(runButton());
   await screen.findByText("出错");
+  assert.ok(screen.getByText("上游服务暂时不可用，请检查网络或 WARP 连接。"));
   fireEvent.click(screen.getByRole("button", { name: /原始响应/ }));
   assert.match(screen.getByText(/502/).textContent ?? "", /502.*upstream exploded/s);
 });
@@ -593,6 +594,7 @@ test("a rejected fetch during run() surfaces the error message", async () => {
   ]);
   fireEvent.click(runButton());
   await screen.findByText("出错");
+  assert.ok(screen.getByText("请求失败，请检查服务器地址、API 密钥和 ChatGPT 会话后重试。"));
   fireEvent.click(screen.getByRole("button", { name: /原始响应/ }));
   assert.match(screen.getByText(/DNS failure/).textContent ?? "", /DNS failure/);
 });
@@ -603,6 +605,7 @@ test("a streaming run with no response body reports the missing-stream error", a
   ]);
   fireEvent.click(runButton());
   await screen.findByText("出错");
+  assert.ok(screen.getByText("响应不包含流式数据"));
   fireEvent.click(screen.getByRole("button", { name: /原始响应/ }));
   assert.match(screen.getByText(/响应不包含流式数据/).textContent ?? "", /响应不包含流式数据/);
 });
@@ -735,6 +738,7 @@ test("a failed conversation load reports the status/body as an error", async () 
   ]);
   fireEvent.click(await screen.findByText("Broken chat"));
   await screen.findByText("出错");
+  assert.ok(screen.getByText("请求的资源不存在或已过期。"));
   fireEvent.click(screen.getByRole("button", { name: /原始响应/ }));
   assert.match(screen.getByText(/404/).textContent ?? "", /404.*nope/s);
 });
