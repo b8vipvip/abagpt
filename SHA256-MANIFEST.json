@@ -164,8 +164,8 @@
   "scripts/protocol-canary.mjs": "a1bb2f0b63dd077a0c18b6d2da4bfc3b256a6eb13ace8d958ef999ad26920c32",
   "scripts/restore-drill.mjs": "05917168b3b909b7403c6ecb6e1d6939482e8e30c254a6103b7968cf077dbd08",
   "scripts/storage.mjs": "1df9e21d08fd0a99d17698c0ecc079a599499d6873a99398ec95e4dead11d1bf",
-  "tests/browser/decoder-challenges.spec.ts": "0a9d618f231637ae45b047cb50ba84f3473fd87f279d847aa0c3ddc18fdf0c70",
-  "tests/browser/playground.spec.ts": "8918b32c29f3cd4e3f21cb45f8d9a19911c49d3b2eeea936670f25f723b6c627",
+  "tests/browser/decoder-challenges.spec.ts": "ef67d3a8aa7db3674dd9f59da80844f21350e0687d75c0ded74e190811496838",
+  "tests/browser/playground.spec.ts": "d9f177445d5689b6aa7e5d70bc5f605e5a80c731528afc25184a002d43e64ecb",
   "tests/browser/server.mjs": "f533bfd6c46958c88f04d4e1dd8ad818c35676e85e52e96843c69e56ea458d9a",
   "tsconfig.base.json": "ea903f97b8096f3cea4d123a67c5f816f1501980dd5317408a0fbc8f411be4e4"
 }
