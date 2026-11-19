@@ -190,11 +190,11 @@ export function ConversationTools({
             包含 ID、模型和消息元数据
           </label>
           <a href={`${base}&format=json`} download>
-            Export JSON
+            导出 JSON
           </a>
           {" · "}
           <a href={`${base}&format=markdown`} download>
-            Export Markdown
+            导出 Markdown
           </a>
           <p>
             导出文件包含对话文本。附件引用不包含签名 URL 和原始事件。导出文件仅用于归档，不能用于恢复会话。
