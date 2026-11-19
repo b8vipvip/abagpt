@@ -26,7 +26,7 @@
   "apps/server/src/gif89a.ts": "83f122d06b7cc1de32be38568701c5daf7a00fc1873504fc140e5b6c4bf4c5e8",
   "apps/server/src/gptgif-v4.ts": "f35e4ca07e5fcc53e733bb506634575d1c8f23773a1b7385a806c73d2dae215a",
   "apps/server/src/gptgif.ts": "d756887000b63c0d15872f19bc002c678ad08e9f780ccbaa81d4fdc36b7d9497",
-  "apps/server/src/index.ts": "f61204e4e47cbe8bc413d8c6ca7648f1fd3d8766d199b9681249be5d094cb450",
+  "apps/server/src/index.ts": "c4e36dedfc5cbf69a0d5dbc90f2244b40897661b907371601041d6361228c7af",
   "apps/server/src/insights.ts": "0b8bd8e7e3bd4f95d0fa7e71ab35f718b5e65efa4a6606b86cc7add9404922cf",
   "apps/server/src/loaf.ts": "e2c85948ffd62a06b70d1af3131972c1d391eb4526d2a4f8ce291d001bece995",
   "apps/server/src/mirror-controls.ts": "238d8eb9f69cc7f59c992e7034311a3459a15ebaa7f325fbf3a86586ba6cfab4",
