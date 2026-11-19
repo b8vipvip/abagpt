@@ -103,6 +103,31 @@ function loadStoredMessages(): PlaygroundMessage[] {
   return DEFAULT_MESSAGES;
 }
 
+function localizedStatus(status: string): string {
+  const labels: Record<string, string> = {
+    "Ready": "就绪",
+    "Loading…": "加载中…",
+    "Loaded": "已加载",
+    "Reading files…": "正在读取文件…",
+    "Blocked": "已阻止",
+    "Running…": "运行中…",
+    "Completed": "已完成",
+    "Stopped": "已停止",
+    "Error": "出错",
+  };
+  return labels[status] ?? status;
+}
+
+function localizedRole(role: string): string {
+  const labels: Record<string, string> = {
+    system: "系统",
+    developer: "开发者",
+    user: "用户",
+    assistant: "助手",
+  };
+  return labels[role] ?? role;
+}
+
 function Header() {
   return (
     <header className="platform-header">
@@ -125,7 +150,7 @@ function Header() {
           OpenAPI schema
         </a>
       </nav>
-      <div className="environment">Local server</div>
+      <div className="environment">本地服务器</div>
     </header>
   );
 }
@@ -243,13 +268,13 @@ export default function App() {
   // only to show *why* a click was a no-op, via runBlockedReason below.
   const runBlockedReason =
     readingFiles
-      ? "Wait for the selected files to finish reading."
+      ? "请等待所选文件读取完成。"
       : mode === "responses" && messages.some(message => message.attachments?.length)
-      ? "File attachments require Chat mode. Switch to Chat to send these files."
+      ? "文件附件仅支持对话模式。请切换到对话模式后发送文件。"
       : !lastMessage || lastMessage.role !== "user"
-      ? "The last message must be from the user."
+      ? "最后一条消息必须来自用户。"
       : !lastMessage.content.trim() && !lastMessage.attachments?.length
-        ? "Type a message in the last (user) row before running."
+        ? "请先在最后一条用户消息中输入内容，再运行请求。"
         : null;
   const canRun = runBlockedReason === null;
 
@@ -606,16 +631,16 @@ export default function App() {
       />
       <Header />
       <aside className="playground-sidebar">
-        <div className="side-title">Playground</div>
+        <div className="side-title">API 测试台</div>
         <button className={`side-item ${mode === "chat" ? "active" : ""}`} aria-pressed={mode === "chat"} disabled={running || readingFiles} onClick={() => selectMode("chat")}>
-          <span>☷</span> Chat
+          <span>☷</span> 对话
         </button>
         <button className={`side-item ${mode === "responses" ? "active" : ""}`} aria-pressed={mode === "responses"} disabled={running || readingFiles} onClick={() => selectMode("responses")}>
-          <span>◇</span> Responses
+          <span>◇</span> Responses API
         </button>
         <div className="side-section">Mirror</div>
         <a className="side-item" href="/">
-          <span>↗</span> Open ChatGPT
+          <span>↗</span> 打开 ChatGPT
         </a>
         <a
           className="side-item"
@@ -623,10 +648,10 @@ export default function App() {
           target="_blank"
           rel="noreferrer"
         >
-          <span>♥</span> Server health
+          <span>♥</span> 服务状态
         </a>
         <div className="server-card">
-          <b>Compatible endpoint</b>
+          <b>兼容接口</b>
           <p>
             Test Mirror or any OpenAI-compatible server directly from your
             browser.
@@ -636,9 +661,9 @@ export default function App() {
       <main className="workbench">
         <div className="workbench-head">
           <div>
-            <h1>{mode === "responses" ? "Responses" : "Chat"}</h1>
-            <p>{mode === "responses" ? "Test text input and streaming output through the Responses API." : "Test an OpenAI-compatible Chat Completions endpoint."}</p>
-            {mode === "responses" && <p>Mirror supports text messages and conversation IDs. Tools, previous_response_id, and response retrieval are not supported.</p>}
+            <h1>{mode === "responses" ? "Responses API" : "对话"}</h1>
+            <p>{mode === "responses" ? "通过 Responses API 测试文本输入和流式输出。" : "测试兼容 OpenAI 的 Chat Completions 接口。"}</p>
+            {mode === "responses" && <p>Mirror 支持文本消息和会话 ID；暂不支持工具调用、previous_response_id 和响应检索。</p>}
           </div>
           <div className="run-actions">
             <span role="status" aria-live="polite" className={`run-status ${status.toLowerCase()}`}>
@@ -658,43 +683,43 @@ export default function App() {
                 title={runBlockedReason ?? undefined}
                 onClick={() => void run()}
               >
-                Run <span>⌘ ↵</span>
+                运行请求 <span>⌘ ↵</span>
               </button>
             )}
           </div>
         </div>
         <div className="connection-bar">
           <label>
-            <span>Server domain</span>
+            <span>服务器地址</span>
             <input
               value={domain}
               onChange={(event) => setDomain(event.target.value)}
             />
           </label>
           <label>
-            <span>Path</span>
+            <span>接口路径</span>
             <input
               value={path}
               onChange={(event) => setPath(event.target.value)}
             />
           </label>
           <label>
-            <span>Bearer credential</span>
+            <span>Bearer 凭证</span>
             <input
               type="password"
               value={apiKey}
               onChange={(event) => setApiKey(event.target.value)}
-              placeholder="Optional for this server"
+              placeholder="此服务器可不填写"
             />
           </label>
         </div>
         <div className="columns">
           <section className="prompt-panel">
             <div className="panel-title">
-              <b>Messages</b>
+              <b>消息</b>
               <button
                 disabled={running || readingFiles || Boolean(lastMessage?.attachments?.length)}
-                title={lastMessage?.attachments?.length ? "Send or remove the attached files before adding another message." : undefined}
+                title={lastMessage?.attachments?.length ? "请先发送或移除已附加的文件，再添加新消息。" : undefined}
                 onClick={() =>
                   setMessages((current) => [
                     ...current,
@@ -702,32 +727,32 @@ export default function App() {
                   ])
                 }
               >
-                ＋ Add message
+                ＋ 添加消息
               </button>
             </div>
             <div className="messages-editor">
-              <p className="field-hint">Attach files to the last user message in Chat mode. Files are sent when you run the request.</p>
+              <p className="field-hint">在对话模式下，可将文件附加到最后一条用户消息。运行请求时会一并发送文件。</p>
               {messages.map((message, index) => (
                 <div className="message-editor" key={index}>
                   <div className="message-toolbar">
                     <select
-                      aria-label={`Message ${index + 1} role`}
+                      aria-label={`第 ${index + 1} 条消息的角色`}
                       disabled={running || readingFiles || message.role === "assistant" || Boolean(message.attachments?.length)}
                       value={message.role}
                       onChange={(event) =>
                         updateMessage(index, "role", event.target.value)
                       }
                     >
-                      <option>system</option>
-                      <option>developer</option>
-                      <option>user</option>
-                      <option>assistant</option>
+                      <option value="system">系统</option>
+                      <option value="developer">开发者</option>
+                      <option value="user">用户</option>
+                      <option value="assistant">助手</option>
                     </select>
                     <button
                       aria-label={
                         message.role === "assistant"
-                          ? "Assistant messages cannot be removed"
-                          : "Remove message"
+                          ? "助手消息不可删除"
+                          : "删除消息"
                       }
                       disabled={running || readingFiles || message.role === "assistant"}
                       onClick={() => removeMessage(index)}
@@ -736,12 +761,12 @@ export default function App() {
                     </button>
                   </div>
                   <textarea
-                    aria-label={`Message ${index + 1} ${message.role} content`}
+                    aria-label={`第 ${index + 1} 条${localizedRole(message.role)}消息内容`}
                     readOnly={running || readingFiles || message.role === "assistant"}
                     aria-readonly={running || readingFiles || message.role === "assistant"}
                     title={
                       message.role === "assistant"
-                        ? "Assistant messages are read-only; you can select and copy their text."
+                        ? "助手消息为只读内容，你可以选中并复制文本。"
                         : undefined
                     }
                     value={message.content}
@@ -754,7 +779,7 @@ export default function App() {
                     <div className="message-attachments">
                       {mode === "chat" && index === messages.length - 1 && (
                       <label className="attach-button">
-                        📎 Attach file
+                        📎 添加附件
                         <input
                           type="file"
                           multiple
@@ -772,7 +797,7 @@ export default function App() {
                         <span className="attachment-chip" key={attachmentIndex}>
                           {attachment.name}
                           <button
-                            aria-label={`Remove attachment ${attachment.name}`}
+                            aria-label={`移除附件 ${attachment.name}`}
                             disabled={running || readingFiles}
                             onClick={() => removeAttachment(index, attachmentIndex)}
                           >
@@ -795,7 +820,7 @@ export default function App() {
                         <button
                           type="button"
                           className="stop-button"
-                          aria-label="Stop (same as the Stop button above)"
+                          aria-label="停止（与上方的停止按钮相同）"
                           onClick={() => controller?.abort()}
                         >
                           Stop
@@ -804,12 +829,12 @@ export default function App() {
                         <button
                           type="button"
                           className="run-button"
-                          aria-label="Send this message (same as the Run button above)"
+                          aria-label="发送此消息（与上方的运行请求按钮相同）"
                           disabled={readingFiles}
                           title={runBlockedReason ?? undefined}
                           onClick={() => void run()}
                         >
-                          Run <span>⌘ ↵</span>
+                          运行请求 <span>⌘ ↵</span>
                         </button>
                       )}
                     </div>
@@ -850,11 +875,11 @@ export default function App() {
               </div>
             ) : (
               <div
-                role="region" aria-label="Response output" tabIndex={0} aria-busy={running}
+                role="region" aria-label="响应输出" tabIndex={0} aria-busy={running}
                 className={`output ${(showRaw ? raw : output) ? "" : "empty"}`}
               >
                 {(showRaw ? raw : output) ||
-                  "Run the request to see the model response."}
+                  "运行请求后，模型响应将在此处显示。"}
                 {/* Text mode only (not raw JSON): the raw tab is meant to show the
                     literal wire response, not a rendering of it. */}
                 {responseTab === "output" && output && <InlineMediaPreview text={output} />}
@@ -862,29 +887,29 @@ export default function App() {
             )}
           </section>
           <aside className="settings-panel">
-            <h2>Configuration</h2>
+            <h2>配置</h2>
             <label>
-              <span>Model</span>
+              <span>模型</span>
               <div className="model-picker-row">
                 {modelFreeform ? (
                   <input
                     value={model}
                     onChange={(event) => setModel(event.target.value)}
-                    placeholder="official model, g-… gizmo id, or g-p-… project id"
+                    placeholder="官方模型 ID、g-… GPT ID 或 g-p-… 项目 ID"
                   />
                 ) : (
                   <select
                     value={model}
                     onChange={(event) => setModel(event.target.value)}
                   >
-                    <option value="auto">auto</option>
+                    <option value="auto">自动（auto）</option>
                     {models.map((item) => (
                       <option value={item.id} key={item.id} disabled={item.mirror?.supported === false}>
                         {item.owned_by === "chatgpt-gizmo"
-                          ? `GPT: ${item.name ?? item.id}`
+                          ? `GPT：${item.name ?? item.id}`
                           : item.owned_by === "chatgpt-project"
-                            ? `Project: ${item.name ?? item.id}`
-                            : `${item.id}${item.mirror?.supported === false ? " (unsupported)" : ""}`}
+                            ? `项目：${item.name ?? item.id}`
+                            : `${item.id}${item.mirror?.supported === false ? "（不支持）" : ""}`}
                       </option>
                     ))}
                   </select>
@@ -894,22 +919,22 @@ export default function App() {
                   className="model-mode-toggle"
                   onClick={() => setModelFreeform((current) => !current)}
                 >
-                  {modelFreeform ? "Use list" : "Type manually"}
+                  {modelFreeform ? "使用列表选择" : "手动输入"}
                 </button>
               </div>
             </label>
             {isGizmoModel && (
               <label>
-                <span>Picked model for this GPT/Project</span>
+                <span>此 GPT/项目使用的模型</span>
                 <input
                   value={pickedModel}
                   onChange={(event) => setPickedModel(event.target.value)}
-                  placeholder="e.g. gpt-5-6, or another g-… / g-p-… id (experimental)"
+                  placeholder="例如 gpt-5-6，或其他 g-… / g-p-… ID（实验性）"
                 />
               </label>
             )}
             <label className="switch-line">
-              <span>Stream response</span>
+              <span>流式响应</span>
               <input
                 type="checkbox"
                 checked={stream}
@@ -917,7 +942,7 @@ export default function App() {
               />
             </label>
             <label className="switch-line">
-              <span>Private chat</span>
+              <span>私密对话</span>
               <input
                 type="checkbox"
                 checked={privateChat}
@@ -925,7 +950,7 @@ export default function App() {
               />
             </label>
             <label className="switch-line">
-              <span>One-shot (temporary; don't retain)</span>
+              <span>单次请求（临时，不保留记录）</span>
               <input
                 type="checkbox"
                 checked={oneShot}
@@ -933,7 +958,7 @@ export default function App() {
               />
             </label>
             <label className="switch-line">
-              <span>Remember prompt history on this device</span>
+              <span>在此设备记住提示词历史</span>
               <input
                 type="checkbox"
                 checked={rememberHistory}
@@ -941,13 +966,13 @@ export default function App() {
               />
             </label>
             <label>
-              <span>Conversation ID</span>
+              <span>会话 ID</span>
               <div className="model-picker-row">
                 <input
                   disabled={running || readingFiles}
                   value={conversationId}
                   onChange={(event) => setConversationId(event.target.value)}
-                  placeholder="auto (filled in after the first response)"
+                  placeholder="自动生成（首次响应后填入）"
                 />
                 <button
                   type="button"
@@ -977,8 +1002,8 @@ export default function App() {
             <label>
               <div className="conversation-list-head">
                 <span>
-                  Load a conversation
-                  {conversationsLoading ? " (refreshing…)" : ""}
+                  加载会话
+                  {conversationsLoading ? "（正在刷新…）" : ""}
                 </span>
                 <button
                   type="button"
@@ -1006,8 +1031,8 @@ export default function App() {
                 {conversationsList.length === 0 ? (
                   <div className="conversation-list-empty">
                     {conversationsLoading
-                      ? "Loading…"
-                      : "No conversations yet"}
+? "加载中…"
+: "暂无会话"}
                   </div>
                 ) : (
                   conversationsList.map((item) => (
@@ -1021,7 +1046,7 @@ export default function App() {
                       onClick={() => void loadConversation(item.id)}
                     >
                       <span className="conversation-list-title">
-                        {item.title || "Untitled"}
+                        {item.title || "未命名会话"}
                       </span>
                       <span className="conversation-list-meta">
                         {new Date(item.updatedAt).toLocaleString()}
