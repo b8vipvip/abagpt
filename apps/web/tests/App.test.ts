@@ -826,19 +826,19 @@ test("the New button resets the conversation id and the transcript to the defaul
   fireEvent.change(lastUserTextarea(), { target: { value: "custom prompt" } });
   fireEvent.click(screen.getByRole("button", { name: "新建" }));
   assert.equal((screen.getByPlaceholderText(/自动生成/) as HTMLInputElement).value, "");
-  assert.ok(screen.getByDisplayValue("You are a helpful assistant."));
+  assert.ok(screen.getByDisplayValue("你是一名乐于助人的助手。"));
   assert.equal(screen.getAllByRole("textbox").filter((el) => el.tagName === "TEXTAREA").length, 2);
 });
 
 test("New preserves an edited System box instead of resetting it to the fallback", async () => {
   await renderApp();
   const systemTextarea = screen.getAllByRole("textbox").find(
-    (el) => el.tagName === "TEXTAREA" && (el as HTMLTextAreaElement).value === "You are a helpful assistant.",
+    (el) => el.tagName === "TEXTAREA" && (el as HTMLTextAreaElement).value === "你是一名乐于助人的助手。",
   ) as HTMLTextAreaElement;
   fireEvent.change(systemTextarea, { target: { value: "Always answer in metric." } });
   fireEvent.click(screen.getByRole("button", { name: "新建" }));
   assert.ok(screen.getByDisplayValue("Always answer in metric."));
-  assert.equal(screen.queryByDisplayValue("You are a helpful assistant."), null);
+  assert.equal(screen.queryByDisplayValue("你是一名乐于助人的助手。"), null);
 });
 
 test("a saved account-wide default system instruction preloads a fresh System box", async () => {
@@ -846,14 +846,14 @@ test("a saved account-wide default system instruction preloads a fresh System bo
     [/^\/api\/settings\/default-system-instructions$/, () => jsonResponse({ content: "Reply concisely, always in Rust code examples." })],
   ]);
   assert.ok(screen.getByDisplayValue("Reply concisely, always in Rust code examples."));
-  assert.equal(screen.queryByDisplayValue("You are a helpful assistant."), null);
+  assert.equal(screen.queryByDisplayValue("你是一名乐于助人的助手。"), null);
 });
 
 test("a failed default-system-instructions fetch is tolerated, keeping the fallback System text", async () => {
   await renderApp([
     [/^\/api\/settings\/default-system-instructions$/, () => new Response("", { status: 500 })],
   ]);
-  assert.ok(screen.getByDisplayValue("You are a helpful assistant."));
+  assert.ok(screen.getByDisplayValue("你是一名乐于助人的助手。"));
 });
 
 test("New falls back to the default System text when the first row isn't role=system at the time", async () => {
@@ -861,7 +861,7 @@ test("New falls back to the default System text when the first row isn't role=sy
   const selects = screen.getAllByRole("combobox").filter((el) => el.closest(".message-editor"));
   fireEvent.change(selects[0] as HTMLSelectElement, { target: { value: "developer" } });
   fireEvent.click(screen.getByRole("button", { name: "新建" }));
-  assert.ok(screen.getByDisplayValue("You are a helpful assistant."));
+  assert.ok(screen.getByDisplayValue("你是一名乐于助人的助手。"));
 });
 
 test("a saved account-wide default arriving after the System box was already edited away from the fallback is not applied", async () => {
@@ -870,7 +870,7 @@ test("a saved account-wide default arriving after the System box was already edi
     [/^\/api\/settings\/default-system-instructions$/, () => deferredDefault.promise],
   ]);
   const systemTextarea = screen.getAllByRole("textbox").find(
-    (el) => el.tagName === "TEXTAREA" && (el as HTMLTextAreaElement).value === "You are a helpful assistant.",
+    (el) => el.tagName === "TEXTAREA" && (el as HTMLTextAreaElement).value === "你是一名乐于助人的助手。",
   ) as HTMLTextAreaElement;
   fireEvent.change(systemTextarea, { target: { value: "Edited before the default arrived." } });
   await act(async () => {
@@ -890,7 +890,7 @@ test("editing the System box saves it as the new account-wide default after a sh
     }],
   ]);
   const systemTextarea = screen.getAllByRole("textbox").find(
-    (el) => el.tagName === "TEXTAREA" && (el as HTMLTextAreaElement).value === "You are a helpful assistant.",
+    (el) => el.tagName === "TEXTAREA" && (el as HTMLTextAreaElement).value === "你是一名乐于助人的助手。",
   ) as HTMLTextAreaElement;
   fireEvent.change(systemTextarea, { target: { value: "Always answer in metric." } });
   await act(async () => { await new Promise((resolve) => setTimeout(resolve, 850)); });
