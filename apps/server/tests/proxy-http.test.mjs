@@ -226,6 +226,21 @@ test("a client-supplied chatgpt-account-id header is never overridden by the res
 
 // --- error handling -----------------------------------------------------------
 
+test("rejects authenticated upstream paths when no verified session is available", () =>
+  withFetch(
+    async () => {
+      throw new Error("upstream fetch must not run without credentials");
+    },
+    async () => {
+      store.clearSession();
+      const req = makeReq({ url: "/backend-api/models" });
+      const { reply, state } = makeReply();
+      await proxyChatGpt(req, reply);
+      assert.equal(state.sentCode, 401);
+      assert.deepEqual(state.sentJson, { error: "A valid session is required for this upstream request" });
+    },
+  ));
+
 test("an upstream fetch failure responds 502 without ever hijacking the reply", () =>
   withFetch(
     async () => {
