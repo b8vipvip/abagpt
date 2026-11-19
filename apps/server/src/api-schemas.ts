@@ -16,17 +16,17 @@ export const SetSessionBody = z
   .object({
     sessionToken: z
       .string()
-      .min(20, "That doesn't look like a valid session token")
+      .min(20, "这看起来不是有效的会话令牌")
       .openapi({
         description:
-          "The value of the __Secure-next-auth.session-token cookie from chatgpt.com/api/auth/session.",
+          "从 chatgpt.com/api/auth/session 获取的 __Secure-next-auth.session-token Cookie 值。",
       }),
     turnstileToken: z
       .string()
       .optional()
       .openapi({
         description:
-          "Optional Cloudflare Turnstile token for sentinel requirements.",
+          "当 Sentinel 要求验证时，可选提供的 Cloudflare Turnstile 令牌。",
       }),
   })
   .openapi({ ref: "SetSessionBody" });
@@ -38,17 +38,17 @@ export const SetSessionBody = z
 // browsed, loaded, and managed through these routes.
 export const ConversationIdParam = z
   .object({
-    id: z.string().min(1).openapi({ description: "A Mirror conversation id (UUID or a caller-supplied slug)." }),
+    id: z.string().min(1).openapi({ description: "Mirror 会话 ID（UUID 或调用方自定义的标识字符串）。" }),
   })
   .openapi({ ref: "ConversationIdParam" });
 
 export const ModelUpdateBody = z
   .object({ model: z.string().min(1) })
-  .openapi({ ref: "ModelUpdateBody", description: "Change a conversation's model." });
+  .openapi({ ref: "ModelUpdateBody", description: "更改会话使用的模型。" });
 
 export const BranchBody = z
   .object({
-    messageId: z.string().uuid().openapi({ description: "The message id to branch from; must have an upstreamNodeId." }),
+    messageId: z.string().uuid().openapi({ description: "要从中创建分支的消息 ID；该消息必须具有 upstreamNodeId。" }),
     title: z.string().optional(),
   })
   .openapi({ ref: "BranchBody" });
@@ -66,14 +66,14 @@ export const ConversationsQuery = z
     limit: z.coerce.number().int().min(1).max(200).default(50),
     offset: z.coerce.number().int().min(0).default(0),
     sync: queryBoolean.default("true").openapi({
-      description: "Whether to sync this page against the real ChatGPT sidebar before reading the local mirror of it.",
+      description: "读取本地会话镜像前，是否先与 ChatGPT 侧边栏同步当前分页。",
       type: "string",
     }),
     // Restart the incremental sync cursor from the very top instead of
     // resuming where a previous call left off - only worth paying for on an
     // explicit user-initiated refresh (see App.tsx), not on every page load.
     resync: queryBoolean.default("false").openapi({
-      description: "Restart the incremental sync cursor from the top instead of resuming where a previous call left off.",
+      description: "是否从头重启增量同步游标，而不是从上次保存的位置继续。",
       type: "string",
     }),
   })
@@ -81,9 +81,9 @@ export const ConversationsQuery = z
 
 export const AssetsQuery = z
   .object({
-    pointer: z.string().openapi({ description: "A file-service:// or sediment:// asset pointer." }),
+    pointer: z.string().openapi({ description: "file-service:// 或 sediment:// 资源指针。" }),
     upstreamConversationId: z.string().optional().openapi({
-      description: "Required when pointer is a sediment:// pointer, to verify ownership of the source conversation.",
+      description: "当 pointer 为 sediment:// 指针时必须提供，用于验证源会话的所有权。",
     }),
   })
   .openapi({ ref: "AssetsQuery" });
@@ -100,7 +100,7 @@ export const ChatAttachment = z
     height: z.number().optional(),
     raw: z.record(z.unknown()).default({}),
   })
-  .openapi({ ref: "ChatAttachment", description: "A file previously uploaded via POST /api/files." });
+  .openapi({ ref: "ChatAttachment", description: "通过 POST /api/files 上传的文件。" });
 
 export const ChatBody = z
   .object({
@@ -112,11 +112,11 @@ export const ChatBody = z
     timezoneOffsetMin: z.number().optional(),
     attachments: z.array(ChatAttachment).default([]),
     turnstileToken: z.string().optional().openapi({
-      description: "Optional Cloudflare Turnstile token override for sentinel requirements.",
+      description: "当 Sentinel 要求验证时，可选覆盖的 Cloudflare Turnstile 令牌。",
     }),
   })
   .openapi({
     ref: "ChatBody",
-    description: "Mirror's native chat request, used by the proxied ChatGPT UI and Playground (see POST /api/chat).",
+    description: "Mirror 原生聊天请求，由代理的 ChatGPT 界面和测试台使用（参见 POST /api/chat）。",
   });
 
