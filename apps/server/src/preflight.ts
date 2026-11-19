@@ -53,7 +53,7 @@ export function classifyStartupFailure(error: unknown): ClassifiedStartupFailure
       category: "port-in-use",
       message,
       nextAction:
-        "Another process is already using this port. Stop it, or set PORT (direct run) / MIRROR_PORT (Compose) to a free one.",
+        "另一个进程正在使用此端口。请停止该进程，或将 PORT（直接运行）／MIRROR_PORT（Compose）设置为未占用的端口。",
     };
   }
 
@@ -62,7 +62,7 @@ export function classifyStartupFailure(error: unknown): ClassifiedStartupFailure
       category: "warp-egress",
       message,
       nextAction:
-        "Confirm the bundled WARP container is running and WARP_ACCEPT_TOS=yes is set, then restart. Mirror will not fall back to a direct connection.",
+        "请确认随附的 WARP 容器正在运行，并已设置 WARP_ACCEPT_TOS=yes，然后重新启动。Mirror 不会回退到直连网络。",
     };
   }
 
@@ -74,7 +74,7 @@ export function classifyStartupFailure(error: unknown): ClassifiedStartupFailure
       category: "database-migration",
       message,
       nextAction:
-        "This database was created by a newer Mirror release. Restore a compatible backup or upgrade Mirror - see RELEASE-RECOVERY.md.",
+        "此数据库由更新版本的 Mirror 创建。请恢复兼容的备份或升级 Mirror，参阅 RELEASE-RECOVERY.md。",
     };
   }
 
@@ -86,7 +86,7 @@ export function classifyStartupFailure(error: unknown): ClassifiedStartupFailure
       category: "configuration",
       message,
       nextAction:
-        "Fix MIRROR_STORE_KEY in your environment - it must be 32 bytes, base64 or hex-encoded - or unset it to let Mirror generate one.",
+        "请修正环境变量中的 MIRROR_STORE_KEY：它必须是 32 字节，并使用 Base64 或十六进制编码；也可以取消设置，让 Mirror 自动生成密钥。",
     };
   }
 
@@ -94,7 +94,7 @@ export function classifyStartupFailure(error: unknown): ClassifiedStartupFailure
     category: "unknown",
     message,
     nextAction:
-      "Check the full error above; if it keeps happening, open an issue with this message (it has already been kept free of credentials/tokens).",
+      "请检查上方的完整错误信息；如果问题持续发生，请携带此信息提交 Issue（其中已排除凭据和令牌）。",
   };
 }
 
@@ -102,5 +102,5 @@ export function classifyStartupFailure(error: unknown): ClassifiedStartupFailure
  * actually prints to stderr on a failed boot. */
 export function formatStartupFailure(error: unknown): string {
   const { category, message, nextAction } = classifyStartupFailure(error);
-  return `mirror failed to start [${category}]: ${message}\nNext step: ${nextAction}`;
+  return `Mirror 启动失败 [${category}]：${message}\n下一步建议：${nextAction}`;
 }
