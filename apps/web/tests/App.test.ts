@@ -1209,7 +1209,7 @@ test("model selection and switching back from raw output update the visible UI",
   const option = screen.getByRole("option", { name: "GPT：g-fixture" });
   fireEvent.change(option.parentElement!, { target: { value: "g-fixture" } });
   assert.ok(screen.getByLabelText(/此 GPT／项目使用的模型/));
-  fireEvent.click(screen.getByRole("button", { name: "Raw response" }));
+  fireEvent.click(screen.getByRole("button", { name: "原始响应" }));
   fireEvent.click(screen.getByRole("button", { name: "输出" }));
   assert.equal(screen.getByRole("button", { name: "输出" }).className, "active");
 });
