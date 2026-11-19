@@ -1260,7 +1260,7 @@ test("Test connection reports diagnostics and model discovery results, and offer
   const panel = connectionToolsPanel();
   assert.equal(within(panel).queryByText(/导出本地诊断信息/), null);
   fireEvent.click(within(panel).getByRole("button", { name: "测试连接" }));
-  await within(panel).findByText(/Model discovery passed \(2 models\)\. Browser authentication used/);
+  await within(panel).findByText(/模型列表获取成功（2 个模型）。已使用浏览器身份验证/);
   assert.match(within(panel).getByText(/"revision": "abc1234"/).textContent ?? "", /abc1234/);
   assert.ok(within(panel).getByRole("link", { name: /导出本地诊断信息/ }));
 });
@@ -1280,7 +1280,7 @@ test("Test connection reports a supplied bearer credential separately from brows
   fireEvent.change(screen.getByLabelText("API 密钥（Bearer）"), { target: { value: "sk-conn" } });
   const panel = connectionToolsPanel();
   fireEvent.click(within(panel).getByRole("button", { name: "测试连接" }));
-  await within(panel).findByText(/Bearer credential supplied\./);
+  await within(panel).findByText(/已提供 API 密钥（Bearer）。/);
   assert.equal(modelsAuth, "Bearer sk-conn");
 });
 
@@ -1403,7 +1403,7 @@ test("a failed local search reports the error instead of throwing", async () => 
   const panel = conversationToolsPanel();
   fireEvent.change(within(panel).getByLabelText("搜索本地历史记录"), { target: { value: "needle" } });
   fireEvent.click(within(panel).getByRole("button", { name: "搜索历史" }));
-  await within(panel).findByText(/History request returned HTTP 500\. Reload and try again\./);
+  await within(panel).findByText(/历史记录接口返回 HTTP 500。请刷新后重试。/);
 });
 
 test("conversation branches list parents and nodes, and continuing from an assistant node selects the branch", async () => {
@@ -1492,7 +1492,7 @@ test("a failed request to create a branch reports the error instead of throwing"
   const panel = conversationToolsPanel();
   fireEvent.click(within(panel).getByRole("button", { name: "查看会话分支" }));
   fireEvent.click(await within(panel).findByRole("button", { name: "从此助手消息继续" }));
-  await within(panel).findByText(/History request returned HTTP 500\. Reload and try again\./);
+  await within(panel).findByText(/历史记录接口返回 HTTP 500。请刷新后重试。/);
 });
 
 test("a failed branch listing reports the error instead of throwing", async () => {
@@ -1501,7 +1501,7 @@ test("a failed branch listing reports the error instead of throwing", async () =
   await renderApp([[/^\/api\/conversations\/conv-remembered\/branches$/, () => new Response("nope", { status: 404 })]]);
   const panel = conversationToolsPanel();
   fireEvent.click(within(panel).getByRole("button", { name: "查看会话分支" }));
-  await within(panel).findByText(/History request returned HTTP 404\. Reload and try again\./);
+  await within(panel).findByText(/历史记录接口返回 HTTP 404。请刷新后重试。/);
 });
 
 test("export links include the selected attachment/metadata flags and format", async () => {
