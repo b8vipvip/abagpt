@@ -161,7 +161,7 @@ test.describe("web / ConversionTools", () => {
       return json({});
     }) as typeof fetch });
     fireEvent.change(screen.getByLabelText(/解码/), { target: { value: "AQID" } });
-    click("Decode");
+    click("解码");
     await screen.findByText("解码失败。");
     fireEvent.change(screen.getByLabelText(/选择文件进行编码/), { target: { files: [] } });
     assert.equal(screen.queryByText("正在编码…"), null);
@@ -174,7 +174,7 @@ test.describe("web / ConversionTools", () => {
       : String(input).includes("fortune") ? new Response(Buffer.from([1])) : (requests.push(String(input)), json({})) ) as typeof fetch });
     selectFormat("loaf");
     fireEvent.change(screen.getByLabelText(/解码/), { target: { value: "some loaf" } });
-    click("Decode");
+    click("解码");
     await screen.findByText("ok");
     click(/幸运签/);
     await screen.findByText(/你的幸运签藏在一张 PngSpeak PNG 图片中/);
@@ -188,7 +188,7 @@ test.describe("web / ConversionTools", () => {
     const { inserted } = mount({ fetcher: (async (input) => String(input).includes("/decode")
       ? json({ bytes: 5, dataBase64: enc("hello") }) : json({}) ) as typeof fetch });
     fireEvent.change(screen.getByLabelText(/解码/), { target: { value: "AQID" } });
-    click("Decode");
+    click("解码");
     await screen.findByText("hello");
     click(/将解码文本插入对话/);
     assert.deepEqual(inserted, ["hello"]);
@@ -196,7 +196,7 @@ test.describe("web / ConversionTools", () => {
     cleanup();
     mount({ fetcher: (async (input) => String(input).includes("/decode") ? json({ bytes: 1, dataBase64: "/w==" }) : json({})) as typeof fetch });
     fireEvent.change(screen.getByLabelText(/解码/), { target: { value: "bad bytes" } });
-    click("Decode");
+    click("解码");
     await screen.findByText(/不是有效的 UTF-8 文本/);
     assert.equal(screen.queryByRole("button", { name: /将解码文本插入对话/ }), null);
   });
@@ -205,11 +205,11 @@ test.describe("web / ConversionTools", () => {
     mount({ fetcher: (async (input) => String(input).includes("loaf/decode") ? json({ entries: [] }) : json({ error: "no fixed map" }, 400)) as typeof fetch });
     selectFormat("loaf");
     fireEvent.change(screen.getByLabelText(/解码/), { target: { value: "not-empty" } });
-    click("Decode");
+    click("解码");
     await screen.findByText("该 LoaF 归档中没有文件条目。");
     selectFormat("gptgif");
     fireEvent.change(screen.getByLabelText(/解码/), { target: { value: "bad" } });
-    click("Decode");
+    click("解码");
     await screen.findByText(/no fixed map.*没有固定字母表/);
   });
 
