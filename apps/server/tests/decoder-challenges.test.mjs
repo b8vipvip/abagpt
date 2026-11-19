@@ -139,7 +139,8 @@ test.describe("server / decoder challenges", () => {
       assert.deepEqual(group.find(e => e.name.endsWith(c.filename)).content, (await f.artifact(c.id)).rawPayload);
       assert.equal(group.find(e => e.name.endsWith("/prompt.txt")).content.toString(), c.prompt);
       assert.ok(group.find(e => e.name.endsWith("/format-guide.txt")).content.length > 0);
-      assert.match(group.find(e => e.name.endsWith("/README.txt")).content.toString(), /No answer key/);
+      assert.match(group.find(e => e.name.endsWith("/README.txt")).content.toString(), /请将 prompt\.txt 粘贴到 ChatGPT/);
+      assert.match(group.find(e => e.name.endsWith("/README.txt")).content.toString(), /压缩包不包含答案密钥/);
       assert.ok(!c.prompt.includes("FORMAT GUIDE"));
     }
     const missing = "00000000-0000-4000-8000-000000000000";
