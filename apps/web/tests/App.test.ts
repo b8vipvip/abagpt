@@ -533,6 +533,33 @@ test("a streaming run reads SSE frames, updates the conversation id mid-stream, 
   assert.equal((screen.getByPlaceholderText(/自动生成/) as HTMLInputElement).value, "stream-conv-1");
 });
 
+test("a streaming error preserves partial output and shows a localized notice", async () => {
+  const sse =
+    `data: ${JSON.stringify({ choices: [{ delta: { content: "部分结果" }, finish_reason: null }] })}\n\n` +
+    `data: ${JSON.stringify({ error: { message: "upstream exploded" } })}\n\n`;
+  await renderApp([
+    [
+      /^\/v1\/chat\/completions$/,
+      () => {
+        const stream = new ReadableStream<Uint8Array>({
+          start(controller) {
+            controller.enqueue(new TextEncoder().encode(sse));
+            controller.close();
+          },
+        });
+        return new Response(stream, { status: 200, headers: { "content-type": "text/event-stream" } });
+      },
+    ],
+  ]);
+  fireEvent.click(runButton());
+  await screen.findByText("出错");
+  const output = screen.getByText(/部分结果/).textContent ?? "";
+  assert.match(output, /部分结果/);
+  assert.match(output, /请求失败，请检查服务器地址、API 密钥和 ChatGPT 会话后重试。/);
+  fireEvent.click(screen.getByRole("button", { name: /原始响应/ }));
+  assert.match(screen.getByText(/upstream exploded/).textContent ?? "", /upstream exploded/);
+});
+
 test("one-shot runs don't append the reply to the transcript and don't refresh conversations", async () => {
   let conversationsFetchCount = 0;
   await renderApp([
@@ -583,6 +610,7 @@ test("a non-ok response from the run endpoint surfaces the status and body as an
   ]);
   fireEvent.click(runButton());
   await screen.findByText("出错");
+  assert.ok(screen.getByText("上游服务暂时不可用，请检查网络或 WARP 连接。"));
   fireEvent.click(screen.getByRole("button", { name: /原始响应/ }));
   assert.match(screen.getByText(/502/).textContent ?? "", /502.*upstream exploded/s);
 });
@@ -593,6 +621,7 @@ test("a rejected fetch during run() surfaces the error message", async () => {
   ]);
   fireEvent.click(runButton());
   await screen.findByText("出错");
+  assert.ok(screen.getByText("请求失败，请检查服务器地址、API 密钥和 ChatGPT 会话后重试。"));
   fireEvent.click(screen.getByRole("button", { name: /原始响应/ }));
   assert.match(screen.getByText(/DNS failure/).textContent ?? "", /DNS failure/);
 });
@@ -603,6 +632,7 @@ test("a streaming run with no response body reports the missing-stream error", a
   ]);
   fireEvent.click(runButton());
   await screen.findByText("出错");
+  assert.ok(screen.getByText("响应不包含流式数据"));
   fireEvent.click(screen.getByRole("button", { name: /原始响应/ }));
   assert.match(screen.getByText(/响应不包含流式数据/).textContent ?? "", /响应不包含流式数据/);
 });
@@ -735,6 +765,7 @@ test("a failed conversation load reports the status/body as an error", async () 
   ]);
   fireEvent.click(await screen.findByText("Broken chat"));
   await screen.findByText("出错");
+  assert.ok(screen.getByText("请求的资源不存在或已过期。"));
   fireEvent.click(screen.getByRole("button", { name: /原始响应/ }));
   assert.match(screen.getByText(/404/).textContent ?? "", /404.*nope/s);
 });
@@ -1687,6 +1718,8 @@ for (const readerError of [null, new Error("File is no longer readable"), "File 
   });
   fireEvent.change(lastAttachInput(), { target: { files: [new window.File(["data"], "failed.md")] } });
   await screen.findByText("出错");
+  assert.ok(screen.getByText(readerError === null ? "无法读取文件" : "读取文件失败，请检查文件后重试。"));
+  fireEvent.click(screen.getByRole("button", { name: /原始响应/ }));
   assert.ok(screen.getByText(readerError instanceof Error ? readerError.message : readerError ?? "无法读取文件"));
   assert.equal(screen.queryByText("failed.md"), null);
   assert.equal(lastUserTextarea().value, "请用一句简短的话打个招呼。");

@@ -14,6 +14,7 @@ test.describe("browser / official UI decoder challenges", () => {
   let conversionCalls: any[];
   test.beforeEach(async ({ page }) => {
     app = Fastify(); registerDecoderChallengeRoutes(app, () => "browser-fixture");
+    await app.ready();
     generated = null;
     conversionCalls = [];
     await page.route("**/api/session", route => route.fulfill({ json: { configured: true } }));
@@ -24,9 +25,11 @@ test.describe("browser / official UI decoder challenges", () => {
     });
     await page.route("**/api/decoder-challenges**", async route => {
       const req = route.request();
-      const response = await app.inject({ method: req.method() as any, url: new URL(req.url()).pathname, headers: { "content-type": "application/json" }, payload: req.postData() || undefined });
-      if (req.method() === "POST" && req.url().endsWith("/api/decoder-challenges") && response.statusCode === 200) generated = response.json();
-      await route.fulfill({ status: response.statusCode, contentType: String(response.headers["content-type"]), body: response.rawPayload });
+      const payload = req.postData() === null ? undefined : req.postDataJSON();
+      const response = await app.inject({ method: req.method() as any, url: new URL(req.url()).pathname, payload });
+      const contentType = String(response.headers["content-type"] || "application/octet-stream");
+      if (req.method() === "POST" && new URL(req.url()).pathname === "/api/decoder-challenges" && response.statusCode === 200) generated = response.json();
+      await route.fulfill({ status: response.statusCode, contentType, body: contentType.includes("application/json") ? response.payload : response.rawPayload });
     });
     await page.route("**/decoder-fixture", route => route.fulfill({ contentType: "text/html", body: `<!doctype html><html><head><style>body{background:#212121;color:white;font:16px system-ui;margin:0}aside{width:250px;padding:16px;height:100vh;background:#181818}aside>div{position:absolute;bottom:20px;width:220px}main{position:absolute;left:290px;top:50px;width:55%}#prompt-textarea{white-space:pre-wrap;background:#303030;border-radius:18px;padding:18px;min-height:60px;max-height:250px;overflow:auto}</style></head><body><aside><div><div><button data-testid="accounts-profile-button">Account</button></div></div></aside><main><h1>ChatGPT</h1><div id="messages"></div><div id="prompt-textarea" contenteditable="true" role="textbox" aria-label="Message ChatGPT"></div></main></body></html>` }));
     await page.goto("/decoder-fixture");

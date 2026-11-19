@@ -39,6 +39,16 @@ var storageKey='mirror-decoder-active-v1';
 function save(){try{sessionStorage.setItem(storageKey,JSON.stringify({activeId:active.id,items:history}));}catch(e){}}
 function remember(challenge){active=challenge;history.unshift(challenge);history=history.slice(0,16);save();render();field('answer').value='';}
 function field(name){return dialog.querySelector('[data-md="'+name+'"]');}
+function formatLabel(format){
+  var labels={loaf:'LoaF',pngspeak:'PngSpeak',gptgif:'gptgif 原版','gptgif-v4':'gptgif v4'};
+  return labels[format]||String(format||'未知格式');
+}
+function guidanceLabel(guidance){
+  return guidance==='guided'?'附带格式说明':guidance==='independent'?'让 GPT 自行研究':String(guidance||'未知模式');
+}
+function payloadLabel(payload){
+  return payload==='binary'?'随机二进制数据':payload==='text'?'UTF-8 文本':String(payload||'未知载荷');
+}
 function status(text,verdict){field('status').textContent=text;field('status').dataset.verdict=verdict||'';}
 function localizeError(error){
   var message=error&&error.message?String(error.message):String(error||'');
