@@ -98,7 +98,11 @@ test.describe("server / decoder challenges", () => {
   });
   test("missing, expired, and changed-session challenges are unavailable", async t => {
     const f = fixture(t), missing = "00000000-0000-4000-8000-000000000000";
-    for (const read of [f.artifact, id => f.verify(id, "00")]) {\n      const response = await read(missing);\n      assert.equal(response.statusCode, 404);\n      assert.equal(response.json().error, "挑战已过期或不可用，请重新生成。");\n    }
+    for (const read of [f.artifact, id => f.verify(id, "00")]) {
+      const response = await read(missing);
+      assert.equal(response.statusCode, 404);
+      assert.equal(response.json().error, "挑战已过期或不可用，请重新生成。");
+    }
     const first = (await f.create()).json();
     f.setScope("account:1");
     for (const read of [f.artifact, id => f.verify(id, "00")]) assert.equal((await read(first.id)).statusCode, 404);
@@ -114,7 +118,9 @@ test.describe("server / decoder challenges", () => {
     const f = fixture(t);
     const first = (await f.create()).json();
     for (let i = 1; i < 64; i++) assert.equal((await f.create()).statusCode, 200);
-    const full = await f.create();\n    assert.equal(full.statusCode, 429);\n    assert.equal(full.json().error, "挑战列表已满。请等待较早的挑战过期后再试。");
+    const full = await f.create();
+    assert.equal(full.statusCode, 429);
+    assert.equal(full.json().error, "挑战列表已满。请等待较早的挑战过期后再试。");
     assert.equal((await f.artifact(first.id)).statusCode, 200);
   });
   test("downloads an independently readable kit for every format without answer keys", async t => {
