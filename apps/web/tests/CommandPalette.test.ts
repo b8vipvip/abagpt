@@ -49,7 +49,7 @@ test("renders nothing when closed", () => {
 
 test("when open, renders the dialog and focuses the input", () => {
   renderPalette({ open: true });
-  const input = screen.getByLabelText("Jump to a conversation");
+  const input = screen.getByLabelText("搜索并跳转到会话");
   assert.equal(document.activeElement, input);
 });
 
@@ -61,7 +61,7 @@ test("typing searches (debounced) against /api/conversations/search and lists re
     return jsonResponse({ items: [{ id: "c1", title: "Rust question" }, { id: "c2", title: "" }] });
   }) as typeof fetch;
   renderPalette();
-  fireEvent.change(screen.getByLabelText("Jump to a conversation"), { target: { value: "rust" } });
+  fireEvent.change(screen.getByLabelText("搜索并跳转到会话"), { target: { value: "rust" } });
   await wait(250);
   assert.ok(screen.getByRole("button", { name: "Rust question" }));
   // An untitled result falls back to a readable placeholder.
@@ -72,7 +72,7 @@ test("an empty query clears results without fetching", async () => {
   let called = false;
   globalThis.fetch = (async () => { called = true; return jsonResponse({ items: [] }); }) as typeof fetch;
   renderPalette();
-  fireEvent.change(screen.getByLabelText("Jump to a conversation"), { target: { value: "  " } });
+  fireEvent.change(screen.getByLabelText("搜索并跳转到会话"), { target: { value: "  " } });
   await wait(250);
   assert.equal(called, false);
 });
@@ -80,25 +80,25 @@ test("an empty query clears results without fetching", async () => {
 test("no matches shows a status message", async () => {
   globalThis.fetch = (async () => jsonResponse({ items: [] })) as typeof fetch;
   renderPalette();
-  fireEvent.change(screen.getByLabelText("Jump to a conversation"), { target: { value: "nothing" } });
+  fireEvent.change(screen.getByLabelText("搜索并跳转到会话"), { target: { value: "nothing" } });
   await wait(250);
-  assert.equal(screen.getByRole("status").textContent, "No matches");
+  assert.equal(screen.getByRole("status").textContent, "没有找到匹配的会话");
 });
 
 test("a response whose items field isn't an array is treated as zero results", async () => {
   globalThis.fetch = (async () => jsonResponse({})) as typeof fetch;
   renderPalette();
-  fireEvent.change(screen.getByLabelText("Jump to a conversation"), { target: { value: "anything" } });
+  fireEvent.change(screen.getByLabelText("搜索并跳转到会话"), { target: { value: "anything" } });
   await wait(250);
-  assert.equal(screen.getByRole("status").textContent, "No matches");
+  assert.equal(screen.getByRole("status").textContent, "没有找到匹配的会话");
 });
 
 test("a failed search reports the error as the status", async () => {
   globalThis.fetch = (async () => new Response("", { status: 500 })) as typeof fetch;
   renderPalette();
-  fireEvent.change(screen.getByLabelText("Jump to a conversation"), { target: { value: "boom" } });
+  fireEvent.change(screen.getByLabelText("搜索并跳转到会话"), { target: { value: "boom" } });
   await wait(250);
-  assert.match(screen.getByRole("status").textContent ?? "", /Search failed/);
+  assert.match(screen.getByRole("status").textContent ?? "", /搜索失败/);
 });
 
 test("arrow keys move the active selection and Enter selects it", async () => {
@@ -108,7 +108,7 @@ test("arrow keys move the active selection and Enter selects it", async () => {
   let selected: string | null = null;
   let closed = false;
   renderPalette({ onSelect: (id) => { selected = id; }, onClose: () => { closed = true; } });
-  fireEvent.change(screen.getByLabelText("Jump to a conversation"), { target: { value: "x" } });
+  fireEvent.change(screen.getByLabelText("搜索并跳转到会话"), { target: { value: "x" } });
   await wait(250);
   const dialog = screen.getByRole("dialog");
   fireEvent.keyDown(dialog, { key: "ArrowDown" });
@@ -144,7 +144,7 @@ test("Enter is a no-op while disabled", async () => {
   globalThis.fetch = (async () => jsonResponse({ items: [{ id: "c1", title: "First" }] })) as typeof fetch;
   let selected: string | null = null;
   renderPalette({ disabled: true, onSelect: (id) => { selected = id; } });
-  fireEvent.change(screen.getByLabelText("Jump to a conversation"), { target: { value: "x" } });
+  fireEvent.change(screen.getByLabelText("搜索并跳转到会话"), { target: { value: "x" } });
   await wait(250);
   fireEvent.keyDown(screen.getByRole("dialog"), { key: "Enter" });
   assert.equal(selected, null);
@@ -155,7 +155,7 @@ test("clicking a result selects it and closes the palette", async () => {
   let selected: string | null = null;
   let closed = false;
   renderPalette({ onSelect: (id) => { selected = id; }, onClose: () => { closed = true; } });
-  fireEvent.change(screen.getByLabelText("Jump to a conversation"), { target: { value: "x" } });
+  fireEvent.change(screen.getByLabelText("搜索并跳转到会话"), { target: { value: "x" } });
   await wait(250);
   fireEvent.click(screen.getByRole("button", { name: "First" }));
   assert.equal(selected, "c1");
@@ -167,7 +167,7 @@ test("hovering a result makes it the active one", async () => {
     items: [{ id: "c1", title: "First" }, { id: "c2", title: "Second" }],
   })) as typeof fetch;
   renderPalette();
-  fireEvent.change(screen.getByLabelText("Jump to a conversation"), { target: { value: "x" } });
+  fireEvent.change(screen.getByLabelText("搜索并跳转到会话"), { target: { value: "x" } });
   await wait(250);
   fireEvent.mouseEnter(screen.getByRole("button", { name: "Second" }));
   assert.equal(screen.getByRole("button", { name: "Second" }).getAttribute("aria-current"), "true");
