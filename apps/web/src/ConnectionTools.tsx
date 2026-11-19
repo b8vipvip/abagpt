@@ -20,7 +20,7 @@ export function ConnectionTools({ domain, apiKey, generationSucceeded }: { domai
       const body = await models.json();
       if (!Array.isArray(body.data)) throw new Error("模型列表接口返回了不受支持的数据格式。");
       setStatus(`模型列表获取成功（${body.data.length} 个模型）。${apiKey ? "已提供 API 密钥（Bearer）。" : "已使用浏览器身份验证；尚未测试客户端 API 密钥。"}`);
-    } catch (error) { setStatus(`连接测试失败：${error instanceof Error ? error.message : String(error)}`); }
+    } catch (error) { setStatus(localizeUiError(error, "连接测试失败")); }
     finally { setBusy(false); }
   }
   const snippet = 'from openai import OpenAI\nclient = OpenAI(base_url="http://127.0.0.1:8799/v1", api_key="YOUR_MIRROR_KEY")';
