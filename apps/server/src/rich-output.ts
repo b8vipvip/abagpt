@@ -289,7 +289,7 @@ export async function renderRichOutput(
     const genericTitle = /^(?:Download(?: file| now)?|下载文件|Image|图片|file|文件)$/i.test(title);
     const named = title && !genericTitle ? title : "";
     if (resolvedName && resolvedName !== "file") return assetFileName(resolvedName);
-    let value = path || named || (genericTitle ? (imageTitle ? "图片" : "下载文件") : pointer.split("//").at(-1)!);
+    let value = path || named || (imageTitle ? "图片" : pointer.split("//").at(-1)!);
     if (path) try { value = decodeURIComponent(value); } catch { /* Preserve literal percent signs. */ }
     return assetFileName(value);
   };
