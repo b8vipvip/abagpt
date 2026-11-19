@@ -159,7 +159,7 @@
   "scripts/restore-drill.mjs": "05917168b3b909b7403c6ecb6e1d6939482e8e30c254a6103b7968cf077dbd08",
   "scripts/storage.mjs": "1df9e21d08fd0a99d17698c0ecc079a599499d6873a99398ec95e4dead11d1bf",
   "tests/browser/decoder-challenges.spec.ts": "b3f7ab784bd335a63cb4015c8c7b85b1a10dad7dc4f56ac612516879128e1492",
-  "tests/browser/playground.spec.ts": "0ec118eded6f9e9e41ea61d8f4772a4aa20ccdb6f4ec9def1575fdc333743c6b",
+  "tests/browser/playground.spec.ts": "4056d88c3926838334effb65da9e51f2559540b978bfb94b581d398d69a53fb8",
   "TODO.md": "71d73b03835da84a9b8ecff802d872b2a0703416ae43972951ef1d48d8bdbd40",
   "tsconfig.base.json": "ea903f97b8096f3cea4d123a67c5f816f1501980dd5317408a0fbc8f411be4e4",
   "UPDATED-SNAPSHOT.md": "6a3d42314c969ed016e0d5e3b76303d517fd60336bc65dfb360d89997f6ac56a"
