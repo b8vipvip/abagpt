@@ -1,10 +1,10 @@
 export function responseText(value: any): string {
   if (value?.status !== "completed" || !Array.isArray(value.output))
-    throw new Error(value?.error?.message ?? "Response did not complete successfully.");
+    throw new Error(value?.error?.message ?? "响应未能成功完成。");
   const parts = value.output.filter((item: any) => item.type === "message" && item.role === "assistant")
     .flatMap((item: any) => item.content ?? []).filter((part: any) => part.type === "output_text");
   if (!parts.length || parts.some((part: any) => typeof part.text !== "string"))
-    throw new Error("Unsupported response; no assistant text was returned.");
+    throw new Error("不支持的响应格式：未返回助手文本。");
   return parts.map((part: any) => part.text).join("");
 }
 
@@ -17,9 +17,9 @@ export async function readResponsesStream(body: ReadableStream<Uint8Array>, onTe
     raw += data + "\n"; onRaw(raw);
     const event = JSON.parse(data);
     if (event.type === "error" || event.error || event.type === "response.failed" || event.type === "response.incomplete")
-      throw new Error(event.response?.error?.message ?? event.error?.message ?? event.message ?? "Response failed or incomplete; partial output is preserved.");
+      throw new Error(event.response?.error?.message ?? event.error?.message ?? event.message ?? "响应失败或未完整结束，已保留部分输出。");
     if (event.type === "response.output_text.delta") {
-      if (typeof event.delta !== "string") throw new Error("Invalid response text delta.");
+      if (typeof event.delta !== "string") throw new Error("响应文本增量格式无效。");
       text += event.delta; onText(text);
     }
     if (event.type === "response.completed") {
@@ -36,7 +36,7 @@ export async function readResponsesStream(body: ReadableStream<Uint8Array>, onTe
       for (const value of frames) frame(value);
       if (result.done) { if (buffer.trim()) frame(buffer); break; }
     }
-    if (!completed) throw new Error("Response interrupted before completion; partial output is preserved.");
+    if (!completed) throw new Error("响应在完成前中断，已保留部分输出。");
     return text;
   } finally { await reader.cancel().catch(() => undefined); reader.releaseLock(); }
 }
