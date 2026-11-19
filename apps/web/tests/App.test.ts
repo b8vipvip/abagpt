@@ -4,9 +4,14 @@ import test from "node:test";
 import React from "react";
 import { act } from "react";
 import { render, screen, cleanup, fireEvent, waitFor, within } from "@testing-library/react";
-import App from "../src/App.js";
+import App, { localizedRole, localizedStatus } from "../src/App.js";
 
 test.describe("web / App", () => {
+  test("preserves unknown status and role values for diagnostics", () => {
+    assert.equal(localizedStatus("Upstream pending"), "Upstream pending");
+    assert.equal(localizedRole("tool"), "tool");
+  });
+
 test.afterEach(() => {
   cleanup();
   localStorage.clear();
