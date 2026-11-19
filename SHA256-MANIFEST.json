@@ -118,7 +118,7 @@
   "apps/web/src/styles.css": "3216ab7af455b8e616ff429e3f6131d129a892fbef3960ad2a842df50bd54d1d",
   "apps/web/src/ui-errors.ts": "c9daf92a79abe3b30d59de4f1497c060a702febd407946f024a960c75172783a",
   "apps/web/tests/App-pagination.test.ts": "ec624f50fc09d0e56440470835b4fed333551c8951ca8d1e06d10032da1cc63d",
-  "apps/web/tests/App.test.ts": "420ee3c40dff4dfc41858e6bef67077e502f30c5ed2f9a0796c3b0e5540659e6",
+  "apps/web/tests/App.test.ts": "01872210f77b9367501dcf2ba69abc2ee734d0babb57c12ea69384064441dd9d",
   "apps/web/tests/CommandPalette.test.ts": "4b710e20fb92b805645e4703fcb331b60e8f0ecf55856f26530489d9f08f2cac",
   "apps/web/tests/ConversionTools.test.ts": "1ddd97da4ed42500b74dd2faa75ebedacc1d0f786cf3be075638fb4c4d545720",
   "apps/web/tests/HotkeySettings.test.ts": "8cb7119944373b1b6adc49e9e5c2074410e3767478da83af2123d5a9b3c8f511",
