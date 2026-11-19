@@ -151,7 +151,7 @@
   "packages/protocol/tests/sse.test.mjs": "073c3160fa2267d2ffa0235a63aabdf009377ffd7a53ab106855122e41fdb7dd",
   "packages/protocol/tests/turnstile.test.mjs": "7cc2abdf7d024ab76518cc6b43752716d3a4d48aea3ad024c997a89856cb2f00",
   "packages/protocol/tsconfig.json": "1a9f0873fec04475a675b9b11b9402a9eca94c930c65a199019538b9f521b861",
-  "playwright.config.ts": "68050f7b3c81f64aaa27511b7c03d8ceb6356cf7f1b4a31c31b378e5d0788c63",
+  "playwright.config.ts": "f3e26cdafee3457fc64650cf383939fc02df66837b8304815fbe6431546678a9",
   "PROTOCOL.md": "54efd828cb092e44d4d6205a824d3da1aac712634abe63ac32cde772ac5cef57",
   "README.md": "246e006b488cd919af3f6822d75a0ddc6d28ca1c814254632d60aa23fcb348a7",
   "RELEASE-RECOVERY.md": "351e5bfd66a26af48427d86a4400bd120b1488b60b6d6e089ab9d9d85e915e1c",
@@ -163,7 +163,8 @@
   "scripts/restore-drill.mjs": "05917168b3b909b7403c6ecb6e1d6939482e8e30c254a6103b7968cf077dbd08",
   "scripts/storage.mjs": "1df9e21d08fd0a99d17698c0ecc079a599499d6873a99398ec95e4dead11d1bf",
   "tests/browser/decoder-challenges.spec.ts": "b3f7ab784bd335a63cb4015c8c7b85b1a10dad7dc4f56ac612516879128e1492",
-  "tests/browser/playground.spec.ts": "c7fd491b40e5a783bf74c3cf13b397a5543fdc6f3a33adbe2403dbe732e28665",
+  "tests/browser/playground.spec.ts": "9b03b26c6224d8ecef536d9c602ccdf01070ed39e567286e69dc111e087aef93",
+  "tests/browser/server.mjs": "f533bfd6c46958c88f04d4e1dd8ad818c35676e85e52e96843c69e56ea458d9a",
   "TODO.md": "71d73b03835da84a9b8ecff802d872b2a0703416ae43972951ef1d48d8bdbd40",
   "tsconfig.base.json": "ea903f97b8096f3cea4d123a67c5f816f1501980dd5317408a0fbc8f411be4e4",
   "UPDATED-SNAPSHOT.md": "6a3d42314c969ed016e0d5e3b76303d517fd60336bc65dfb360d89997f6ac56a"
