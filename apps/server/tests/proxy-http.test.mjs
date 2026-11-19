@@ -105,6 +105,26 @@ async function withFetch(handler, fn) {
   }
 }
 
+test("proxied ChatGPT HTML pages request Simplified Chinese regardless of browser locale", () =>
+  withFetch(
+    fetchRouter([[/^\/$/, (_url, init) => {
+      assert.equal(init.headers.get("accept-language"), "zh-CN,zh;q=0.9,en;q=0.8");
+      return new Response("<!doctype html><html lang='en'><body>ChatGPT</body></html>", {
+        headers: { "content-type": "text/html; charset=utf-8" },
+      });
+    }]]),
+    async () => {
+      store.clearSession();
+      const req = makeReq({
+        url: "/",
+        headers: { accept: "text/html", "accept-language": "en-US,en;q=0.9" },
+      });
+      const { reply, raw } = makeReply();
+      await proxyChatGpt(req, reply);
+      assert.equal(raw.writableEnded, true);
+    },
+  ));
+
 // --- /api/auth/session (mirrorAuthSession) ----------------------------------
 
 test("GET /api/auth/session mirrors upstream /me into a NextAuth-shaped session, hiding the real token", () =>
