@@ -55,7 +55,7 @@ export function CommandPalette({
           const items = Array.isArray(body.items) ? body.items : [];
           setResults(items);
           setActiveIndex(0);
-          setStatus(items.length ? "" : "没有匹配的会话");
+          setStatus(items.length ? "" : "没有找到匹配的会话");
         })
         .catch((error) => {
           setResults([]);
@@ -105,7 +105,7 @@ export function CommandPalette({
         <input
           ref={inputRef}
           value={query}
-          placeholder="搜索并跳转到某个会话…"
+          placeholder="搜索会话并跳转…"
           aria-label="搜索并跳转到会话"
           onChange={(event) => setQuery(event.target.value)}
         />
