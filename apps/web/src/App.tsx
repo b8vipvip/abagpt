@@ -138,16 +138,16 @@ function Header() {
       <nav>
         <a href="/">ChatGPT</a>
         <a className="active" href="/mirror/playground">
-          Playground
+          API 测试台
         </a>
         <a href="/v1/models" target="_blank" rel="noreferrer">
-          Models
+          模型
         </a>
         <a href="/mirror/api-docs" target="_blank" rel="noreferrer">
-          API docs
+          API 文档
         </a>
         <a href="/mirror/openapi" target="_blank" rel="noreferrer">
-          OpenAPI schema
+          OpenAPI 规范
         </a>
       </nav>
       <div className="environment">本地服务器</div>
@@ -653,8 +653,7 @@ export default function App() {
         <div className="server-card">
           <b>兼容接口</b>
           <p>
-            Test Mirror or any OpenAI-compatible server directly from your
-            browser.
+            在浏览器中直接测试 Mirror 或其他兼容 OpenAI API 的服务器。
           </p>
         </div>
       </aside>
@@ -667,14 +666,14 @@ export default function App() {
           </div>
           <div className="run-actions">
             <span role="status" aria-live="polite" className={`run-status ${status.toLowerCase()}`}>
-              {status}
+              {localizedStatus(status)}
             </span>
             {running ? (
               <button
                 className="stop-button"
                 onClick={() => controller?.abort()}
               >
-                Stop
+                停止
               </button>
             ) : (
               <button
@@ -823,7 +822,7 @@ export default function App() {
                           aria-label="停止（与上方的停止按钮相同）"
                           onClick={() => controller?.abort()}
                         >
-                          Stop
+                          停止
                         </button>
                       ) : (
                         <button
@@ -849,19 +848,19 @@ export default function App() {
                 className={responseTab === "output" ? "active" : ""}
                 onClick={() => setResponseTab("output")}
               >
-                Output
+                输出
               </button>
               <button
                 className={responseTab === "raw" ? "active" : ""}
                 onClick={() => setResponseTab("raw")}
               >
-                Raw response
+                原始响应
               </button>
               <button
                 className={responseTab === "convert" ? "active" : ""}
                 onClick={() => setResponseTab("convert")}
               >
-                Convert
+                转换工具
               </button>
             </div>
             {responseTab === "convert" ? (
@@ -995,7 +994,7 @@ export default function App() {
                     ]);
                   }}
                 >
-                  New
+                  新建
                 </button>
               </div>
             </label>
@@ -1010,7 +1009,7 @@ export default function App() {
                   className="model-mode-toggle"
                   onClick={() => void refreshConversations(true)}
                 >
-                  Refresh
+                  刷新
                 </button>
               </div>
               <div
@@ -1049,22 +1048,19 @@ export default function App() {
                         {item.title || "未命名会话"}
                       </span>
                       <span className="conversation-list-meta">
-                        {new Date(item.updatedAt).toLocaleString()}
+                        {new Date(item.updatedAt).toLocaleString("zh-CN")}
                       </span>
                     </button>
                   ))
                 )}
                 {conversationsLoadingMore && (
                   <div className="conversation-list-loading">
-                    Loading more…
+                    正在加载更多…
                   </div>
                 )}
               </div>
               <p className="field-hint">
-                Loading a conversation copies its history into the editor
-                below. Editing a committed user message
-                drops dependent turns; assistant replies are read-only. Run rebases the same Playground
-                conversation onto the edited history.
+                加载会话会将历史记录复制到下方编辑器。修改已提交的用户消息会删除依赖该消息的后续轮次；助手回复为只读。运行请求时，会基于修改后的历史记录继续当前测试台会话。
               </p>
             </label>
             <ConversationTools conversationId={conversationId} disabled={running || readingFiles} onSelect={id => void loadConversation(id)} />
