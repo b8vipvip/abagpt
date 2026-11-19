@@ -2,36 +2,36 @@ import { useState } from "react";
 
 export function ConnectionTools({ domain, apiKey, generationSucceeded }: { domain: string; apiKey: string; generationSucceeded: boolean }) {
   const [diagnostics, setDiagnostics] = useState<unknown>(null);
-  const [status, setStatus] = useState("Not tested");
+  const [status, setStatus] = useState("尚未测试");
   const [busy, setBusy] = useState(false);
   async function testConnection() {
     setBusy(true);
-    setStatus("Checking API and local diagnostics…");
+    setStatus("正在检查 API 和本地诊断信息…");
     try {
       const health = await fetch("/api/diagnostics");
-      if (!health.ok) throw new Error(`Diagnostics returned HTTP ${health.status}`);
+      if (!health.ok) throw new Error(`诊断接口返回 HTTP ${health.status}`);
       setDiagnostics(await health.json());
       const models = await fetch(`${domain.replace(/\/$/, "")}/v1/models`, {
         headers: apiKey ? { authorization: `Bearer ${apiKey}` } : {},
         signal: AbortSignal.timeout(30_000),
       });
-      if (!models.ok) throw new Error(`Model discovery returned HTTP ${models.status}. Check the key, WARP, and saved session.`);
+      if (!models.ok) throw new Error(`模型列表接口返回 HTTP ${models.status}。请检查 API Key、WARP 和已保存的会话。`);
       const body = await models.json();
-      if (!Array.isArray(body.data)) throw new Error("Model discovery returned an unsupported response.");
-      setStatus(`Model discovery passed (${body.data.length} models). ${apiKey ? "Bearer credential supplied." : "Browser authentication used; a client key has not been tested."}`);
-    } catch (error) { setStatus(error instanceof Error ? error.message : "Connection test failed"); }
+      if (!Array.isArray(body.data)) throw new Error("模型列表接口返回了不受支持的数据格式。");
+      setStatus(`模型列表获取成功（${body.data.length} 个模型）。${apiKey ? "已提供 Bearer 凭证。" : "已使用浏览器身份验证；尚未测试客户端 API Key。"}`);
+    } catch (error) { setStatus(error instanceof Error ? error.message : "连接测试失败"); }
     finally { setBusy(false); }
   }
   const snippet = 'from openai import OpenAI\nclient = OpenAI(base_url="http://127.0.0.1:8799/v1", api_key="YOUR_MIRROR_KEY")';
   return <details className="utility-panel">
-    <summary>Connection diagnostics and client setup</summary>
-    <button disabled={busy} onClick={() => void testConnection()}>Test connection</button>
+    <summary>连接诊断与客户端配置</summary>
+    <button disabled={busy} onClick={() => void testConnection()}>测试连接</button>
     <p role="status">{status}</p>
-    <p>Generation: {generationSucceeded ? "completed in this Playground session" : "not verified; use Run to send a test message"}.</p>
-    {diagnostics !== null && <><pre>{JSON.stringify(diagnostics, null, 2)}</pre><a href="/api/diagnostics" download="mirror-diagnostics.json">Export local diagnostics</a></>}
-    <p>Diagnostics describe this local Mirror. Model discovery tests the selected server domain.</p>
+    <p>请求生成状态：{generationSucceeded ? "本次测试台会话中已成功完成" : "尚未验证；请点击“运行请求”发送一条测试消息"}。</p>
+    {diagnostics !== null && <><pre>{JSON.stringify(diagnostics, null, 2)}</pre><a href="/api/diagnostics" download="mirror-diagnostics.json">导出本地诊断信息</a></>}
+    <p>诊断信息描述当前 Mirror 实例的状态；模型列表检查会测试所选服务器地址。</p>
     <pre tabIndex={0}>{snippet}</pre>
-    <button onClick={() => void navigator.clipboard.writeText(snippet).then(() => setStatus("Setup snippet copied"), () => setStatus("Select and copy the setup snippet above"))}>Copy setup snippet</button>
-    <p>cm uses the server root: <code>CM_BASE_URL=http://127.0.0.1:8799</code>. ChatGPTBox uses the OpenAI-compatible provider, a Mirror model ID, and the completion URL ending in <code>/v1/chat/completions</code> when a full endpoint is requested.</p>
+    <button onClick={() => void navigator.clipboard.writeText(snippet).then(() => setStatus("客户端配置代码已复制"), () => setStatus("请选中并复制上方的配置代码"))}>复制配置代码</button>
+    <p>cm 使用服务器根地址： <code>CM_BASE_URL=http://127.0.0.1:8799</code>。ChatGPTBox 使用兼容 OpenAI 的服务提供方、Mirror 模型 ID，以及以 <code>/v1/chat/completions</code> 结尾的完整接口地址。</p>
   </details>;
 }
