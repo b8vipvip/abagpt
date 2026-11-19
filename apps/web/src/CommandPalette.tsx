@@ -48,14 +48,14 @@ export function CommandPalette({
     const timer = setTimeout(() => {
       fetch(`/api/conversations/search?q=${encodeURIComponent(query)}`)
         .then(async (res) => {
-          if (!res.ok) throw new Error(`Search failed (HTTP ${res.status}).`);
+          if (!res.ok) throw new Error(`搜索失败（HTTP ${res.status}）。`);
           return res.json();
         })
         .then((body: { items?: Result[] }) => {
           const items = Array.isArray(body.items) ? body.items : [];
           setResults(items);
           setActiveIndex(0);
-          setStatus(items.length ? "" : "No matches");
+          setStatus(items.length ? "" : "没有匹配的会话");
         })
         .catch((error) => {
           setResults([]);
@@ -77,7 +77,7 @@ export function CommandPalette({
       <div
         className="command-palette"
         role="dialog"
-        aria-label="Quick-open conversation search"
+        aria-label="快速搜索并打开会话"
         onClick={(event) => event.stopPropagation()}
         onKeyDown={(event) => {
           if (event.key === "Escape") {
@@ -105,8 +105,8 @@ export function CommandPalette({
         <input
           ref={inputRef}
           value={query}
-          placeholder="Jump to a conversation…"
-          aria-label="Jump to a conversation"
+          placeholder="搜索并跳转到某个会话…"
+          aria-label="搜索并跳转到会话"
           onChange={(event) => setQuery(event.target.value)}
         />
         <p role="status">{status}</p>
@@ -123,7 +123,7 @@ export function CommandPalette({
                 onMouseEnter={() => setActiveIndex(index)}
                 onClick={() => choose(item.id)}
               >
-                {item.title || "Untitled"}
+                {item.title || "未命名会话"}
               </button>
             </li>
           ))}
