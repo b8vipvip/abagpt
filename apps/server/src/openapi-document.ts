@@ -746,8 +746,7 @@ export function buildOpenApiDocument(): oas31.OpenAPIObject {
         get: {
           summary: "列出可用模型",
           description:
-            "Real ChatGPT model slugs plus Custom GPT / Project pseudo-models the account " +
-            "can chat with.",
+            "列出当前账号可用于对话的 ChatGPT 实际模型标识，以及自定义 GPT／项目伪模型标识。",
           tags: ["OpenAI 兼容接口"],
           responses: {
             "200": { description: "成功", content: { "application/json": { schema: ModelsResponse } } },
