@@ -31,7 +31,7 @@ test("the browser entry point mounts the Playground in StrictMode", async (t) =>
   t.mock.method(ReactDOM, "createRoot", (...args) => { root = createRoot(...args); return root; });
   try {
     await act(async () => { await import("../src/main.js"); });
-    assert.ok([...document.querySelectorAll("h1,h2")].some(element => element.textContent === "Chat"));
+    assert.ok([...document.querySelectorAll("h1,h2")].some(element => element.textContent === "对话"));
     assert.ok(document.querySelector(".message-editor"));
   } finally { await act(async () => root?.unmount()); }
 });
