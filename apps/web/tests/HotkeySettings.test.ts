@@ -46,7 +46,7 @@ test("clicking Change opens a recording field; pressing a combo saves it and rep
   const field = screen.getByLabelText("请为“快速搜索并打开会话”按下快捷键组合");
   fireEvent.keyDown(field, { key: "p", ctrlKey: true, shiftKey: true });
   assert.deepEqual(saved, { commandPalette: "mod+shift+p" });
-  assert.ok(screen.getByText(/set to Cmd\/Ctrl\+Shift\+P/));
+  assert.ok(screen.getByText(/已设置为 Cmd\/Ctrl\+Shift\+P/));
 });
 
 test("recording ignores bare modifier keypresses and waits for a real key", () => {
