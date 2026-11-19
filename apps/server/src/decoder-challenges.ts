@@ -38,7 +38,7 @@ export function registerDecoderChallengeRoutes(app: FastifyInstance, scope: () =
       if (challenge.expiresAt <= Date.now() || challenge.scope !== owner) challenges.delete(id);
     }
     // Refuse at capacity rather than silently evicting another open challenge.
-    if (challenges.size >= 64) return reply.code(429).send({ error: "Challenge shelf is full. Try again after an older challenge expires." });
+    if (challenges.size >= 64) return reply.code(429).send({ error: "挑战列表已满。请等待较早的挑战过期后再试。" });
     const id = randomUUID();
     const expected = body.payload === "text"
       ? Buffer.from(`Mirror decoder expedition\nDiscovery: ${randomBytes(16).toString("hex")}\nKeep every byte: café, stars ✨, and this final newline.\n`, "utf8")
@@ -65,7 +65,7 @@ export function registerDecoderChallengeRoutes(app: FastifyInstance, scope: () =
     for (const id of ids) {
       const challenge = challenges.get(id);
       if (!challenge || challenge.scope !== scope() || challenge.expiresAt <= Date.now()) {
-        return reply.code(404).send({ error: "Challenge expired or unavailable. Generate a new one." });
+        return reply.code(404).send({ error: "挑战已过期或不可用，请重新生成。" });
       }
       const format = formats[challenge.format];
       const prefix = `${challenge.format}-${id}`;
@@ -87,7 +87,7 @@ export function registerDecoderChallengeRoutes(app: FastifyInstance, scope: () =
     const { id } = ChallengeParams.parse(req.params);
     const challenge = challenges.get(id);
     if (!challenge || challenge.scope !== scope() || challenge.expiresAt <= Date.now()) {
-      return reply.code(404).send({ error: "Challenge expired or unavailable. Generate a new one." });
+      return reply.code(404).send({ error: "挑战已过期或不可用，请重新生成。" });
     }
     const format = formats[challenge.format];
     return reply.header("cache-control", "no-store").header("content-disposition", `attachment; filename="decoder-${id}.${format.extension}"`).type(format.mime).send(challenge.artifact);
@@ -97,7 +97,7 @@ export function registerDecoderChallengeRoutes(app: FastifyInstance, scope: () =
     const { hex } = ChallengeAnswer.parse(req.body);
     const challenge = challenges.get(id);
     if (!challenge || challenge.scope !== scope() || challenge.expiresAt <= Date.now()) {
-      return reply.code(404).send({ error: "Challenge expired or unavailable. Generate a new one." });
+      return reply.code(404).send({ error: "挑战已过期或不可用，请重新生成。" });
     }
     const actual = Buffer.from(hex, "hex");
     const expected = challenge.expected;
