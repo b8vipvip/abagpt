@@ -92,6 +92,7 @@ test("mobile navigation remains available without horizontal page overflow", asy
  expect(hasHorizontalOverflow).toBe(false);
 });
 test("API documentation is localized without changing the OpenAPI contract", async ({ page }) => {
+ await page.goto(`${serverBase}/mirror/playground`);
  const specResponse = await page.request.get(`${serverBase}/mirror/openapi`);
  expect(specResponse.ok()).toBe(true);
  const spec = await specResponse.json();
@@ -102,14 +103,14 @@ test("API documentation is localized without changing the OpenAPI contract", asy
  expect(requestSchema.properties.max_tokens).toBeDefined();
  expect(requestSchema.properties.metadata).toBeDefined();
  expect(requestSchema.properties.messages).toBeDefined();
- await page.goto(`${serverBase}/mirror/playground`);
  await page.goto(`${serverBase}/mirror/api-docs`);
  await expect(page.locator(".swagger-ui")).toContainText("授权");
  await expect(page.locator(".swagger-ui")).toContainText("创建聊天补全");
 });
 test("mobile API documentation stays readable without horizontal page overflow", async ({ page }) => {
  await page.setViewportSize({ width: 390, height: 844 });
- await page.goto("/mirror/api-docs");
+ await page.goto(`${serverBase}/mirror/playground`);
+ await page.goto(`${serverBase}/mirror/api-docs`);
  await expect(page.locator(".swagger-ui")).toBeVisible();
  await expect(page.locator(".swagger-ui")).toContainText("创建聊天补全");
  const hasHorizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
