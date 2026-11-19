@@ -636,7 +636,7 @@ export default function App() {
           <span>☷</span> 对话
         </button>
         <button className={`side-item ${mode === "responses" ? "active" : ""}`} aria-pressed={mode === "responses"} disabled={running || readingFiles} onClick={() => selectMode("responses")}>
-          <span>◇</span> Responses API
+          <span>◇</span> Responses API（响应接口）
         </button>
         <div className="side-section">Mirror 服务</div>
         <a className="side-item" href="/">
@@ -660,7 +660,7 @@ export default function App() {
       <main className="workbench">
         <div className="workbench-head">
           <div>
-            <h1>{mode === "responses" ? "Responses API" : "对话"}</h1>
+            <h1>{mode === "responses" ? "Responses API（响应接口）" : "对话"}</h1>
             <p>{mode === "responses" ? "通过 Responses API 测试文本输入和流式输出。" : "测试兼容 OpenAI 的 Chat Completions 接口。"}</p>
             {mode === "responses" && <p>Mirror 支持文本消息和会话 ID；暂不支持工具调用、previous_response_id 和响应检索。</p>}
           </div>
@@ -703,7 +703,7 @@ export default function App() {
             />
           </label>
           <label>
-            <span>Bearer 凭证</span>
+            <span>API 密钥（Bearer）</span>
             <input
               type="password"
               value={apiKey}
@@ -924,7 +924,7 @@ export default function App() {
             </label>
             {isGizmoModel && (
               <label>
-                <span>此 GPT/项目使用的模型</span>
+                <span>此 GPT／项目使用的模型</span>
                 <input
                   value={pickedModel}
                   onChange={(event) => setPickedModel(event.target.value)}
@@ -933,7 +933,7 @@ export default function App() {
               </label>
             )}
             <label className="switch-line">
-              <span>流式响应</span>
+              <span>流式输出</span>
               <input
                 type="checkbox"
                 checked={stream}
