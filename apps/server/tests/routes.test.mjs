@@ -157,7 +157,7 @@ test("an unexpected non-statusCode error is hidden behind a generic 500 message"
       useSession("acct-500");
       const res = await app.inject({ method: "GET", url: "/api/models", headers: AUTH });
       assert.equal(res.statusCode, 500);
-      assert.deepEqual(JSON.parse(res.body), { error: "Internal server error" });
+      assert.deepEqual(JSON.parse(res.body), { error: "服务器内部发生错误。" });
     },
   ));
 
@@ -845,7 +845,7 @@ test("error handler gives a safe fallback for a non-Error exception", async () =
     probe.get("/api/test-error", async () => { throw { statusCode: 422 }; });
     const res = await probe.inject({ method: "GET", url: "/api/test-error", headers: AUTH });
     assert.equal(res.statusCode, 422);
-    assert.deepEqual(res.json(), { error: "Request failed" });
+    assert.deepEqual(res.json(), { error: "请求失败。" });
     // Diagnostic request objects may not yet have a URL; logging must still work.
     assert.doesNotThrow(() => probe.log.info({ req: { method: "GET" } }, "incomplete request diagnostic"));
   } finally { await probe.close(); }
