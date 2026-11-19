@@ -134,13 +134,22 @@ test.describe("browser / official UI decoder challenges", () => {
   });
   test("GPT workshop builds format-aware prompts through the conversion API", async ({ page }) => {
     await page.getByRole("combobox", { name: "格式", exact: true }).selectOption("gptgif-v4");
-    await page.getByPlaceholder("制作一个有三个房间和隐藏结局的简短互动冒险故事。").fill("a tiny constellation diary");
+    await page.getByPlaceholder("制作一个有三个房间和隐藏结局的简短互动冒险故事。").fill("一份微型星空日记");
     await page.getByRole("button", { name: "让 GPT 按需求创作", exact: true }).click();
     await expect(page.getByRole("status")).toContainText("创作需求已准备就绪");
     expect(conversionCalls).toHaveLength(1);
     expect(conversionCalls[0].format).toBe("gptgif-v4");
     expect(conversionCalls[0].filename).toBe("format-lab-brief.txt");
+    expect(conversionCalls[0].note).toContain("请生成实际的文件字节");
     expect(conversionCalls[0].dataBase64).toMatch(/^[A-Za-z0-9+/]+=*$/);
-    expect(await page.getByLabel("挑战提示词").inputValue()).toContain("FORMAT API PROMPT for gptgif-v4");
+    await expect(page.getByLabel("挑战提示词")).toHaveValue(/你正在与 Mirror 格式实验室协作。请根据以下需求创建一个 gptgif-v4 格式的文件：一份微型星空日记/);
+
+    await page.getByRole("button", { name: "让 GPT 改编此格式", exact: true }).click();
+    expect(conversionCalls[1].note).toContain("请生成实际的文件字节");
+    await expect(page.getByLabel("挑战提示词")).toHaveValue(/请根据以下需求改编一个 gptgif-v4 格式的文件/);
+
+    await page.getByRole("button", { name: "让 GPT 解释此格式", exact: true }).click();
+    expect(conversionCalls[2].note).toContain("请用简体中文解释该格式如何表示字节");
+    await expect(page.getByLabel("挑战提示词")).toHaveValue(/请根据以下需求解释一个 gptgif-v4 格式的文件/);
   });
 });
