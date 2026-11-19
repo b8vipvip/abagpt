@@ -192,7 +192,7 @@ test.describe("web / ConversionTools", () => {
     await screen.findByText("hello");
     click(/将解码文本插入对话/);
     assert.deepEqual(inserted, ["hello"]);
-    assert.ok(screen.getByRole("link", { name: /Download decoded bytes/ }));
+    assert.ok(screen.getByRole("link", { name: /下载解码后的数据/ }));
     cleanup();
     mount({ fetcher: (async (input) => String(input).includes("/decode") ? json({ bytes: 1, dataBase64: "/w==" }) : json({})) as typeof fetch });
     fireEvent.change(screen.getByLabelText(/解码/), { target: { value: "bad bytes" } });
