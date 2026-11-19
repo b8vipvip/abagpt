@@ -27,7 +27,7 @@ export function ConnectionTools({ domain, apiKey, generationSucceeded }: { domai
     <summary>连接诊断与客户端配置</summary>
     <button disabled={busy} onClick={() => void testConnection()}>测试连接</button>
     <p role="status">{status}</p>
-    <p>请求生成状态：{generationSucceeded ? "本次测试台会话中已成功完成" : "尚未验证；请点击“运行请求”发送一条测试消息"}。</p>
+    <p>请求生成状态：{generationSucceeded ? "本次测试台会话已成功完成" : "尚未验证；请点击“运行请求”发送一条测试消息"}。</p>
     {diagnostics !== null && <><pre>{JSON.stringify(diagnostics, null, 2)}</pre><a href="/api/diagnostics" download="mirror-diagnostics.json">导出本地诊断信息</a></>}
     <p>诊断信息描述当前 Mirror 实例的状态；模型列表检查会测试所选服务器地址。</p>
     <pre tabIndex={0}>{snippet}</pre>
