@@ -122,7 +122,7 @@ export function ConversionTools({
       setArtifact(normalizeEncodeResult(res, dataBase64));
       setStatus(`编码完成：${FORMAT_LABELS[format]}，共 ${res.bytes} 字节。`);
     } catch (error) {
-      setStatus(error instanceof Error ? `编码失败：${error.message}` : "编码失败");
+      setStatus(localizeUiError(error, "编码失败"));
     } finally {
       setBusy(false);
     }
@@ -145,8 +145,7 @@ export function ConversionTools({
       setDecodedResult({ text: tryFromBase64(res.dataBase64), dataBase64: res.dataBase64, bytes: res.bytes });
       setStatus(`解码完成，共 ${res.bytes} 字节。`);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "未知错误";
-      const failureMessage = `解码失败：${message}`;
+      const failureMessage = localizeUiError(error, "解码失败。");
       setStatus(format === "gptgif" ? `${failureMessage}（gptgif 原版格式没有固定字母表，请参阅下方说明。）` : failureMessage);
     } finally {
       setBusy(false);
@@ -187,7 +186,7 @@ export function ConversionTools({
       }
       setStatus("就绪");
     } catch (error) {
-      setStatus(error instanceof Error ? `操作未成功：${error.message}` : "操作未成功");
+      setStatus(localizeUiError(error, "操作未成功"));
     } finally {
       setBusy(false);
     }
@@ -206,7 +205,7 @@ export function ConversionTools({
         onInsertText(res.prompt);
         setStatus("已将提示词插入下方当前对话消息。");
       } catch (error) {
-        setStatus(error instanceof Error ? `生成提示词失败：${error.message}` : "无法生成提示词");
+        setStatus(localizeUiError(error, "无法生成提示词"));
       } finally {
         setBusy(false);
       }
