@@ -77,6 +77,6 @@ test("shows a 'Loading more…' indicator while the next page is in flight", asy
   // an equivalent assertion (the indicator disappearing) is not otherwise
   // meaningful to double-check beyond the state transition already proven
   // by "a failed load-more request..." above.
-  await screen.findByText("Loading more…");
+  await screen.findByText("正在加载更多…");
 });
 });
