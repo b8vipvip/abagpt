@@ -71,13 +71,20 @@ test.describe("web / ConversionTools", () => {
     mount({ fetcher: (async (_url, init) => { captured = JSON.parse(String(init?.body)); return json({ error: "bad file" }, 422); }) as typeof fetch });
     const file = new File([new Uint8Array([0, 128, 255])], "tiny.bin", { type: "application/octet-stream" });
     fireEvent.change(screen.getByLabelText(/选择文件进行编码/), { target: { files: [file] } });
-    await screen.findByText("编码失败：bad file");
+    await screen.findByText("输入内容无法处理，请检查文件或参数。");
     assert.equal(captured.dataBase64, "AID/");
     assert.equal((screen.getByLabelText(/选择文件进行编码/) as HTMLInputElement).value, "");
     cleanup();
     mount({ fetcher: (async () => { throw new Error("offline"); }) as typeof fetch });
     click("编码");
-    await screen.findByText("编码失败：offline");
+    await screen.findByText("网络连接失败，请检查服务器地址和网络后重试。");
+  });
+
+
+  test("localizes object-shaped API errors using their HTTP status", async () => {
+    mount({ fetcher: (async () => json({ error: { message: "The requested resource was not found." } }, 404)) as typeof fetch });
+    click("编码");
+    await screen.findByText("请求的资源不存在或已过期。");
   });
 
   test("mystery and fortune actions render their results, prompt eligibility, and chat attachment behavior", async () => {
@@ -120,10 +127,10 @@ test.describe("web / ConversionTools", () => {
     click(/神秘编码/);
     await screen.findByText(/神秘格式：gptgif-v4/);
     click(/将解码提示词插入对话/);
-    await screen.findByText("无法生成提示词");
+    await screen.findByText("网络连接失败，请检查服务器地址和网络后重试。");
     promptError = new Error("prompt service down");
     click(/将解码提示词插入对话/);
-    await screen.findByText("生成提示词失败：prompt service down");
+    await screen.findByText("无法生成提示词");
     mysteryFormat = "gptgif";
     click(/神秘编码/);
     await screen.findByText(/神秘格式：gptgif/);
@@ -149,10 +156,10 @@ test.describe("web / ConversionTools", () => {
     await screen.findByAltText(/已编码的 gptgif 原版/);
     assert.equal(screen.getByRole("link", { name: /下载/ }).getAttribute("download"), "mirror-convert.gptgif.gif");
     click(/幸运签/);
-    await screen.findByText("操作未成功：fortune offline");
+    await screen.findByText("网络连接失败，请检查服务器地址和网络后重试。");
     selectFormat("pngspeak");
     click("编码");
-    await screen.findByText(/HTTP 503/);
+    await screen.findByText("服务暂时不可用，请稍后重试。");
   });
 
   test("handles non-Error decode failures and empty file picker selections", async () => {
@@ -162,7 +169,7 @@ test.describe("web / ConversionTools", () => {
     }) as typeof fetch });
     fireEvent.change(screen.getByLabelText(/解码/), { target: { value: "AQID" } });
     click("解码");
-    await screen.findByText("解码失败：未知错误");
+    await screen.findByText("网络连接失败，请检查服务器地址和网络后重试。");
     fireEvent.change(screen.getByLabelText(/选择文件进行编码/), { target: { files: [] } });
     assert.equal(screen.queryByText("正在编码…"), null);
   });
@@ -206,11 +213,11 @@ test.describe("web / ConversionTools", () => {
     selectFormat("loaf");
     fireEvent.change(screen.getByLabelText(/解码/), { target: { value: "not-empty" } });
     click("解码");
-    await screen.findByText("解码失败：该 LoaF 归档中没有文件条目。");
+    await screen.findByText("该 LoaF 归档中没有文件条目。");
     selectFormat("gptgif");
     fireEvent.change(screen.getByLabelText(/解码/), { target: { value: "bad" } });
     click("解码");
-    await screen.findByText(/no fixed map.*没有固定字母表/);
+    await screen.findByText(/请求参数无效，请检查输入内容。.*没有固定字母表/);
   });
 
   test("disabled and Playground modes keep chat mutations unavailable while encoding remains usable", async () => {
@@ -223,8 +230,8 @@ test.describe("web / ConversionTools", () => {
   test("non-Error fetch rejections use the component's fallback messages", async () => {
     mount({ fetcher: (async () => { throw "offline string"; }) as typeof fetch });
     click("编码");
-    await screen.findByText("编码失败");
+    await screen.findByText("网络连接失败，请检查服务器地址和网络后重试。");
     click(/神秘编码/);
-    await screen.findByText("操作未成功");
+    await screen.findByText("网络连接失败，请检查服务器地址和网络后重试。");
   });
 });
