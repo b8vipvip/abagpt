@@ -60,7 +60,7 @@ export function ConversationTools({
       setItems(result.items);
       setStatus(`找到 ${result.items.length} 条本地匹配记录（最多 100 条）`);
     } catch (error) {
-      setStatus(`操作失败：${error instanceof Error ? error.message : String(error)}`);
+      setStatus(localizeUiError(error, "操作失败，请稍后重试。"));
     }
   }
 
@@ -73,7 +73,7 @@ export function ConversationTools({
       );
       setStatus("会话分支已加载");
     } catch (error) {
-      setStatus(`操作失败：${error instanceof Error ? error.message : String(error)}`);
+      setStatus(localizeUiError(error, "操作失败，请稍后重试。"));
     }
   }
 
@@ -91,7 +91,7 @@ export function ConversationTools({
       setBranches(null);
       setStatus("已选择此分支；下一轮对话将以该节点为父节点。");
     } catch (error) {
-      setStatus(`操作失败：${error instanceof Error ? error.message : String(error)}`);
+      setStatus(localizeUiError(error, "操作失败，请稍后重试。"));
     }
   }
 
