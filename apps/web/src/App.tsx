@@ -7,6 +7,7 @@ import { CommandPalette } from "./CommandPalette.js";
 import { HotkeySettings } from "./HotkeySettings.js";
 import { DEFAULT_HOTKEYS, matchesHotkey } from "./hotkeys.js";
 import { readCompletionStream } from "./completion-stream.js";
+import { localizeUiError } from "./ui-errors.js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   editPlaygroundMessage,
@@ -242,6 +243,16 @@ export default function App() {
   const [responseTab, setResponseTab] = useState<"output" | "raw" | "convert">("output");
   const showRaw = responseTab === "raw";
   const setShowRaw = (raw: boolean) => setResponseTab(raw ? "raw" : "output");
+  function reportError(error: unknown, fallback: string, preserveOutput = false) {
+    const rawMessage = error instanceof Error ? error.message : String(error);
+    const localizedMessage = localizeUiError(error, fallback);
+    setStatus("Error");
+    setRaw(rawMessage);
+    setOutput(current => preserveOutput && current
+      ? `${current}\n\n${localizedMessage}`
+      : localizedMessage);
+    setResponseTab("output");
+  }
   const [running, setRunning] = useState(false);
   const [readingFiles, setReadingFiles] = useState(false);
   const readingFilesRef = useRef(false);
@@ -378,9 +389,7 @@ export default function App() {
         setPrivateChat(body.conversation.private);
       setStatus("Loaded");
     } catch (error) {
-      setStatus("Error");
-      setRaw(String((error as Error).message ?? error));
-      setShowRaw(true);
+      reportError(error, "加载会话失败，请检查会话状态后重试。");
     }
   }
   useEffect(() => {
@@ -472,9 +481,7 @@ export default function App() {
       ));
       setStatus("Ready");
     } catch (error) {
-      setStatus("Error");
-      setRaw(String((error as Error).message ?? error));
-      setShowRaw(true);
+      reportError(error, "读取文件失败，请检查文件后重试。");
     } finally {
       readingFilesRef.current = false;
       setReadingFiles(false);
@@ -603,9 +610,7 @@ export default function App() {
     } catch (error) {
       if ((error as Error).name === "AbortError") setStatus("Stopped");
       else {
-        setStatus("Error");
-        setRaw(String((error as Error).message ?? error));
-        setShowRaw(true);
+        reportError(error, "请求失败，请检查服务器地址、API 密钥和 ChatGPT 会话后重试。", true);
       }
     } finally {
       runningRef.current = false;
