@@ -9,7 +9,7 @@
   "apps/server/package.json": "b7b45ef092fff0783b6597afe126d950a4d101cf7ea85052967f19d78f93803b",
   "apps/server/scripts/gen-openapi.mjs": "2c24061032f2cee3bc6d8caaf1dbeff4391736753de18b21a8f222e0dda043fb",
   "apps/server/src/api-errors.ts": "9ef9f63587628ed449fe3f8019d598eeb183ffd19ea6cea37347d91d3ddc2fc2",
-  "apps/server/src/api-schemas.ts": "949e207d7aa30447da14ce38c45c3dedcbf0d85b97683fdd6a5fc9d2c4d6944c",
+  "apps/server/src/api-schemas.ts": "0a33150f51d13a81d5d5995c892cd1801aa6374b85754a6037b7a52ec1101940",
   "apps/server/src/asset-content.ts": "ac5cc77b1ef26393a6353d0051c1616c571a6db8a55639482c8cb85ab6209106",
   "apps/server/src/asset-links.ts": "3b506ede9ea025c399c0bfaa5e9e21a219f81f6616c28ee706d9368b581acc22",
   "apps/server/src/auth.ts": "f2ffc04b050d5e9c6b439e70294d6555c262f00bc970a9cbec9d11e8d0ebff06",
