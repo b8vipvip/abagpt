@@ -448,7 +448,7 @@ export async function registerOpenAiRoutes(
     }
     const requestRevision = getSessionRevision();
     const body = parsed.data;
-    if (!isResponses && (body.tools?.length || body.messages.some(message => message.role === "tool" || "tool_calls" in message))) {
+    if (!isResponses && (body.tools?.length || body.messages.some(message => "tool_calls" in message))) {
       let bridgeStream = false;
       let bridgeHeartbeat: ReturnType<typeof setInterval> | undefined;
       try {
