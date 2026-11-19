@@ -10,6 +10,8 @@ test("stream error is shown as Error",async({page})=>{
  await page.route("**/v1/chat/completions",route=>route.fulfill({contentType:"text/event-stream",body:'data: {"error":{"message":"Synthetic failure"}}\n\ndata: [DONE]\n\n'}));
  await page.goto("/mirror/playground");await page.getByRole("button",{name:/^运行请求/}).click();
  await expect(page.locator(".run-status")).toHaveText("出错");
+ await expect(page.locator(".output")).toContainText("请求失败，请检查服务器地址、API 密钥和 ChatGPT 会话后重试。");
+ await page.getByRole("button", { name: /原始响应/ }).click();
  await expect(page.locator(".output")).toContainText("Synthetic failure");
 });
 test("legacy ID without history is not reused",async({page})=>{
