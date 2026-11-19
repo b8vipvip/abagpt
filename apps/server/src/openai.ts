@@ -56,7 +56,7 @@ import {
 const TextPart = z
   .object({ type: z.literal("text"), text: z.string() })
   .strict()
-  .openapi({ description: "Plain text content part." });
+  .openapi({ description: "纯文本内容片段。" });
 /**
  * Official OpenAI vision content part. `url` accepts a data: URI (uploaded
  * inline, the common case for API callers) or an https URL (fetched
@@ -74,17 +74,17 @@ const ImageUrlPart = z
       .object({
         url: z.string().openapi({
           description:
-            "A data: URI (uploaded inline) or an https:// URL (fetched server-side). " +
-            "Mirror uploads the resolved image to ChatGPT's file service before sending " +
-            "the turn - backend-api has no concept of pointing at an external URL directly.",
+            "图片数据的 data: URI（随请求内联上传）或 https:// URL（由服务器获取）。" +
+            "Mirror 会在发送本轮消息前将解析后的图片上传到 ChatGPT 文件服务；" +
+            "backend-api 不支持直接引用外部 URL。",
         }),
         detail: z
           .enum(["auto", "low", "high"])
           .optional()
           .openapi({
             description:
-              "Accepted for OpenAI shape-compatibility but has no backend-api equivalent " +
-              "(no client-selectable vision resolution tier exists upstream); parsed and ignored.",
+              "为兼容 OpenAI 请求结构而接受此字段，但 backend-api 没有对应功能 " +
+              "（上游不支持由客户端选择视觉分辨率等级）；字段会被解析后忽略。",
           }),
       })
       .strict(),
@@ -92,8 +92,8 @@ const ImageUrlPart = z
   .strict()
   .openapi({
     description:
-      "Vision input content part. See COMPATIBILITY.md for how this maps onto ChatGPT's " +
-      "own file-upload flow.",
+      "视觉输入内容片段。此字段如何映射到 ChatGPT 文件上传流程，请参阅 COMPATIBILITY.md。" +
+      "",
   });
 /**
  * Mirror's addition (not an original OpenAI vision-only field): a generic,
@@ -111,11 +111,11 @@ const FilePart = z
       .object({
         file_data: z.string().openapi({
           description:
-            "A data: URI (uploaded inline) or an https:// URL, containing the file's bytes. " +
-            "Mirror uploads the resolved file to ChatGPT's file service before sending the turn.",
+            "包含文件字节的 data: URI（随请求内联上传）或 https:// URL。" +
+            "Mirror 会在发送本轮消息前将解析后的文件上传到 ChatGPT 文件服务。",
         }),
         filename: z.string().optional().openapi({
-          description: "Original filename; its extension determines the server-side MIME type. Unknown or absent extensions use application/octet-stream. Defaults to attachment-<index>.",
+          description: "原始文件名；服务器根据扩展名确定 MIME 类型。扩展名缺失或无法识别时使用 application/octet-stream。默认名称为 attachment-<index>。",
         }),
       })
       .strict(),
@@ -123,18 +123,18 @@ const FilePart = z
   .strict()
   .openapi({
     description:
-      "Filename-bearing file attachment content part for images, PDFs, Markdown, text files, spreadsheets, etc. " +
-      "MIME type is selected from the filename extension, without content sniffing. " +
-      "See COMPATIBILITY.md.",
+      "带文件名的附件内容片段，可用于图片、PDF、Markdown、文本文件、电子表格等。" +
+      "MIME 类型仅根据文件扩展名确定，不会进行内容嗅探。" +
+      "详见 COMPATIBILITY.md。",
   });
 const ContentPart = z.union([TextPart, ImageUrlPart, FilePart]).openapi({ ref: "ContentPart" });
 const OpenAiMessage = z
   .object({
     role: z.enum(["system", "developer", "user", "assistant", "tool"]).openapi({
       description:
-        "'tool' is accepted by this schema's shape but rejected at request time - tool/" +
-        "function calling is a structural two-way gap between backend-api and the official " +
-        "OpenAI tools contract. See COMPATIBILITY.md.",
+        "此结构允许 role 为 'tool'，但请求处理阶段会拒绝该角色。工具／函数调用是 backend-api 与 OpenAI 官方工具调用规范之间的结构性差异，" +
+        "" +
+        "OpenAI tools contract. 详见 COMPATIBILITY.md。",
     }),
     content: z.union([z.string(), z.array(ContentPart), z.null()]),
     name: z.string().optional(),
@@ -144,7 +144,7 @@ const OpenAiMessage = z
 const CompletionBody = z
   .object({
     model: z.string().default("auto").openapi({
-      description: "A ChatGPT model slug, or a Custom GPT/Project id from GET /v1/models.",
+      description: "ChatGPT 模型标识，或通过 GET /v1/models 获取的自定义 GPT／项目 ID。",
       example: "gpt-4o",
     }),
     messages: z.array(OpenAiMessage).min(1),
@@ -165,13 +165,13 @@ const CompletionBody = z
     // Compatibility-only fields: some clients always send these. Mirror never
     // truncates the answer or stops generation based on them.
     max_tokens: z.number().int().positive().optional().openapi({
-      description: "Accepted for client compatibility; ignored. Mirror returns the complete answer without a token or character cap.",
+      description: "为兼容客户端而接受此字段，但不会生效。Mirror 返回完整回答，不按 token 数量或字符数截断。",
     }),
     max_completion_tokens: z.number().int().positive().optional().openapi({
-      description: "Accepted for client compatibility; ignored. Mirror does not limit response length.",
+      description: "为兼容客户端而接受此字段，但不会生效。Mirror 不限制响应长度。",
     }),
     stop: z.union([z.string(), z.array(z.string().min(1)).min(1).max(4)]).optional().openapi({
-      description: "Accepted for client compatibility; ignored. Mirror does not truncate answers at stop strings.",
+      description: "为兼容客户端而接受此字段，但不会生效。Mirror 不会根据 stop 字符串截断回答。",
     }),
     /**
      * Official OpenAI field (free-form string metadata), repurposed for
@@ -249,43 +249,43 @@ const CompletionBody = z
     metadata: z
       .object({
         private: z.enum(["true", "false"]).optional().openapi({
-          description: "Request ChatGPT's temporary/incognito chat mode for this turn.",
+          description: "请求 ChatGPT 将本轮设为临时／隐身对话。",
         }),
         mirror_model: z.string().min(1).optional().openapi({
           description:
-            "Override the effective ChatGPT model slug independent of the model field " +
-            "(e.g. picking a Project's underlying model).",
+            "独立于 model 字段指定实际使用的 ChatGPT 模型标识 " +
+            "（例如为某个项目选择其底层模型）。",
         }),
         conversation_id: z.string().min(1).max(200).optional().openapi({
-          description: "Continue an existing Mirror conversation by id.",
+          description: "通过会话 ID 继续现有的 Mirror 对话。",
         }),
         mirror_turnstile_token: z.string().min(1).optional().openapi({
-          description: "Alias of turnstile_token below.",
+          description: "与下方 turnstile_token 字段等效的别名。",
         }),
         turnstile_token: z.string().min(1).optional().openapi({
           description:
-            "Caller-supplied Cloudflare Turnstile response token, used when Sentinel " +
-            "requires one. Tokens are used only for this request and never persisted. " +
-            "See PROTOCOL.md's Turnstile resolution notes.",
+            "调用方提供的 Cloudflare Turnstile 响应令牌，在 Sentinel " +
+            "要求验证时使用。令牌仅用于当前请求，不会持久化。" +
+            "详见 PROTOCOL.md 中的 Turnstile 令牌处理说明。",
         }),
       })
       .catchall(z.string())
       .optional()
       .openapi({
         description:
-          "Officially a flat request-only string map in the real OpenAI API; Mirror " +
-          "repurposes it (bidirectionally - the response carries its own mirror_tool_events/" +
-          "mirror_images keys here too, see the response schema) for anything with no " +
-          "dedicated schema slot. Unknown string metadata is passed through unchanged. See " +
-          "COMPATIBILITY.md.",
+          "在 OpenAI 官方 API 中，metadata 是仅用于请求的扁平字符串映射。Mirror " +
+          "将其扩展为双向字段（响应也会在此返回 mirror_tool_events/" +
+          "mirror_images，详见响应结构），用于承载没有专用字段的信息。" +
+          "未知字符串元数据会原样透传。详见 " +
+          "COMPATIBILITY.md。",
       }),
   })
   .strict()
   .openapi({
     ref: "CompletionRequest",
     description:
-      "OpenAI Chat Completions-shaped request, backed by chatgpt.com/backend-api. " +
-      "Caller-defined function tools use an experimental prompt-based translation; unsupported fields are rejected (400).",
+      "采用 OpenAI Chat Completions 请求结构，并由 chatgpt.com/backend-api 提供支持。" +
+      "调用方定义的函数工具使用实验性的提示词转换机制；不支持的字段将返回 400 错误。",
   });
 
 
