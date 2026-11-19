@@ -158,7 +158,9 @@ export function ConversionTools({
     try {
       if (kind === "mystery") {
         const sourceText = inputText || "hello";
-        const res = await fetch(`/api/convert/mystery?text=${encodeURIComponent(sourceText)}`).then((r) => r.json());
+        const response = await fetch(`/api/convert/mystery?text=${encodeURIComponent(sourceText)}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const res = await response.json();
         const mime = res.format === "loaf" ? "text/plain" : res.format === "pngspeak" ? "image/png" : "image/gif";
         setFunResult({
           label: `神秘格式：${res.format} — ${res.surprise}`,
@@ -176,6 +178,7 @@ export function ConversionTools({
         });
       } else {
         const res = await fetch("/api/convert/fortune?format=pngspeak");
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const buffer = await res.arrayBuffer();
         let binary = "";
         for (const byte of new Uint8Array(buffer)) binary += String.fromCharCode(byte);
