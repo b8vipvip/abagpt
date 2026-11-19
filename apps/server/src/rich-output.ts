@@ -8,7 +8,8 @@ type ObjectValue = Record<string, unknown>;
 const object = (value: unknown): ObjectValue | undefined => value !== null && typeof value === "object" && !Array.isArray(value) ? value as ObjectValue : undefined;
 const str = (value: unknown): string => typeof value === "string" ? value : "";
 const label = (value: string) => value.replace(/[\r\n]/g, " ").trim().replace(/[\\`*_[\]<>]/g, "\\$&");
-const toolLabel = (value: string) => value.replace(/[\\\[\]<>\r\n]/g, " ").trim() || "Download file";
+const TOOL_FIELD_LABELS = { text: "文本", stdout: "标准输出", stderr: "标准错误", logs: "日志" } as const;
+const toolLabel = (value: string) => value.replace(/[\\\[\]<>\r\n]/g, " ").trim() || "工具输出";
 const fence = (value: string) => { const ticks = "`".repeat(Math.max(3, ...(value.match(/`+/g) ?? []).map(s => s.length + 1))); return `${ticks}text\n${value}\n${ticks}`; };
 const pointerPattern = /(?:file-service|sediment):\/\/[^\s\)\]"'<>\uE000-\uF8FF]+|sandbox:\/[^\s\)\]"'<>\uE000-\uF8FF]+/g;
 
@@ -65,17 +66,17 @@ function toolText(raw: ObjectValue): string {
     const text = str(value); if (!text || seen.has(text)) return;
     seen.add(text); blocks.push(`${heading}\n\n${fence(text)}`);
   };
-  if (Array.isArray(content?.parts)) for (const part of content.parts) if (typeof part === "string") add("Output", part);
+  if (Array.isArray(content?.parts)) for (const part of content.parts) if (typeof part === "string") add("输出", part);
   for (const container of [raw, content, object(raw.output)]) {
     if (!container) continue;
-    for (const key of ["text", "stdout", "stderr", "logs"]) {
+    for (const key of ["text", "stdout", "stderr", "logs"] as const) {
       const value = container[key];
-      add(key, Array.isArray(value) && value.every(v => typeof v === "string") ? value.join("\n") : value);
+      add(TOOL_FIELD_LABELS[key], Array.isArray(value) && value.every(v => typeof v === "string") ? value.join("\n") : value);
     }
     // Render a safe textual representation. Executable HTML/JS widgets are
     // not injected into Markdown clients.
     const data = object(container.data);
-    if (data) add("Display", data["text/plain"]);
+    if (data) add("显示内容", data["text/plain"]);
   }
   return blocks.join("\n\n");
 }
@@ -163,16 +164,20 @@ export async function renderRichOutput(
   };
   const visit = (value: unknown, messageId?: string | null) => {
     if (typeof value === "string") {
-      for (const match of value.matchAll(pointerPattern)) if (!pointers.has(match[0])) pointers.set(match[0], { image: match[0].startsWith("sediment:"), title: "Download file", messageId });
+      for (const match of value.matchAll(pointerPattern)) if (!pointers.has(match[0])) {
+        const image = match[0].startsWith("sediment:");
+        pointers.set(match[0], { image, title: image ? "图片" : "下载文件", messageId });
+      }
       return;
     }
     if (Array.isArray(value)) { value.forEach(v => visit(v, messageId)); return; }
     const item = object(value); if (!item) return;
     const pointer = str(item.asset_pointer) || (str(item.file_id) ? `file-service://${item.file_id}` : "");
-    const title = str(item.file_name) || str(item.fileName) || str(item.filename) || str(item.name) || str(item.title) || "Download file";
+    const image = item.content_type === "image_asset_pointer" || pointer.startsWith("sediment:");
+    const title = str(item.file_name) || str(item.fileName) || str(item.filename) || str(item.name) || str(item.title) || (image ? "图片" : "下载文件");
     if (pointer) {
       const prior = pointers.get(pointer);
-      pointers.set(pointer, { image: prior?.image || item.content_type === "image_asset_pointer" || pointer.startsWith("sediment:"), title, messageId: messageId ?? prior?.messageId });
+      pointers.set(pointer, { image: prior?.image || image, title, messageId: messageId ?? prior?.messageId });
       for (const key of ["matched_text", "text", "citation", "url", "path"]) {
         const token = str(item[key]);
         if (token && (/[\uE000-\uF8FF]/.test(token) || token.startsWith("sandbox:"))) references.set(token, { pointer, title });
@@ -208,7 +213,7 @@ export async function renderRichOutput(
       if (!pointers.has(event.assetPointer)) {
         pointers.set(event.assetPointer, {
           image: isImage,
-          title: !isImage && event.kind === "file" ? event.title ?? "Download file" : "Image",
+          title: !isImage && event.kind === "file" ? event.title ?? "下载文件" : "图片",
         });
       }
       if (event.raw) visit(event.raw);
@@ -245,7 +250,7 @@ export async function renderRichOutput(
     if (node.type === "definition") definitions.set(node.identifier, node.url);
     if ((node.type === "link" || node.type === "image" || node.type === "definition") && internal(node.url)) {
       const pointer = alias(node.url);
-      if (!pointers.has(pointer)) pointers.set(pointer, { image: node.type === "image", title: "Download file" });
+      if (!pointers.has(pointer)) pointers.set(pointer, { image: node.type === "image", title: node.type === "image" ? "图片" : "下载文件" });
       else if (node.type === "image") pointers.get(pointer)!.image = true;
     }
   });
@@ -280,9 +285,11 @@ export async function renderRichOutput(
     const resolvedName = urls.get(pointer)?.fileName;
     const sandboxAlias = [...references].find(([token, ref]) => token.startsWith("sandbox:") && ref.pointer === pointer)?.[0];
     const path = pointer.startsWith("sandbox:") ? pointer.slice("sandbox:".length) : sandboxAlias?.slice("sandbox:".length) ?? "";
-    const named = title && !/^(?:Download(?: file| now)?|Image|file)$/i.test(title) ? title : "";
+    const imageTitle = /^(?:Image|图片)$/i.test(title);
+    const genericTitle = /^(?:Download(?: file| now)?|下载文件|Image|图片|file|文件)$/i.test(title);
+    const named = title && !genericTitle ? title : "";
     if (resolvedName && resolvedName !== "file") return assetFileName(resolvedName);
-    let value = path || named || pointer.split("//").at(-1)!;
+    let value = path || named || (genericTitle ? (imageTitle ? "图片" : "下载文件") : pointer.split("//").at(-1)!);
     if (path) try { value = decodeURIComponent(value); } catch { /* Preserve literal percent signs. */ }
     return assetFileName(value);
   };
@@ -291,8 +298,8 @@ export async function renderRichOutput(
     used.add(pointer);
     const value = urls.get(pointer);
     const name = label(filename(pointer, title));
-    if (!value) return `[${name} — download unavailable]`;
-    const download = `${prefixed ? "" : "Download file: "}[${name}](<${escapedUrl(value.downloadUrl)}>)`;
+    if (!value) return `[${name} — 下载不可用]`;
+    const download = `${prefixed ? "" : "下载文件："}[${name}](<${escapedUrl(value.downloadUrl)}>)`;
     return image && !value.previewUnavailable ? `![${name}](<${escapedUrl(value.url)}>)\n\n${download}` : download;
   };
   const edits: { start: number; end: number; value: string }[] = [];
@@ -303,7 +310,7 @@ export async function renderRichOutput(
       : node.type === "linkReference" || node.type === "imageReference" ? definitions.get(node.identifier) : undefined;
     if (destination && internal(destination)) {
       const pointer = alias(destination);
-      const prefixed = /Download file:\s*$/i.test(text.slice(0, node.position!.start.offset));
+      const prefixed = /(?:Download file:|下载文件：)\s*$/i.test(text.slice(0, node.position!.start.offset));
       edit(node as RootContent, link(pointer, pointers.get(pointer)!.title, node.type === "image" || node.type === "imageReference", prefixed));
       return;
     }
@@ -332,7 +339,7 @@ export async function renderRichOutput(
             ` codePoints=${JSON.stringify([...unresolved].map((ch) => "U+" + ch.codePointAt(0)!.toString(16).toUpperCase().padStart(4, "0")))}` +
             `; raw content_references for this turn: ${JSON.stringify(rawContentReferenceEntries)}`,
         );
-        return "[Reference unavailable]";
+        return "[引用不可用]";
       });
       edit(node, value);
       return;
