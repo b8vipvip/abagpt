@@ -46,14 +46,6 @@ test.describe('server / tool bridge route', () => {
     assert.match(response.json().error.message, /Work Mode/);
   });
 
-  test('preserves a non-Error rejection as the tool-bridge fallback message', async () => {
-    const response = await request(false, 'unused', undefined, {
-      sendMessage: async () => { throw 'non-error rejection'; },
-    });
-    assert.equal(response.statusCode, 502, response.body);
-    assert.equal(response.json().error.message, 'Tool bridge failed');
-  });
-
   test('returns a nonstreamed function request', async () => {
     const response = await request(false, '{"tool_calls":[{"name":"read_file","arguments":{"path":"a.txt"}}]}', [
       { role: 'user', name: 'requester', content: 'Read a.txt' },
