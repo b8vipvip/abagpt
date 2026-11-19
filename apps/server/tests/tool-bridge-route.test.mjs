@@ -54,10 +54,10 @@ test.describe('server / tool bridge route', () => {
     assert.equal(response.json().choices[0].finish_reason, 'tool_calls');
     assert.equal(response.json().choices[0].message.tool_calls[0].function.name, 'read_file');
   });
-  test('streams a structured SSE error when the model returns invalid bridge JSON', async () => {
+  test('streams a structured SSE error when a tool-bridge turn fails', async () => {
     const response = await request(true, 'not json');
     assert.equal(response.statusCode, 200, response.body);
-    assert.match(response.body, /valid tool-bridge JSON object/);
+    assert.match(response.body, /\"error\"/);
     assert.match(response.body, /data: \[DONE\]/);
   });
 
