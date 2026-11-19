@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { localizeUiError } from "./ui-errors.js";
 
 interface Result {
   id: string;
