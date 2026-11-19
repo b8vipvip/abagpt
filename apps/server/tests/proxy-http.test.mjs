@@ -257,7 +257,7 @@ test("rejects authenticated upstream paths when no verified session is available
       const { reply, state } = makeReply();
       await proxyChatGpt(req, reply);
       assert.equal(state.sentCode, 401);
-      assert.deepEqual(state.sentJson, { error: "A valid session is required for this upstream request" });
+      assert.deepEqual(state.sentJson, { error: "访问此上游接口需要有效的 ChatGPT 会话。" });
     },
   ));
 
