@@ -39,7 +39,7 @@ test.describe('server / tool bridge route', () => {
     const response = await request(true, 'not json');
     assert.equal(response.statusCode, 200, response.body);
     assert.match(response.body, /valid tool-bridge JSON object/);
-    assert.match(response.body, /data: \\[DONE\\]/);
+    assert.match(response.body, /data: \[DONE\]/);
   });
 
   test('emits a keepalive chunk while a streamed tool-bridge response is pending', async () => {
@@ -71,7 +71,7 @@ test.describe('server / tool bridge route', () => {
       release();
       const response = await pending;
       assert.equal(response.statusCode, 200, response.body);
-      assert.match(response.body, /"delta":\\{\\}/);
+      assert.match(response.body, /"delta":\{\}/);
       heartbeat();
     } finally {
       globalThis.setInterval = originalSetInterval;
