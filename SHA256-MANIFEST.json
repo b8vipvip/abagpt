@@ -161,7 +161,7 @@
   "scripts/check-chatgptbox-assets.mjs": "e81b94815262cc85e248a9ca127e11b23e3607a6d93d8967774bc96a6a2a3286",
   "scripts/check-test-suites.mjs": "aec37f18c0199d80ec7a3bebd155cfe98f4f29dbd80e3d33e705a688ebbe5c17",
   "scripts/gen-api-key.mjs": "03004c5d0bd264cdbeb964e3ca11fdee6f3c48ff7d81d1db09c9e1579890f521",
-  "scripts/manifest.mjs": "76a90a05eebe79597c8fcd8cb1b683921f2d1f6c5496f1291831021cca3ddd48",
+  "scripts/manifest.mjs": "2ae6d8e833fe4c15a0c80d863a7a594d8ea4af788ba0cb75e8d45b9e9ca47cb7",
   "scripts/protocol-canary.mjs": "a1bb2f0b63dd077a0c18b6d2da4bfc3b256a6eb13ace8d958ef999ad26920c32",
   "scripts/restore-drill.mjs": "05917168b3b909b7403c6ecb6e1d6939482e8e30c254a6103b7968cf077dbd08",
   "scripts/storage.mjs": "1df9e21d08fd0a99d17698c0ecc079a599499d6873a99398ec95e4dead11d1bf",
