@@ -1718,7 +1718,7 @@ for (const readerError of [null, new Error("File is no longer readable"), "File 
   });
   fireEvent.change(lastAttachInput(), { target: { files: [new window.File(["data"], "failed.md")] } });
   await screen.findByText("出错");
-  assert.ok(screen.getByText("读取文件失败，请检查文件后重试。"));
+  assert.ok(screen.getByText(readerError === null ? "无法读取文件" : "读取文件失败，请检查文件后重试。"));
   fireEvent.click(screen.getByRole("button", { name: /原始响应/ }));
   assert.ok(screen.getByText(readerError instanceof Error ? readerError.message : readerError ?? "无法读取文件"));
   assert.equal(screen.queryByText("failed.md"), null);
