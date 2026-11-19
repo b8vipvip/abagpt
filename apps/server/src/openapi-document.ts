@@ -39,7 +39,7 @@ const ErrorResponse = z
       z.object({ message: z.string(), type: z.string() }),
     ]),
   })
-  .openapi({ ref: "Error", description: "Error envelope returned by Mirror's error handler." });
+  .openapi({ ref: "Error", description: "Mirror 错误处理器返回的错误对象。" });
 
 const OkResponse = z
   .object({ ok: z.boolean() })
@@ -57,9 +57,7 @@ const ModelSchema = z
   .openapi({
     ref: "Model",
     description:
-      "An OpenAI-shaped model entry. Mirror lists both real ChatGPT model slugs (gpt-4o, " +
-      "o1, ...) and Custom GPT / Project pseudo-models (ids like g-<hex> / g-p-<hex>) - " +
-      "see COMPATIBILITY.md.",
+      "符合 OpenAI 格式的模型条目。Mirror 会同时列出 ChatGPT 实际模型标识（如 gpt-4o、o1 等）以及自定义 GPT／项目的伪模型标识（如 g-<hex>、g-p-<hex>）。详见 COMPATIBILITY.md。",
   });
 
 const ModelsResponse = z
@@ -95,10 +93,7 @@ const CompletionResponseMetadata = z
   .openapi({
     ref: "CompletionResponseMetadata",
     description:
-      "Response-only convention: Mirror attaches ChatGPT-only, no-official-schema-slot " +
-      "information here rather than inventing new top-level response fields the official " +
-      "OpenAI client libraries wouldn't expect. Only present when there is something to " +
-      "report. See COMPATIBILITY.md.",
+      "仅用于响应的约定：Mirror 将 ChatGPT 专有、没有官方标准字段可承载的信息放在此处，而不是新增官方 OpenAI 客户端库无法预期的顶层字段。仅在有内容需要报告时返回。详见 COMPATIBILITY.md。",
   });
 
 const CompletionResponse = z
@@ -146,8 +141,8 @@ const AssistantTextEvent = z
   .object({
     kind: z.literal("assistant_text"),
     messageId: z.string().nullable(),
-    delta: z.string().openapi({ description: "The text added by this SSE event alone." }),
-    text: z.string().openapi({ description: "The full assistant text accumulated so far, including this delta." }),
+    delta: z.string().openapi({ description: "仅包含此 SSE 事件新增的文本。" }),
+    text: z.string().openapi({ description: "截至目前累积的完整助手文本，包含本次增量。" }),
   })
   .openapi({ ref: "AssistantTextEvent" });
 
@@ -158,7 +153,7 @@ const MessageEvent = z
     role: z.string().nullable(),
     contentType: z.string().nullable(),
     authorName: z.string().nullable(),
-    raw: z.record(z.unknown()).openapi({ description: "The raw upstream message envelope." }),
+    raw: z.record(z.unknown()).openapi({ description: "上游返回的原始消息对象。" }),
   })
   .openapi({ ref: "MessageEvent" });
 
@@ -166,13 +161,13 @@ const ToolEvent = z
   .object({
     kind: z.literal("tool"),
     messageId: z.string().nullable(),
-    name: z.string().openapi({ description: "The built-in ChatGPT tool's name, e.g. web, python, dalle." }),
-    status: z.string().nullable().optional().openapi({ description: "e.g. \"in_progress\", \"completed\", when backend-api reports one." }),
-    raw: z.record(z.unknown()).openapi({ description: "The raw upstream tool-call envelope." }),
+    name: z.string().openapi({ description: "ChatGPT 内置工具名称，例如 web、python、dalle。" }),
+    status: z.string().nullable().optional().openapi({ description: "当 backend-api 提供状态时，可能为 \"in_progress\"、\"completed\" 等。" }),
+    raw: z.record(z.unknown()).openapi({ description: "上游返回的原始工具调用对象。" }),
   })
   .openapi({
     ref: "ToolEvent",
-    description: "A ChatGPT built-in tool invocation (web browsing, code interpreter, etc) - see COMPATIBILITY.md.",
+    description: "一次 ChatGPT 内置工具调用（网页浏览、代码解释器等），详见 COMPATIBILITY.md。",
   });
 
 const CitationEvent = z
@@ -180,27 +175,27 @@ const CitationEvent = z
     kind: z.literal("citation"),
     fileId: z.string().optional(),
     title: z.string().optional(),
-    raw: z.unknown().openapi({ description: "The raw upstream citation envelope; shape varies by citation type." }),
+    raw: z.unknown().openapi({ description: "上游返回的原始引用对象；具体结构因引用类型而异。" }),
   })
   .openapi({ ref: "CitationEvent" });
 
 const ImageEvent = z
   .object({
     kind: z.literal("image"),
-    assetPointer: z.string().openapi({ description: "Resolve via GET /api/assets?pointer=..." }),
-    raw: z.unknown().openapi({ description: "The raw upstream image-generation envelope." }),
+    assetPointer: z.string().openapi({ description: "通过 GET /api/assets?pointer=... 解析资源。" }),
+    raw: z.unknown().openapi({ description: "上游返回的原始图片生成对象。" }),
   })
   .openapi({
     ref: "ImageEvent",
-    description: "An in-chat DALL-E generated image - see COMPATIBILITY.md.",
+    description: "对话中由 DALL·E 生成的图片，详见 COMPATIBILITY.md。",
   });
 
 const FileEvent = z
   .object({
     kind: z.literal("file"),
-    assetPointer: z.string().openapi({ description: "Resolve via GET /api/assets?pointer=..." }),
+    assetPointer: z.string().openapi({ description: "通过 GET /api/assets?pointer=... 解析资源。" }),
     title: z.string().optional(),
-    raw: z.unknown().openapi({ description: "The raw upstream file envelope." }),
+    raw: z.unknown().openapi({ description: "上游返回的原始文件对象。" }),
   })
   .openapi({ ref: "FileEvent" });
 
@@ -210,7 +205,7 @@ const MarkerEvent = z
     messageId: z.string().nullable(),
     marker: z.string().optional(),
     event: z.string().optional(),
-    raw: z.record(z.unknown()).openapi({ description: "The raw upstream marker/event envelope." }),
+    raw: z.record(z.unknown()).openapi({ description: "上游返回的原始标记／事件对象。" }),
   })
   .openapi({ ref: "MarkerEvent" });
 
@@ -225,7 +220,7 @@ const StatusEvent = z
 const RawEvent = z
   .object({
     kind: z.literal("raw"),
-    raw: z.unknown().openapi({ description: "An unrecognized upstream SSE payload, passed through unparsed." }),
+    raw: z.unknown().openapi({ description: "无法识别的上游 SSE 数据，保持原样透传，不进行解析。" }),
   })
   .openapi({ ref: "RawEvent" });
 
@@ -263,14 +258,14 @@ const PublicUploadedFile = z
     fileSize: z.number(),
     mimeType: z.string(),
     useCase: z.enum(["multimodal", "my_files"]).openapi({
-      description: "multimodal for images passed to the vision model; my_files for anything else (code interpreter, retrieval, etc).",
+      description: "multimodal 表示发送给视觉模型的图片；my_files 表示其他文件（例如代码解释器、检索等用途）。",
     }),
-    width: z.number().optional().openapi({ description: "Present for image uploads." }),
-    height: z.number().optional().openapi({ description: "Present for image uploads." }),
+    width: z.number().optional().openapi({ description: "图片上传时提供。" }),
+    height: z.number().optional().openapi({ description: "图片上传时提供。" }),
   })
   .openapi({
     ref: "UploadedFile",
-    description: "A file uploaded to ChatGPT's file service via POST /api/files, with the raw upstream response stripped.",
+    description: "通过 POST /api/files 上传到 ChatGPT 文件服务的文件；返回前已剔除上游原始响应。",
   });
 
 /** Mirrors StoredMessage from store.ts. */
@@ -278,15 +273,15 @@ const StoredMessage = z
   .object({
     id: z.string().uuid(),
     conversationId: z.string(),
-    upstreamNodeId: z.string().nullable().openapi({ description: "The backend-api message node id, or null if this turn never reached upstream." }),
+    upstreamNodeId: z.string().nullable().openapi({ description: "backend-api 消息节点 ID；如果本轮未发送到上游则为 null。" }),
     role: z.enum(["user", "assistant"]),
     content: z.string(),
-    status: z.string().openapi({ description: "e.g. \"finished_successfully\", \"in_progress\" - passed through from backend-api." }),
+    status: z.string().openapi({ description: "例如 \"finished_successfully\"、\"in_progress\"；该值由 backend-api 原样提供。" }),
     events: z.array(NormalizedConversationEvent),
     attachments: z.array(PublicUploadedFile).optional(),
-    createdAt: z.string().datetime().openapi({ description: "ISO 8601 timestamp." }),
+    createdAt: z.string().datetime().openapi({ description: "ISO 8601 时间戳。" }),
   })
-  .openapi({ ref: "StoredMessage", description: "A single stored message in a Mirror conversation (store.ts)." });
+  .openapi({ ref: "StoredMessage", description: "Mirror 会话中存储的一条消息（store.ts）。" });
 
 /**
  * Mirrors StoredConversation from store.ts (which extends
@@ -294,21 +289,21 @@ const StoredMessage = z
  */
 const StoredConversation = z
   .object({
-    id: z.string().openapi({ description: "The Mirror-local conversation id (UUID when auto-generated, or a caller-supplied slug via metadata.conversation_id)." }),
+    id: z.string().openapi({ description: "Mirror 本地会话 ID（自动生成时为 UUID，也可通过 metadata.conversation_id 传入自定义标识）。" }),
     accountId: z.string(),
     title: z.string(),
-    init: z.record(z.unknown()).nullable().openapi({ description: "Raw backend-api f/conversation/init response, once this conversation has been initialized." }),
-    createdAt: z.string().datetime().openapi({ description: "ISO 8601 timestamp." }),
-    updatedAt: z.string().datetime().openapi({ description: "ISO 8601 timestamp." }),
-    isBranch: z.boolean().openapi({ description: "True if this conversation was created via POST /api/conversations/{id}/branch." }),
-    conversationId: z.string().nullable().openapi({ description: "The real upstream backend-api conversation id, or null until the first turn is sent." }),
-    currentNodeId: z.string().openapi({ description: "The assistant node that becomes parent_message_id on the next turn." }),
+    init: z.record(z.unknown()).nullable().openapi({ description: "会话初始化后保存的 backend-api f/conversation/init 原始响应。" }),
+    createdAt: z.string().datetime().openapi({ description: "ISO 8601 时间戳。" }),
+    updatedAt: z.string().datetime().openapi({ description: "ISO 8601 时间戳。" }),
+    isBranch: z.boolean().openapi({ description: "如果此会话通过 POST /api/conversations/{id}/branch 创建，则为 true。" }),
+    conversationId: z.string().nullable().openapi({ description: "上游 backend-api 的真实会话 ID；首次发送消息前为 null。" }),
+    currentNodeId: z.string().openapi({ description: "下一轮请求中将用作 parent_message_id 的助手节点。" }),
     model: z.string(),
-    gizmoId: z.string().nullable().optional().openapi({ description: "Set when this conversation is pinned to a Custom GPT or Project." }),
+    gizmoId: z.string().nullable().optional().openapi({ description: "当会话固定到自定义 GPT 或项目时提供。" }),
     initialized: z.boolean().optional(),
-    private: z.boolean().optional().openapi({ description: "Temporary/incognito chat: excluded from chatgpt.com history and model training." }),
+    private: z.boolean().optional().openapi({ description: "临时／隐身对话：不会写入 chatgpt.com 历史记录，也不会用于模型训练。" }),
   })
-  .openapi({ ref: "StoredConversation", description: "A Mirror-local conversation record (store.ts)." });
+  .openapi({ ref: "StoredConversation", description: "Mirror 本地会话记录（store.ts）。" });
 
 /** Mirrors ModelDescriptor from @mirror/protocol, minus the `raw` field GET /api/models strips before returning it. */
 const PublicModelDescriptor = z
@@ -322,13 +317,13 @@ const PublicModelDescriptor = z
   })
   .openapi({
     ref: "PublicModelDescriptor",
-    description: "Mirror's native model shape (normalizeModels() in @mirror/protocol), with the raw upstream payload stripped.",
+    description: "Mirror 原生模型数据结构（@mirror/protocol 中的 normalizeModels()），已剔除上游原始数据。",
   });
 
 /** Mirrors GizmoSummary from @mirror/protocol, minus the `raw` field GET /api/gpts strips before returning it. */
 const PublicGizmoSummary = z
   .object({
-    id: z.string().openapi({ description: "g-<hex> for a Custom GPT, g-p-<hex> for a Project." }),
+    id: z.string().openapi({ description: "自定义 GPT 使用 g-<hex>，项目使用 g-p-<hex>。" }),
     shortUrl: z.string().optional(),
     name: z.string(),
     description: z.string().optional(),
@@ -337,19 +332,19 @@ const PublicGizmoSummary = z
   })
   .openapi({
     ref: "PublicGizmoSummary",
-    description: "Mirror's native Custom GPT / Project shape (normalizeGizmos() in @mirror/protocol), with the raw upstream payload stripped.",
+    description: "Mirror 原生自定义 GPT／项目数据结构（@mirror/protocol 中的 normalizeGizmos()），已剔除上游原始数据。",
   });
 
 /** Mirrors EgressStatus from egress.ts. */
 const EgressStatus = z
   .object({
     mode: z.enum(["direct", "warp"]),
-    required: z.boolean().openapi({ description: "Whether this deployment is configured to require verified WARP egress before it will serve traffic." }),
+    required: z.boolean().openapi({ description: "此部署是否配置为必须先验证 WARP 出口后才对外提供服务。" }),
     verified: z.boolean(),
     checkedAt: z.string().datetime().nullable(),
     error: z.string().nullable(),
   })
-  .openapi({ ref: "EgressStatus", description: "The result of Mirror's last Cloudflare WARP verification check (egress.ts)." });
+  .openapi({ ref: "EgressStatus", description: "Mirror 最近一次 Cloudflare WARP 出口验证的结果（egress.ts）。" });
 
 /** The shape stored/returned by store.ts's getInstructions(). */
 const InstructionMessage = z
@@ -359,17 +354,17 @@ const InstructionMessage = z
 const nativeApiPaths: ZodOpenApiPathsObject = {
   "/api/health": {
     get: {
-      summary: "Health check",
+      summary: "健康检查",
       tags: ["Mirror"],
       responses: {
         "200": {
-          description: "OK",
+          description: "成功",
           content: {
             "application/json": {
               schema: z.object({
-                ok: z.boolean().openapi({ description: "True only when storage is healthy and required WARP egress (if configured) is verified." }),
+                ok: z.boolean().openapi({ description: "仅当存储正常且已验证所需的 WARP 出口（如果启用）时为 true。" }),
                 storage: z.literal("sqlite"),
-                configured: z.boolean().openapi({ description: "Whether a ChatGPT session has been connected." }),
+                configured: z.boolean().openapi({ description: "是否已连接 ChatGPT 会话。" }),
                 egress: EgressStatus,
               }),
             },
@@ -380,17 +375,17 @@ const nativeApiPaths: ZodOpenApiPathsObject = {
   },
   "/api/session": {
     get: {
-      summary: "Check whether a ChatGPT session is configured",
+      summary: "检查是否已配置 ChatGPT 会话",
       tags: ["Mirror"],
       responses: {
         "200": {
-          description: "OK",
+          description: "成功",
           content: {
             "application/json": {
               schema: z.object({
                 configured: z.boolean(),
-                savedAt: z.string().datetime().nullable().openapi({ description: "ISO timestamp the session was last saved, or null if none is configured." }),
-                hasTurnstileToken: z.boolean().openapi({ description: "Whether one pending single-use challenge token is staged." }),
+                savedAt: z.string().datetime().nullable().openapi({ description: "会话最近一次保存的 ISO 时间戳；未配置时为 null。" }),
+                hasTurnstileToken: z.boolean().openapi({ description: "是否暂存了一个待使用的一次性验证令牌。" }),
               }),
             },
           },
@@ -398,41 +393,41 @@ const nativeApiPaths: ZodOpenApiPathsObject = {
       },
     },
     post: {
-      summary: "Connect Mirror to a ChatGPT account",
+      summary: "将 Mirror 连接到 ChatGPT 账号",
       tags: ["Mirror"],
       requestBody: { content: { "application/json": { schema: SetSessionBody } } },
       responses: {
         "200": {
-          description: "OK",
+          description: "成功",
           content: {
             "application/json": {
               schema: z.object({
                 ok: z.literal(true),
-                accountId: z.string().optional().openapi({ description: "The ChatGPT account id, when the upstream account lookup succeeded." }),
-                email: z.string().nullable().openapi({ description: "The account's email, when ChatGPT's /me endpoint returned one." }),
+                accountId: z.string().optional().openapi({ description: "上游账号查询成功时返回的 ChatGPT 账号 ID。" }),
+                email: z.string().nullable().openapi({ description: "ChatGPT 的 /me 接口返回的账号邮箱；未返回时为 null。" }),
               }),
             },
           },
         },
         "400": {
-          description: "Invalid session token",
+          description: "会话令牌无效",
           content: { "application/json": { schema: ErrorResponse } },
         },
       },
     },
     delete: {
-      summary: "Disconnect the configured ChatGPT session",
+      summary: "断开当前配置的 ChatGPT 会话",
       tags: ["Mirror"],
-      responses: { "200": { description: "OK", content: { "application/json": { schema: OkResponse } } } },
+      responses: { "200": { description: "成功", content: { "application/json": { schema: OkResponse } } } },
     },
   },
   "/api/models": {
     get: {
-      summary: "List models (Mirror's native shape, includes richer fields than /v1/models but no raw upstream payload)",
+      summary: "列出模型（Mirror 原生数据结构，字段比 /v1/models 更丰富，但不包含上游原始数据）",
       tags: ["Mirror"],
       responses: {
         "200": {
-          description: "OK",
+          description: "成功",
           content: { "application/json": { schema: z.array(PublicModelDescriptor) } },
         },
       },
@@ -440,11 +435,11 @@ const nativeApiPaths: ZodOpenApiPathsObject = {
   },
   "/api/gpts": {
     get: {
-      summary: "List Custom GPTs and Projects visible to this account",
+      summary: "列出当前账号可访问的自定义 GPT 和项目",
       tags: ["Mirror"],
       responses: {
         "200": {
-          description: "OK",
+          description: "成功",
           content: { "application/json": { schema: z.array(PublicGizmoSummary) } },
         },
       },
@@ -452,17 +447,17 @@ const nativeApiPaths: ZodOpenApiPathsObject = {
   },
   "/api/conversations": {
     get: {
-      summary: "List locally-known conversations, paginated",
+      summary: "分页列出本地已知会话",
       tags: ["Mirror"],
       requestParams: { query: ConversationsQuery },
       responses: {
         "200": {
-          description: "OK",
+          description: "成功",
           content: {
             "application/json": {
               schema: z.object({
                 items: z.array(StoredConversation),
-                total: z.number().int().openapi({ description: "Total conversation count for this account, independent of limit/offset." }),
+                total: z.number().int().openapi({ description: "当前账号的会话总数，不受 limit／offset 影响。" }),
                 hasMore: z.boolean(),
               }),
             },
@@ -471,135 +466,135 @@ const nativeApiPaths: ZodOpenApiPathsObject = {
       },
     },
     post: {
-      summary: "Create a new empty conversation",
+      summary: "创建一个空白会话",
       tags: ["Mirror"],
       requestBody: { content: { "application/json": { schema: NewConversationBody } } },
       responses: {
-        "200": { description: "OK", content: { "application/json": { schema: StoredConversation } } },
+        "200": { description: "成功", content: { "application/json": { schema: StoredConversation } } },
       },
     },
   },
   "/api/conversations/{id}": {
     get: {
-      summary: "Fetch a conversation and its messages",
+      summary: "获取会话及其消息",
       tags: ["Mirror"],
       requestParams: { path: ConversationIdParam },
       responses: {
         "200": {
-          description: "OK",
+          description: "成功",
           content: {
             "application/json": {
               schema: z.object({
                 conversation: StoredConversation,
                 messages: z.array(StoredMessage),
                 instructions: z.array(InstructionMessage).openapi({
-                  description: "Combined system/developer instructions synthesized for this conversation - see promptFor() in openai.ts.",
+                  description: "为此会话合并生成的 system／developer 指令，详见 openai.ts 中的 promptFor()。",
                 }),
               }),
             },
           },
         },
-        "404": { description: "Not found", content: { "application/json": { schema: ErrorResponse } } },
+        "404": { description: "未找到", content: { "application/json": { schema: ErrorResponse } } },
       },
     },
     patch: {
-      summary: "Change a conversation's model",
+      summary: "更改会话使用的模型",
       tags: ["Mirror"],
       requestParams: { path: ConversationIdParam },
       requestBody: { content: { "application/json": { schema: ModelUpdateBody } } },
       responses: {
-        "200": { description: "OK", content: { "application/json": { schema: StoredConversation.nullable() } } },
-        "404": { description: "Not found", content: { "application/json": { schema: ErrorResponse } } },
+        "200": { description: "成功", content: { "application/json": { schema: StoredConversation.nullable() } } },
+        "404": { description: "未找到", content: { "application/json": { schema: ErrorResponse } } },
       },
     },
     delete: {
-      summary: "Delete a conversation",
+      summary: "删除会话",
       tags: ["Mirror"],
       requestParams: { path: ConversationIdParam },
-      responses: { "200": { description: "OK", content: { "application/json": { schema: OkResponse } } } },
+      responses: { "200": { description: "成功", content: { "application/json": { schema: OkResponse } } } },
     },
   },
   "/api/conversations/{id}/stop": {
     post: {
-      summary: "Stop an in-flight generation",
+      summary: "停止正在进行的生成",
       tags: ["Mirror"],
       requestParams: { path: ConversationIdParam },
       responses: {
         "200": {
-          description: "OK",
+          description: "成功",
           content: {
             "application/json": {
-              schema: z.object({ ok: z.boolean().openapi({ description: "False if no generation was in flight for this conversation." }) }),
+              schema: z.object({ ok: z.boolean().openapi({ description: "如果此会话当时没有正在进行的生成，则为 false。" }) }),
             },
           },
         },
-        "404": { description: "Not found", content: { "application/json": { schema: ErrorResponse } } },
+        "404": { description: "未找到", content: { "application/json": { schema: ErrorResponse } } },
       },
     },
   },
   "/api/conversations/{id}/branch": {
     post: {
-      summary: "Fork a new branch from an existing message",
+      summary: "从现有消息创建新分支",
       tags: ["Mirror"],
       requestParams: { path: ConversationIdParam },
       requestBody: { content: { "application/json": { schema: BranchBody } } },
       responses: {
         "200": {
-          description: "OK",
+          description: "成功",
           content: { "application/json": { schema: StoredConversation.nullable() } },
         },
         "400": {
-          description: "Invalid branch point",
+          description: "分支起点无效",
           content: { "application/json": { schema: ErrorResponse } },
         },
-        "404": { description: "Not found", content: { "application/json": { schema: ErrorResponse } } },
+        "404": { description: "未找到", content: { "application/json": { schema: ErrorResponse } } },
       },
     },
   },
   "/api/decoder-challenges": {
     post: {
-      summary: "Generate a decoder challenge for the relayed official UI",
-      description: "Creates an ephemeral, session-scoped answer key valid for 24 hours or until restart/session change. The prompt carries base64(gzip(artifact)) and an optional format guide, never the answer key. Limited to 20 generations per minute and 64 active challenges.",
+      summary: "为代理的官方界面生成解码挑战",
+      description: "创建临时的会话级答案密钥，有效期为 24 小时，或直到服务重启／会话变更。提示词包含 base64(gzip(artifact)) 和可选格式指南，但绝不包含答案密钥。每分钟最多生成 20 次，同时最多保留 64 个有效挑战。",
       tags: ["Mirror"],
       requestBody: { content: { "application/json": { schema: ChallengeBody } } },
       responses: {
-        "200": { description: "Challenge prompt and downloadable artifact metadata", content: { "application/json": { schema: z.object({
+        "200": { description: "挑战提示词和可下载产物的元数据", content: { "application/json": { schema: z.object({
           id: z.string().uuid(), format: ChallengeBody.shape.format, label: z.string(), guidance: ChallengeBody.shape.guidance,
           payload: ChallengeBody.shape.payload, filename: z.string(), artifactBytes: z.number().int(), prompt: z.string(), expiresAt: z.number(),
         }) } } },
-        "400": { description: "Invalid options" }, "429": { description: "Generation limit or shelf capacity reached" },
+        "400": { description: "选项无效" }, "429": { description: "已达到生成频率限制或挑战容量上限" },
       },
     },
   },
   "/api/decoder-challenges/kit": {
     post: {
-      summary: "Download one to four challenge kits as a tar.gz archive",
-      description: "Each kit contains the encoded artifact, matching prompt, optional format guide, and instructions. No answer key is included.",
+      summary: "将 1 至 4 个挑战包下载为 tar.gz 压缩文件",
+      description: "每个挑战包包含编码产物、对应提示词、可选格式指南和操作说明，不包含答案密钥。",
       tags: ["Mirror"], requestBody: { content: { "application/json": { schema: ChallengeKitBody } } },
-      responses: { "200": { description: "Gzip-compressed tar archive", content: { "application/gzip": { schema: z.string().openapi({ format: "binary" }) } } }, "400": { description: "Invalid challenge IDs" }, "404": { description: "An included challenge expired or is unavailable" } },
+      responses: { "200": { description: "Gzip 压缩的 tar 归档文件", content: { "application/gzip": { schema: z.string().openapi({ format: "binary" }) } } }, "400": { description: "挑战 ID 无效" }, "404": { description: "其中一个挑战已过期或不可用" } },
     },
   },
   "/api/decoder-challenges/{id}/artifact": {
     get: {
-      summary: "Download the original encoded challenge artifact",
+      summary: "下载原始编码挑战产物",
       tags: ["Mirror"], requestParams: { path: ChallengeParams },
-      responses: { "200": { description: "LoaF text, PNG, or GIF attachment", content: { "application/octet-stream": { schema: z.string().openapi({ format: "binary" }) } } }, "404": { description: "Expired or unavailable challenge" } },
+      responses: { "200": { description: "LoaF 文本、PNG 或 GIF 附件", content: { "application/octet-stream": { schema: z.string().openapi({ format: "binary" }) } } }, "404": { description: "挑战已过期或不可用" } },
     },
   },
   "/api/decoder-challenges/{id}/verify": {
     post: {
-      summary: "Compare recovered payload bytes with the challenge answer key",
+      summary: "将恢复出的数据字节与挑战答案密钥进行比较",
       tags: ["Mirror"], requestParams: { path: ChallengeParams },
       requestBody: { content: { "application/json": { schema: ChallengeAnswer } } },
       responses: {
-        "200": { description: "Exact equality or positional byte comparison; no answer bytes are returned", content: { "application/json": { schema: z.object({ verdict: z.enum(["exact", "partial", "mismatch"]), matchingBytes: z.number().int(), expectedBytes: z.number().int(), actualBytes: z.number().int() }) } } },
-        "400": { description: "Invalid hexadecimal answer" }, "404": { description: "Expired or unavailable challenge" },
+        "200": { description: "返回完全匹配或按位置比较的结果；不会返回答案字节。", content: { "application/json": { schema: z.object({ verdict: z.enum(["exact", "partial", "mismatch"]), matchingBytes: z.number().int(), expectedBytes: z.number().int(), actualBytes: z.number().int() }) } } },
+        "400": { description: "十六进制答案无效" }, "404": { description: "挑战已过期或不可用" },
       },
     },
   },
   "/api/files": {
     post: {
-      summary: "Upload a file attachment (multipart/form-data)",
+      summary: "上传文件附件（multipart/form-data）",
       tags: ["Mirror"],
       requestBody: {
         content: {
@@ -609,46 +604,46 @@ const nativeApiPaths: ZodOpenApiPathsObject = {
                 file: z.string().openapi({
                   type: "string",
                   format: "binary",
-                  description: "A single file field, handled by @fastify/multipart. Exactly one file per request.",
+                  description: "单个文件字段，由 @fastify/multipart 处理。每个请求只能上传一个文件。",
                 }),
               })
-              .openapi({ description: "A single-file multipart/form-data upload." }),
+              .openapi({ description: "单文件 multipart/form-data 上传。" }),
           },
         },
       },
       responses: {
-        "200": { description: "OK", content: { "application/json": { schema: PublicUploadedFile } } },
-        "400": { description: "No file uploaded", content: { "application/json": { schema: ErrorResponse } } },
+        "200": { description: "成功", content: { "application/json": { schema: PublicUploadedFile } } },
+        "400": { description: "未上传文件", content: { "application/json": { schema: ErrorResponse } } },
       },
     },
   },
   "/api/asset-content": {
     get: {
-      summary: "Read a generated file using its sealed file-scoped link",
-      description: "No browser cookie or API key is needed. The sealed ticket grants read access to one output asset for seven days while the originating saved session remains connected. Resolves fresh upstream metadata and streams file bytes. download=1 sends Content-Disposition: attachment with the actual filename; otherwise supported images are served inline. Invalid tickets return 404. No arbitrary URL or pointer is accepted from the caller.",
+      summary: "使用受保护的文件专属链接读取生成文件",
+      description: "无需浏览器 Cookie 或 API 密钥。受保护的票据在原始已保存会话保持连接期间，授予对单个输出资源为期 7 天的读取权限。接口会重新解析上游元数据并流式传输文件字节。download=1 时通过 Content-Disposition: attachment 返回真实文件名；否则支持的图片会以内嵌方式显示。无效票据返回 404。调用方不能提交任意 URL 或资源指针。",
       security: [],
       tags: ["Mirror"],
       requestParams: { query: z.object({ ticket: z.string(), download: z.literal("1").optional() }) },
       responses: {
-        "200": { description: "File bytes with the original content type and a filename in Content-Disposition.", content: { "application/octet-stream": { schema: z.string().openapi({ format: "binary" }) } } },
-        "404": { description: "Expired, invalid, or disconnected-session file link." },
-        "502": { description: "The upstream file could not be retrieved." },
+        "200": { description: "文件字节，保留原始内容类型，并在 Content-Disposition 中提供文件名。", content: { "application/octet-stream": { schema: z.string().openapi({ format: "binary" }) } } },
+        "404": { description: "文件链接已过期、无效，或所属会话已断开。" },
+        "502": { description: "无法从上游获取文件。" },
       },
     },
   },
   "/api/assets": {
     get: {
-      summary: "Resolve a file-service:// or sediment:// asset pointer to a downloadable URL",
+      summary: "将 file-service:// 或 sediment:// 资源指针解析为可下载 URL",
       tags: ["Mirror"],
       requestParams: { query: AssetsQuery },
       responses: {
-        "302": { description: "Redirect to the resolved, time-limited asset URL." },
+        "302": { description: "重定向到已解析的限时资源 URL。" },
         "400": {
-          description: "Unsupported pointer",
+          description: "不支持的资源指针",
           content: { "application/json": { schema: ErrorResponse } },
         },
         "404": {
-          description: "Not found / not owned by this account",
+          description: "未找到 / not owned by this account",
           content: { "application/json": { schema: ErrorResponse } },
         },
       },
@@ -657,19 +652,14 @@ const nativeApiPaths: ZodOpenApiPathsObject = {
   "/api/chat": {
     post: {
       summary:
-        "Mirror's native streaming chat endpoint (text/event-stream), used by the proxied " +
-        "ChatGPT UI and Playground",
+        "Mirror 原生流式聊天接口（text/event-stream），供代理的 ChatGPT 界面和测试台使用",
       description:
-        "A text/event-stream of named SSE events: `delta` ({delta: string}) for each streamed " +
-        "text chunk, `event` for a NormalizedConversationEvent (tool/citation/image/file/marker/" +
-        "status only - assistant_text/message/raw are filtered out, see publicEvent() in " +
-        "index.ts), `done` (the final result) once the turn completes, or `error` ({message}) " +
-        "if generation fails or is stopped.",
+        "返回带名称的 SSE 事件流：每个文本块对应 `delta`（{delta: string}）；`event` 对应 NormalizedConversationEvent（仅包含 tool／citation／image／file／marker／status，assistant_text／message／raw 会被过滤，详见 index.ts 中的 publicEvent()）；本轮完成后发送 `done`（最终结果）；生成失败或被停止时发送 `error`（{message}）。",
       tags: ["Mirror"],
       requestBody: { content: { "application/json": { schema: ChatBody } } },
       responses: {
         "200": {
-          description: "text/event-stream of delta/event/done/error events - see the operation description.",
+          description: "包含 delta／event／done／error 事件的 text/event-stream，详见接口说明。",
           content: { "text/event-stream": { schema: z.string() } },
         },
       },
@@ -677,21 +667,21 @@ const nativeApiPaths: ZodOpenApiPathsObject = {
   },
   "/mirror/openapi": {
     get: {
-      summary: "This OpenAPI document",
+      summary: "此 OpenAPI 文档",
       tags: ["Mirror"],
       requestParams: {
         query: z.object({
           format: z.enum(["json", "yaml"]).default("json").openapi({
-            description: "?format=yaml returns YAML instead of the default JSON.",
+            description: "使用 ?format=yaml 可返回 YAML；默认返回 JSON。",
           }),
         }),
       },
       responses: {
         "200": {
-          description: "OK",
+          description: "成功",
           content: {
-            "application/json": { schema: z.object({}).passthrough().openapi({ description: "This same OpenAPI 3.1 document, as JSON." }) },
-            "application/yaml": { schema: z.string().openapi({ description: "This same OpenAPI 3.1 document, as YAML." }) },
+            "application/json": { schema: z.object({}).passthrough().openapi({ description: "同一份 OpenAPI 3.1 文档，以 JSON 格式返回。" }) },
+            "application/yaml": { schema: z.string().openapi({ description: "同一份 OpenAPI 3.1 文档，以 YAML 格式返回。" }) },
           },
         },
       },
@@ -744,15 +734,9 @@ export function buildOpenApiDocument(): oas31.OpenAPIObject {
       title: "Mirror API",
       version: "0.1.0",
       description:
-        "Mirror exposes two API surfaces on top of a single ChatGPT account: an OpenAI-" +
-        "compatible surface under /v1 (for use with any OpenAI SDK or tool), and Mirror's " +
-        "own /api surface (used by the proxied ChatGPT UI and the Playground). See " +
-        "README.md for setup and COMPATIBILITY.md for exactly where the /v1 surface does " +
-        "and doesn't match the real OpenAI API. This document, request schemas included, " +
-        "is generated from the Zod schemas the server validates requests against and the " +
-        "TypeScript types its routes return (see openapi-document.ts).",
+        "Mirror 基于同一个 ChatGPT 账号提供两组 API：/v1 下的 OpenAI 兼容接口（可供 OpenAI SDK 或其他工具调用），以及 Mirror 自己的 /api 接口（供代理的 ChatGPT 界面和测试台使用）。部署方法见 README.md；/v1 接口与官方 OpenAI API 的具体差异见 COMPATIBILITY.md。本文档（包括请求结构）由服务器实际用于验证请求的 Zod 结构以及路由返回的 TypeScript 类型自动生成，详见 openapi-document.ts。",
     },
-    servers: [{ url: "/", description: "This Mirror instance" }],
+    servers: [{ url: "/", description: "当前 Mirror 实例" }],
     security: [{ mirrorApiKey: [] }],
     components: {
       securitySchemes: {
@@ -760,25 +744,22 @@ export function buildOpenApiDocument(): oas31.OpenAPIObject {
           type: "http",
           scheme: "bearer",
           description:
-            "A value from MIRROR_API_KEY / MIRROR_API_KEYS. Required for /v1/* and /api/* " +
-            "requests that aren't coming from a browser tab that has already completed the " +
-            "Mirror controls sessionToken bootstrap (which instead authenticates via an " +
-            "HttpOnly mirror_control cookie).",
+            "取自 MIRROR_API_KEY 或 MIRROR_API_KEYS 的值。/v1/* 和 /api/* 请求必须提供此密钥；已在浏览器标签页中完成 Mirror 控制面 sessionToken 初始化的请求除外，这类请求改用 HttpOnly mirror_control Cookie 进行身份验证。",
         },
       },
     },
     paths: {
       "/v1/models": {
         get: {
-          summary: "List available models",
+          summary: "列出可用模型",
           description:
             "Real ChatGPT model slugs plus Custom GPT / Project pseudo-models the account " +
             "can chat with.",
           tags: ["OpenAI-compatible"],
           responses: {
-            "200": { description: "OK", content: { "application/json": { schema: ModelsResponse } } },
+            "200": { description: "成功", content: { "application/json": { schema: ModelsResponse } } },
             "401": {
-              description: "Missing/invalid Mirror API key",
+              description: "缺少或无效的 Mirror API 密钥",
               content: { "application/json": { schema: ErrorResponse } },
             },
           },
@@ -786,21 +767,21 @@ export function buildOpenApiDocument(): oas31.OpenAPIObject {
       },
       "/v1/responses": {
         post: {
-          summary: "Create a text response",
-          description: "Text-only Responses subset using Mirror conversation semantics. Continue with metadata.conversation_id or full input history. No previous_response_id, retrieval, tools, or background mode. max_output_tokens is accepted but ignored. store=false is a non-resumable one-shot.",
+          summary: "创建文本响应",
+          description: "仅支持文本的 Responses API 子集，使用 Mirror 会话语义。可通过 metadata.conversation_id 或完整 input 历史继续会话。不支持 previous_response_id、检索、工具或后台模式。接受 max_output_tokens 参数但会忽略；store=false 表示不可恢复的单次请求。",
           tags: ["OpenAI-compatible"],
           requestBody: { content: { "application/json": { schema: ResponsesBody } } },
           responses: {
-            "200": { description: "Response object with assistant output_text parts, or named Responses SSE events ending in response.completed (response.failed on failure). usage is null.",
+            "200": { description: "返回包含助手 output_text 内容的响应对象，或以 response.completed 结束的命名 Responses SSE 事件（失败时为 response.failed）。usage 为 null。",
               content: { "application/json": { schema: z.object({ id: z.string(), object: z.literal("response"), status: z.literal("completed"), output: z.array(z.object({ type: z.literal("message"), role: z.literal("assistant"), content: z.array(z.object({ type: z.literal("output_text"), text: z.string() }).passthrough()) }).passthrough()), metadata: z.record(z.string()), usage: z.null() }).passthrough() }, "text/event-stream": { schema: z.string() } } },
-            "400": { description: "Invalid or unsupported input", content: { "application/json": { schema: ErrorResponse } } },
-            "401": { description: "Missing/invalid Mirror API key", content: { "application/json": { schema: ErrorResponse } } },
+            "400": { description: "输入无效或不受支持", content: { "application/json": { schema: ErrorResponse } } },
+            "401": { description: "缺少或无效的 Mirror API 密钥", content: { "application/json": { schema: ErrorResponse } } },
           },
         },
       },
       "/v1/chat/completions": {
         post: {
-          summary: "Create a chat completion",
+          summary: "创建聊天补全",
           description:
             "OpenAI Chat Completions-shaped endpoint backed by chatgpt.com/backend-api. See " +
             "COMPATIBILITY.md for the full list of what is and isn't supported relative to " +
@@ -812,7 +793,7 @@ export function buildOpenApiDocument(): oas31.OpenAPIObject {
           responses: {
             "200": {
               description:
-                "OK. When stream=true this is a text/event-stream of OpenAI-shaped " +
+                "成功. When stream=true this is a text/event-stream of OpenAI-shaped " +
                 "chat.completion.chunk SSE events instead of a single JSON body.",
               content: {
                 "application/json": { schema: CompletionResponse },
@@ -820,11 +801,11 @@ export function buildOpenApiDocument(): oas31.OpenAPIObject {
               },
             },
             "400": {
-              description: "Invalid or unsupported request field",
+              description: "请求字段无效或不受支持",
               content: { "application/json": { schema: ErrorResponse } },
             },
             "401": {
-              description: "Missing/invalid Mirror API key",
+              description: "缺少或无效的 Mirror API 密钥",
               content: { "application/json": { schema: ErrorResponse } },
             },
           },
