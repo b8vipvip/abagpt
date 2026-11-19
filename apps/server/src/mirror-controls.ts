@@ -44,6 +44,17 @@ export const injectionCss = decoderChallengeCss + `
  */
 export const injectionJs = decoderChallengeJs + `\n(()=>{
 var widgetRoot=null;
+function localizeMirrorError(error){
+  var message=error&&error.message?String(error.message):String(error||'');
+  if(/[\u3400-\u9fff]/.test(message))return message;
+  if(/failed to fetch|networkerror|network request failed|load failed|offline/i.test(message))return '网络连接失败，请检查服务器地址和网络后重试。';
+  var match=message.match(/(?:HTTP\\s*)?([45]\\d{2})\\b/i);
+  if(match){
+    var labels={'400':'请求参数无效，请检查输入内容。','401':'身份验证失败，请重新连接 ChatGPT 会话。','403':'当前账号没有执行此操作的权限。','404':'请求的资源不存在或已过期。','409':'会话状态已变化，请刷新后重试。','422':'输入内容无法处理，请检查参数。','429':'请求过于频繁，请稍后再试。','500':'服务器内部发生错误，请稍后重试。','502':'上游服务暂时不可用，请检查网络或 WARP 连接。','503':'服务暂时不可用，请稍后重试。','504':'请求处理超时，请稍后重试。'};
+    return labels[match[1]]||'服务器请求失败，请稍后重试。';
+  }
+  return '操作失败，请检查会话令牌和服务器连接后重试。';
+}
 function buildWidget(){
   var root=document.createElement('div');
   root.id='mirror-launcher';
@@ -93,9 +104,9 @@ function wireWidget(root){
     try{
       var r=await fetch('/api/session',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({sessionToken:token})});
       var b=await r.json();
-      if(!r.ok)throw Error(b.error||'无法连接');
+      if(!r.ok){var err=b.error;var message=typeof err==='string'?err:(err&&typeof err.message==='string'?err.message:'');throw Error(message?message+' (HTTP '+r.status+')':'HTTP '+r.status);}
       area.value='';status.textContent='连接成功，正在刷新…';location.reload();
-    }catch(e){status.textContent=e.message||String(e);}
+    }catch(e){status.textContent=localizeMirrorError(e);}
   };
   fetch('/api/session').then(function(r){return r.json();}).then(function(s){
     root.querySelector('.mirror-dot').style.background=s.configured?'#19c59a':'#e7a83d';
