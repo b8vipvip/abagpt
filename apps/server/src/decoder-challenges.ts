@@ -6,7 +6,7 @@ import { makeLoaf } from "./loaf.js";
 import { encodePngSpeak } from "./pngspeak.js";
 import { encodeGptgif } from "./gptgif.js";
 import { encodeGptgifV4 } from "./gptgif-v4.js";
-import { decoderGuides } from "./decoder-challenge-guides.js";
+import { decoderGuides, decoderGuidesZh } from "./decoder-challenge-guides.js";
 
 export const ChallengeBody = z.object({
   format: z.enum(["loaf", "pngspeak", "gptgif", "gptgif-v4"]),
@@ -75,7 +75,7 @@ export function registerDecoderChallengeRoutes(app: FastifyInstance, scope: () =
       entries.push(
         { name: `${prefix}/decoder-${id}.${format.extension}`, content: challenge.artifact },
         { name: `${prefix}/prompt.txt`, content: Buffer.from(challenge.prompt) },
-        { name: `${prefix}/format-guide.txt`, content: Buffer.from(decoderGuides[challenge.format]) },
+        { name: `${prefix}/format-guide.txt`, content: Buffer.from(decoderGuidesZh[challenge.format]) },
         { name: `${prefix}/README.txt`, content: Buffer.from(`${kitFormatLabel} 解码挑战 ${id}\n\n请将 prompt.txt 粘贴到 ChatGPT，或将 prompt.txt 作为附件发送给 GPT，并要求它解决其中描述的挑战。\n提示词中包含经过压缩的编码文件完整副本。压缩包也单独提供，供你检查。\nformat-guide.txt 是可选提示。如果你希望 GPT 独立完成挑战，请不要把它提供给 GPT。\n请在 Mirror 控制台 > 解码挑战中检查带标记的答案，并从“最近的挑战”中选择本挑战。\n答案密钥将于 ${new Date(challenge.expiresAt).toISOString()} 过期，或在 Mirror 重启／会话变更时失效。过期后，压缩包仍可用于独立解码。\n压缩包不包含答案密钥。\n`) },
       );
     }
