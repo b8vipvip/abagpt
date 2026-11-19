@@ -420,28 +420,61 @@ a {
 }
 @media (max-width: 900px) {
   .playground-app {
-    grid-template: 56px 1fr/1fr;
+    grid-template: auto 1fr / minmax(0, 1fr);
   }
   .playground-sidebar {
     display: none;
   }
+  .platform-header {
+    min-height: 56px;
+    height: auto;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 10px 16px;
+  }
+  .platform-header nav {
+    display: flex;
+    order: 3;
+    width: 100%;
+    align-self: auto;
+    gap: 16px;
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: thin;
+  }
+  .platform-header nav a {
+    flex: 0 0 auto;
+    min-height: 36px;
+  }
+  .environment {
+    margin-left: auto;
+  }
+  .workbench-head {
+    height: auto;
+    min-height: 88px;
+    padding: 16px;
+    gap: 12px;
+  }
+  .workbench-head > div:first-child {
+    min-width: 0;
+  }
+  .run-actions {
+    flex-shrink: 0;
+  }
   .columns {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .response-panel,
   .settings-panel {
     border-top: 1px solid #ddd;
   }
   .connection-bar {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .messages-editor,
   .output {
     height: auto;
     min-height: 320px;
-  }
-  .platform-header nav {
-    display: none;
   }
 }
 .model-picker-row {
@@ -550,12 +583,84 @@ a {
 .utility-panel label { margin: 10px 0; }
 .output { overflow-wrap: anywhere; }
 @media (max-width: 700px) {
-  .platform-header { flex-wrap: wrap; height: auto; gap: 10px; padding: 12px; }
-  .platform-header nav { flex-wrap: wrap; }
-  .connection-bar { display: flex; flex-direction: column; }
-  .columns { display: flex; flex-direction: column; }
-  .settings-panel, .prompt-panel, .response-panel { width: 100%; min-width: 0; }
-  .workbench { min-width: 0; }
+  .platform-header {
+    flex-wrap: wrap;
+    height: auto;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+  .platform-brand {
+    min-width: 0;
+  }
+  .environment {
+    padding: 5px 7px;
+    font-size: 11px;
+  }
+  .platform-header nav {
+    display: flex;
+    flex-wrap: nowrap;
+    width: 100%;
+    gap: 14px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .platform-header nav a {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+  .workbench,
+  .workbench-head > div:first-child {
+    min-width: 0;
+  }
+  .workbench-head {
+    height: auto;
+    min-height: 0;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 14px 12px;
+    gap: 12px;
+  }
+  .workbench-head h1 {
+    font-size: 18px;
+  }
+  .run-actions {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+  .connection-bar {
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+  }
+  .columns {
+    display: flex;
+    flex-direction: column;
+  }
+  .settings-panel,
+  .prompt-panel,
+  .response-panel {
+    width: 100%;
+    min-width: 0;
+    padding: 16px 12px;
+  }
+  .model-picker-row {
+    flex-wrap: wrap;
+  }
+  .model-picker-row select,
+  .model-picker-row input {
+    min-width: 0;
+    flex: 1 1 100%;
+  }
+  .model-mode-toggle {
+    min-height: 36px;
+    font-size: 12px;
+  }
+  .messages-editor,
+  .output {
+    min-height: 260px;
+    padding: 14px;
+  }
 }
 .command-palette-backdrop {
   position: fixed;
