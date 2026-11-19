@@ -224,6 +224,23 @@ test("an invalid function tool is rejected before calling ChatGPT", async () => 
   assert.match(res.json().error.message, /Tool names/);
 });
 
+test("tool result messages without function definitions are rejected outside the tool bridge", async () => {
+  useSession("account-tool-result-without-tools");
+  const res = await app.inject({
+    method: "POST",
+    url: "/v1/chat/completions",
+    payload: {
+      model: "auto",
+      messages: [
+        { role: "user", content: "read this" },
+        { role: "tool", tool_call_id: "call_1", content: "file data" },
+      ],
+    },
+  });
+  assert.equal(res.statusCode, 400);
+  assert.match(res.json().error.message, /Tool messages are not supported/);
+});
+
 test("a final message that isn't from the user is rejected", async () => {
   useSession("account-validate-4");
   const res = await app.inject({
