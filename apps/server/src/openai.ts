@@ -377,6 +377,10 @@ export function remainingStreamText(responseText: string, emittedText: string): 
 export { CompletionBody, OpenAiMessage, ContentPart };
 export type { TextPart };
 
+export function toolBridgeErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : "Tool bridge failed";
+}
+
 export async function registerOpenAiRoutes(
   app: FastifyInstance,
 ): Promise<void> {
@@ -498,7 +502,7 @@ export async function registerOpenAiRoutes(
         if (bridgeHeartbeat) clearInterval(bridgeHeartbeat);
         const upstreamResponseText = (error as { upstreamResponseText?: unknown })?.upstreamResponseText;
         const status = Number((error as { statusCode?: number; status?: number }).statusCode ?? (error as { status?: number }).status ?? 502);
-        const message = error instanceof Error ? error.message : "Tool bridge failed";
+        const message = toolBridgeErrorMessage(error);
         const envelope = apiError(status, message, req.id);
         if (bridgeStream) {
           if (!reply.raw.destroyed) { sse(reply, envelope); sse(reply, "[DONE]"); reply.raw.end(); }
