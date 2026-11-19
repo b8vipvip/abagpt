@@ -40,6 +40,17 @@ function save(){try{sessionStorage.setItem(storageKey,JSON.stringify({activeId:a
 function remember(challenge){active=challenge;history.unshift(challenge);history=history.slice(0,16);save();render();field('answer').value='';}
 function field(name){return dialog.querySelector('[data-md="'+name+'"]');}
 function status(text,verdict){field('status').textContent=text;field('status').dataset.verdict=verdict||'';}
+function localizeError(error){
+  var message=error&&error.message?String(error.message):String(error||'');
+  if(/[\u3400-\u9fff]/.test(message))return message;
+  if(/failed to fetch|networkerror|network request failed|load failed|offline/i.test(message))return '网络连接失败，请检查服务器地址和网络后重试。';
+  var match=message.match(/(?:HTTP\s*)?([45]\d{2})\b/i);
+  if(match){
+    var labels={'400':'请求参数无效，请检查输入内容。','401':'身份验证失败，请重新连接 ChatGPT 会话。','403':'当前账号没有执行此操作的权限。','404':'挑战不存在或已过期，请重新生成。','409':'挑战状态已变化，请重新加载后重试。','422':'输入内容无法处理，请检查答案格式。','429':'请求过于频繁，请稍后再试。','500':'服务器内部发生错误，请稍后重试。','502':'上游服务暂时不可用，请检查网络或 WARP 连接。','503':'服务暂时不可用，请稍后重试。','504':'请求处理超时，请稍后重试。'};
+    return labels[match[1]]||'服务器请求失败，请稍后重试。';
+  }
+  return '操作失败，请检查网络和 ChatGPT 会话后重试。';
+}
 function render(){
   field('recent').replaceChildren();
   history.forEach(function(item){
@@ -61,7 +72,7 @@ function render(){
 async function request(url,body){
   var r=await fetch(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
   var data=await r.json();
-  if(!r.ok)throw Error(typeof data.error==='string'?data.error:(data.error&&data.error.message)||'Mirror 请求失败。');
+  if(!r.ok){var err=data.error;var message=typeof err==='string'?err:(err&&typeof err.message==='string'?err.message:'');throw Error(message?message+' (HTTP '+r.status+')':'HTTP '+r.status);}
   return data;
 }
 function downloadBlob(blob,filename){
@@ -70,14 +81,14 @@ function downloadBlob(blob,filename){
 }
 async function downloadKit(ids){
   var r=await fetch('/api/decoder-challenges/kit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({ids:ids})});
-  if(!r.ok){var error=await r.json();throw Error(error.error||'无法下载挑战套件。');}
+  if(!r.ok){var error=await r.json();var err=error.error;var message=typeof err==='string'?err:(err&&typeof err.message==='string'?err.message:'');throw Error(message?message+' (HTTP '+r.status+')':'HTTP '+r.status);}
   downloadBlob(await r.blob(),'mirror-decoder-kits.tar.gz');
 }
 async function run(action){
   if(busy)return;
   busy=true;
   dialog.querySelectorAll('button:not(.md-close),select').forEach(function(b){b.disabled=true;});
-  try{await action();}catch(e){status(e.message||String(e));}
+  try{await action();}catch(e){status(localizeError(e));}
   finally{busy=false;dialog.querySelectorAll('button,select').forEach(function(b){b.disabled=false;});}
 }
 function markedAnswer(text){
@@ -150,7 +161,7 @@ function build(){
     var note=kind==='explain'?'Explain how the format represents bytes, then demonstrate with a tiny valid example. If code execution is available, generate and inspect the exact bytes.':'Produce the actual artifact bytes or a complete reproducible script that creates them. Keep a manifest of files/bytes, describe format-specific tradeoffs, and end with a short CHANGELOG for the next iteration. Do not pretend an image is ordinary visual art if it is carrying data.';
     var response=await fetch('/api/convert/gpt-prompt',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({dataBase64:briefBase64(brief),format:format,filename:'format-lab-brief.txt',note:note})});
     var data=await response.json();
-    if(!response.ok)throw Error(data.error||'转换接口无法生成此格式的提示词。');
+    if(!response.ok){var err=data.error;var message=typeof err==='string'?err:(err&&typeof err.message==='string'?err.message:'');throw Error(message?message+' (HTTP '+response.status+')':'HTTP '+response.status);}
     return data.prompt+'\n\nYou are collaborating with Mirror Format Lab. '+lead+' a '+format+' artifact for this brief: '+brief+'\nUse the format exactly as described above, preserve Unicode and binary bytes, and clearly label anything that is a lossy visual experiment. Mirror will display the resulting file and can feed a later remix back to you.';
   }
   async function putWorkshopPrompt(kind){var text=await workshopPrompt(kind);field('prompt').value=text;field('prompt').closest('details').open=true;status('创作需求已准备就绪。请将其插入对话，或复制后发送给 GPT。');}
