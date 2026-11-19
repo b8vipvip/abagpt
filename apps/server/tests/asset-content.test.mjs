@@ -56,7 +56,9 @@ test("Google image and download requests get real bytes without a browser bearer
 test("invalid, modified, expired and disconnected-account tickets never reach upstream", async () => {
   globalThis.fetch = async () => assert.fail("Invalid capability reached upstream");
   for (const token of ["invalid", ticket().slice(0, -3) + "bad", store.sealAssetTicket({ pointer, conversationId: "upstream", messageId: "answer", fileName: "test.png" }, Date.now() - 8 * 86400000)]) {
-    const invalid = await request(token);\n    assert.equal(invalid.statusCode, 404);\n    assert.equal(JSON.parse(invalid.body).error, "文件链接已过期或不可用，请在对话中重新获取文件链接。");
+    const invalid = await request(token);
+    assert.equal(invalid.statusCode, 404);
+    assert.equal(JSON.parse(invalid.body).error, "文件链接已过期或不可用，请在对话中重新获取文件链接。");
   }
   const old = ticket(); store.clearSession(); assert.equal((await request(old)).statusCode, 404);
   store.saveVerifiedSession("another-synthetic-session", "other-account", "other-device");
@@ -137,7 +139,9 @@ test("literal percent filenames, generic downloads, missing tickets and network 
   assert.equal(links.fileName, "report%.csv");
   const res = await request(new URL(links.downloadUrl).searchParams.get("ticket"));
   assert.equal(res.statusCode, 200); assert.equal(res.headers["content-type"], "application/octet-stream");
-  const missingTicket = await app.inject({ url: "/api/asset-content" });\n  assert.equal(missingTicket.statusCode, 404);\n  assert.equal(missingTicket.json().error, "文件链接已过期或不可用，请在对话中重新获取文件链接。");
+  const missingTicket = await app.inject({ url: "/api/asset-content" });
+  assert.equal(missingTicket.statusCode, 404);
+  assert.equal(missingTicket.json().error, "文件链接已过期或不可用，请在对话中重新获取文件链接。");
   globalThis.fetch = async () => { throw new Error("private upstream failure"); };
   const failure = await request(); assert.equal(failure.statusCode, 502); assert.equal(failure.json().error, "文件当前不可用，请在对话中重新获取文件链接。"); assert.doesNotMatch(failure.body, /private/);
   const { assetFileName } = await import("../dist/asset-links.js");
