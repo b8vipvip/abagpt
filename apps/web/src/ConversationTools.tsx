@@ -107,7 +107,7 @@ export function ConversationTools({
         disabled={disabled || !query.trim()}
         onClick={() => void search()}
       >
-        Search history
+        搜索历史
       </button>
       <p role="status">{status}</p>
       <ul>
@@ -122,7 +122,7 @@ export function ConversationTools({
       {conversationId && (
         <>
           <button disabled={disabled} onClick={() => void refreshBranches()}>
-            Show conversation branches
+            查看会话分支
           </button>
           {branches?.selected === conversationId && (
             <>
@@ -164,7 +164,7 @@ export function ConversationTools({
                           disabled={disabled}
                           onClick={() => void branch(node.id)}
                         >
-                          Continue from this assistant
+                          从此助手消息继续
                         </button>
                       )}
                     </li>
