@@ -144,7 +144,7 @@ const accountKey = () => getSession()?.accountId ?? "default";
 app.addHook("onRequest", async (req, reply) => {
   reply.header("x-request-id", req.id);
   if (!isAllowedRequestHost(req.headers.host)) {
-    return reply.code(421).send({ error: "Untrusted Host header" });
+    return reply.code(421).send({ error: "请求主机名不受信任。" });
   }
   // Image tags and new-tab downloads cannot attach a Mirror bearer header.
   // This exact read-only route validates its own sealed, file-scoped ticket.
@@ -152,7 +152,7 @@ app.addHook("onRequest", async (req, reply) => {
   if (isPublicApiPath(req.url) && !isAllowedOrigin(req.headers.origin, req.headers.host)) {
     if (!tokenMatches(bearerToken(req.headers.authorization), configuredApiKeys())) {
       return reply.code(401).send({ error: {
-        message: "Cross-origin API requests require a configured Mirror API key",
+        message: "跨域 API 请求需要配置有效的 Mirror API 密钥。",
         type: "authentication_error",
       } });
     }
@@ -162,10 +162,10 @@ app.addHook("onRequest", async (req, reply) => {
   if (mutating && !isAllowedOrigin(req.headers.origin, req.headers.host)) {
     return reply
       .code(403)
-      .send({ error: "Cross-origin control request rejected" });
+      .send({ error: "已拒绝跨域控制请求。" });
   }
   if (req.headers.origin && !isAllowedOrigin(req.headers.origin, req.headers.host))
-    return reply.code(403).send({error: "Origin rejected"});
+    return reply.code(403).send({error: "请求来源未获允许。"});
   if (mayBootstrapBrowser(req.method, req.url, req.headers)) {
     req.log.info({ url: req.url }, "setting control cookie for bootstrap");
     reply.header("Set-Cookie", controlCookie());
@@ -173,7 +173,7 @@ app.addHook("onRequest", async (req, reply) => {
   }
   if (req.url === "/api/health" || req.url.startsWith("/mirror/assets/")) return;
   if (!authorizedLocalRequest(req.headers)) {
-    return reply.code(401).send({ error: { message: "Open Mirror in your browser or supply a configured Mirror API key", type: "authentication_error" } });
+    return reply.code(401).send({ error: { message: "请在浏览器中打开 Mirror，或提供已配置的 Mirror API 密钥。", type: "authentication_error" } });
   }
 });
 
@@ -204,10 +204,10 @@ app.setErrorHandler((error, _req, reply) => {
     error instanceof ZodError
       ? error.issues.map((issue) => issue.message).join("; ")
       : status >= 500
-        ? "Internal server error"
+        ? "服务器内部发生错误。"
         : error instanceof Error
           ? error.message
-          : "Request failed";
+          : "请求失败。";
   if (status >= 500) app.log.error({ err: error }, "request failed");
   reply.code(status).send({ error: message });
 });
@@ -331,7 +331,7 @@ app.get("/api/conversations/:id", async (req, reply) => {
   const { id } = ConversationIdParam.parse(req.params);
   let conversation = getConversation(id);
   if (conversation?.accountId !== accountKey())
-    return reply.code(404).send({ error: "Conversation not found" });
+    return reply.code(404).send({ error: "未找到会话。" });
   if (conversation.conversationId && listMessages(id).length === 0) {
     const client = new ChatGptBackendClient(await getValidCredentials());
     conversation = importRemoteConversation(
@@ -349,7 +349,7 @@ app.patch("/api/conversations/:id", async (req, reply) => {
   // browsed, loaded, and managed through these routes.
   const { id } = ConversationIdParam.parse(req.params);
   if (getConversation(id)?.accountId !== accountKey())
-    return reply.code(404).send({ error: "Conversation not found" });
+    return reply.code(404).send({ error: "未找到会话。" });
   return setConversationModel(id, ModelUpdateBody.parse(req.body).model);
 });
 app.delete("/api/conversations/:id", async (req) => {
@@ -372,7 +372,7 @@ app.post("/api/conversations/:id/stop", async (req, reply) => {
   // browsed, loaded, and managed through these routes.
   const { id } = ConversationIdParam.parse(req.params);
   if (getConversation(id)?.accountId !== accountKey())
-    return reply.code(404).send({ error: "Conversation not found" });
+    return reply.code(404).send({ error: "未找到会话。" });
   return { ok: stopConversation(id) };
 });
 app.post("/api/conversations/:id/branch", async (req, reply) => {
@@ -383,7 +383,7 @@ app.post("/api/conversations/:id/branch", async (req, reply) => {
   // browsed, loaded, and managed through these routes.
   const { id } = ConversationIdParam.parse(req.params);
   if (getConversation(id)?.accountId !== accountKey())
-    return reply.code(404).send({ error: "Conversation not found" });
+    return reply.code(404).send({ error: "未找到会话。" });
   const body = BranchBody.parse(req.body);
   const target = listMessages(id).find(
     (message) => message.id === body.messageId && message.upstreamNodeId,
@@ -391,7 +391,7 @@ app.post("/api/conversations/:id/branch", async (req, reply) => {
   if (!target?.upstreamNodeId)
     return reply
       .code(400)
-      .send({ error: "That message cannot be used as a branch point" });
+      .send({ error: "该消息不能用作会话分支节点。" });
   return branchConversation(
     id,
     target.upstreamNodeId,
@@ -402,7 +402,7 @@ app.post("/api/conversations/:id/branch", async (req, reply) => {
 
 app.post("/api/files", async (req, reply) => {
   const part = await req.file();
-  if (!part) return reply.code(400).send({ error: "No file uploaded" });
+  if (!part) return reply.code(400).send({ error: "未上传文件。" });
   const data = await part.toBuffer();
   const client = new ChatGptBackendClient(await getValidCredentials());
   await client.fetchMe().catch(() => undefined);
@@ -422,20 +422,20 @@ app.get("/api/assets", async (req, reply) => {
     !query.pointer.startsWith("file-service://") &&
     !query.pointer.startsWith("sediment://")
   ) {
-    return reply.code(400).send({ error: "Unsupported asset pointer" });
+    return reply.code(400).send({ error: "不支持的资源指针。" });
   }
   if (
     query.pointer.startsWith("file-service://") &&
     !ownsFile(query.pointer.slice("file-service://".length), accountKey())
   ) {
-    return reply.code(404).send({ error: "File not found" });
+    return reply.code(404).send({ error: "未找到文件。" });
   }
   if (
     query.pointer.startsWith("sediment://") &&
     (!query.upstreamConversationId ||
       !ownsUpstreamConversation(query.upstreamConversationId, accountKey()))
   ) {
-    return reply.code(404).send({ error: "Conversation asset not found" });
+    return reply.code(404).send({ error: "未找到会话资源。" });
   }
   const client = new ChatGptBackendClient(await getValidCredentials());
   const url = await client.resolveAssetDownload(
@@ -471,7 +471,7 @@ app.post("/api/chat", async (req, reply) => {
   ) {
     return reply
       .code(404)
-      .send({ error: "One or more attachments do not belong to this account" });
+      .send({ error: "一个或多个附件不属于当前账号。" });
   }
   const controller = new AbortController();
   req.raw.once("aborted", () => controller.abort());
@@ -521,7 +521,7 @@ app.post("/api/chat", async (req, reply) => {
     send("error", {
       message:
         error instanceof Error && error.name === "AbortError"
-          ? "Generation stopped"
+          ? "生成已停止。"
           : String((error as Error)?.message ?? error),
     });
   } finally {
@@ -588,7 +588,7 @@ app.setNotFoundHandler(async (req, reply) => {
   // Every Mirror-owned /api route is registered above. Any remaining route may
   // belong to the official ChatGPT frontend and must be proxied upstream.
   if (req.url.startsWith("/v1/"))
-    return reply.code(404).send({ error: "Not found" });
+    return reply.code(404).send({ error: "未找到请求的资源。" });
   return proxyChatGpt(req, reply);
 });
 
