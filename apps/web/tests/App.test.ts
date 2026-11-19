@@ -1301,7 +1301,7 @@ test("Test connection surfaces a failed diagnostics call without touching model 
   const panel = connectionToolsPanel();
   const callsBeforeClick = modelsCalls;
   fireEvent.click(within(panel).getByRole("button", { name: "测试连接" }));
-  await within(panel).findByText("诊断接口返回 HTTP 500");
+  await within(panel).findByText("连接测试失败：诊断接口返回 HTTP 500");
   assert.equal(modelsCalls, callsBeforeClick);
 });
 
@@ -1322,14 +1322,14 @@ test("Test connection rejects a model-discovery response whose data field isn't 
   ]);
   const panel = connectionToolsPanel();
   fireEvent.click(within(panel).getByRole("button", { name: "测试连接" }));
-  await within(panel).findByText("模型列表接口返回了不受支持的数据格式。");
+  await within(panel).findByText("连接测试失败：模型列表接口返回了不受支持的数据格式。");
 });
 
 test("Test connection falls back to a generic message when a non-Error value is thrown", async () => {
   await renderApp([[/^\/api\/diagnostics$/, () => { throw "network offline"; }]]);
   const panel = connectionToolsPanel();
   fireEvent.click(within(panel).getByRole("button", { name: "测试连接" }));
-  await within(panel).findByText("连接测试失败");
+  await within(panel).findByText("连接测试失败：network offline");
 });
 
 test("the generation-status note reflects whether a Playground run has completed yet", async () => {
