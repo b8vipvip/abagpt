@@ -18,7 +18,7 @@ export function ConnectionTools({ domain, apiKey, generationSucceeded }: { domai
       if (!models.ok) throw new Error(`模型列表接口返回 HTTP ${models.status}。请检查 API Key、WARP 和已保存的会话。`);
       const body = await models.json();
       if (!Array.isArray(body.data)) throw new Error("模型列表接口返回了不受支持的数据格式。");
-      setStatus(`模型列表获取成功（${body.data.length} 个模型）。${apiKey ? "已提供 Bearer 凭证。" : "已使用浏览器身份验证；尚未测试客户端 API Key。"}`);
+      setStatus(`模型列表获取成功（${body.data.length} 个模型）。${apiKey ? "已提供 API 密钥（Bearer）。" : "已使用浏览器身份验证；尚未测试客户端 API 密钥。"}`);
     } catch (error) { setStatus(error instanceof Error ? error.message : "连接测试失败"); }
     finally { setBusy(false); }
   }
