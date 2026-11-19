@@ -1329,7 +1329,7 @@ test("Test connection falls back to a generic message when a non-Error value is 
   await renderApp([[/^\/api\/diagnostics$/, () => { throw "unclassified failure"; }]]);
   const panel = connectionToolsPanel();
   fireEvent.click(within(panel).getByRole("button", { name: "测试连接" }));
-  await within(panel).findByText("连接测试失败：network offline");
+  await within(panel).findByText("连接测试失败");
 });
 
 test("the generation-status note reflects whether a Playground run has completed yet", async () => {
