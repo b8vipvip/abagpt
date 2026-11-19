@@ -263,7 +263,7 @@ export function ConversionTools({
             <button disabled={blocked} onClick={() => void buildChatPrompt(artifact)}>
               💬 将解码提示词插入对话
             </button>
-            <button disabled={blocked || !chatModeActive} title={!chatModeActive ? "Switch to Chat mode to attach files" : undefined} onClick={() => attach(artifact)}>
+            <button disabled={blocked || !chatModeActive} title={!chatModeActive ? "切换到对话模式后才能添加附件" : undefined} onClick={() => attach(artifact)}>
               📎 添加到对话附件
             </button>
           </div>
@@ -323,7 +323,7 @@ export function ConversionTools({
               </button>
             )}
             <a href={`data:application/octet-stream;base64,${decodedResult.dataBase64}`} download="decoded.bin">
-              ⬇ 下载 decoded bytes
+              ⬇ 下载解码后的数据
             </a>
           </div>
         </div>
