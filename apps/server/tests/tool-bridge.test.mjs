@@ -74,6 +74,8 @@ test.describe('server / tool bridge', () => {
       { type: 'function', function: { name: 'read_file' } },
     ), /unknown function/);
     assert.deepEqual(parseToolBridgeAnswer(oneCall, tools, { type: 'other' }).toolCalls.length, 1);
+    assert.deepEqual(parseToolBridgeAnswer(oneCall, tools, null).toolCalls.length, 1);
+    assert.deepEqual(parseToolBridgeAnswer(oneCall, tools, { type: 'function', function: { name: 'read_file' } }).toolCalls.length, 1);
   });
 
   test('parses string arguments and rejects invalid, null, array, or primitive arguments', () => {
@@ -94,5 +96,6 @@ test.describe('server / tool bridge', () => {
     assert.throws(() => parseToolBridgeAnswer('{"content":"done"}', tools, { type: 'function', function: { name: 'read_file' } }), /did not request the required function/);
     assert.throws(() => parseToolBridgeAnswer('{"content":42}', tools, 'auto'), /neither a final answer nor function calls/);
     assert.deepEqual(parseToolBridgeAnswer('{"tool_calls":[],"content":"done"}', tools, 'auto'), { content: 'done' });
+    assert.deepEqual(parseToolBridgeAnswer('{"content":"done"}', tools, null), { content: 'done' });
   });
 });
