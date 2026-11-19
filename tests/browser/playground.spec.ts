@@ -96,9 +96,21 @@ test("API documentation is localized without changing the OpenAPI contract", asy
  expect(spec.openapi).toBe("3.1.0");
  expect(spec.paths["/v1/chat/completions"].post.summary).toBe("创建聊天补全");
  expect(spec.paths["/v1/chat/completions"].post.requestBody).toBeDefined();
+ const requestSchema = spec.components.schemas.CompletionRequest;
+ expect(requestSchema.properties.max_tokens).toBeDefined();
+ expect(requestSchema.properties.metadata).toBeDefined();
+ expect(requestSchema.properties.messages).toBeDefined();
  await page.goto("/mirror/api-docs");
  await expect(page.locator(".swagger-ui")).toContainText("授权");
  await expect(page.locator(".swagger-ui")).toContainText("创建聊天补全");
+});
+test("mobile API documentation stays readable without horizontal page overflow", async ({ page }) => {
+ await page.setViewportSize({ width: 390, height: 844 });
+ await page.goto("/mirror/api-docs");
+ await expect(page.locator(".swagger-ui")).toBeVisible();
+ await expect(page.locator(".swagger-ui")).toContainText("创建聊天补全");
+ const hasHorizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
+ expect(hasHorizontalOverflow).toBe(false);
 });
 
 });
