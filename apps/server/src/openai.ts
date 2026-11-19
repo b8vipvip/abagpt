@@ -92,8 +92,7 @@ const ImageUrlPart = z
   .strict()
   .openapi({
     description:
-      "视觉输入内容片段。此字段如何映射到 ChatGPT 文件上传流程，请参阅 COMPATIBILITY.md。" +
-      "",
+      "视觉输入内容片段。此字段如何映射到 ChatGPT 文件上传流程，请参阅 COMPATIBILITY.md。",
   });
 /**
  * Mirror's addition (not an original OpenAI vision-only field): a generic,
@@ -134,7 +133,7 @@ const OpenAiMessage = z
       description:
         "此结构允许 role 为 'tool'，但请求处理阶段会拒绝该角色。工具／函数调用是 backend-api 与 OpenAI 官方工具调用规范之间的结构性差异，" +
         "" +
-        "OpenAI tools contract. 详见 COMPATIBILITY.md。",
+        "详见 COMPATIBILITY.md。",
     }),
     content: z.union([z.string(), z.array(ContentPart), z.null()]),
     name: z.string().optional(),
