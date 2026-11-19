@@ -55,6 +55,7 @@
   "apps/server/src/security.ts": "af53fcbf25c89ec2990361ffbe75a0494dbaafa487bb2601c107f3ac392dedd6",
   "apps/server/src/storage-config.ts": "b8aeabd9c4791a5a1a22622da7e520bf7ac7a0e2df32807d21d7237c136871eb",
   "apps/server/src/store.ts": "7053a46e8b6eef9a4430f6dc4d88aa6fb5531b8eb3b9ff268020c22d6cd5ee08",
+  "apps/server/src/tool-bridge.ts": "0342b22fd40a2f98ad7927e09413d8618fa691fc4ff7cb3d98b94de4ef272dde",
   "apps/server/src/upload-mime.ts": "dc8962b1f593355a45f755a268041782ce80d71901dae7ed0c060f8a981c6435",
   "apps/server/src/url-rewrite.ts": "4ad57dd2a6e9d197c5fc069d86986b2b89312e6fc9d68bfe9599d856f7248082",
   "apps/server/src/zod-openapi-init.ts": "e3ae339fdd09a60b6cf95daf0e8f0c7ae9c8fc2a1189e49ec473b79650c0a01f",
