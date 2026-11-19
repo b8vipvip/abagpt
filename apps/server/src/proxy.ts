@@ -120,6 +120,11 @@ function safeRequestHeaders(req: FastifyRequest): Headers {
     if (typeof rawValue === "string") headers.set(name, rawValue);
     else if (Array.isArray(rawValue)) headers.set(name, rawValue.join(", "));
   }
+  // Prefer Simplified Chinese for upstream HTML documents. Keep the browser's
+  // original language negotiation untouched for API and asset requests.
+  if ((req.headers.accept ?? "").includes("text/html")) {
+    headers.set("accept-language", "zh-CN,zh;q=0.9,en;q=0.8");
+  }
   headers.set("user-agent", USER_AGENT);
   // Set origin, host, and referer to match chatgpt.com for proper SSL/TLS origin verification
   headers.set("origin", UPSTREAM);
