@@ -1326,7 +1326,7 @@ test("Test connection rejects a model-discovery response whose data field isn't 
 });
 
 test("Test connection falls back to a generic message when a non-Error value is thrown", async () => {
-  await renderApp([[/^\/api\/diagnostics$/, () => { throw "network offline"; }]]);
+  await renderApp([[/^\/api\/diagnostics$/, () => { throw "unclassified failure"; }]]);
   const panel = connectionToolsPanel();
   fireEvent.click(within(panel).getByRole("button", { name: "测试连接" }));
   await within(panel).findByText("连接测试失败：network offline");
@@ -1427,6 +1427,7 @@ test("conversation branches list parents and nodes, and continuing from an assis
             { id: "m-user", upstreamNodeId: "node-6", role: "user", status: "done" },
             { id: "m-pending", upstreamNodeId: null, role: "assistant", status: "streaming" },
             { id: "m-asst", upstreamNodeId: "node-7", role: "assistant", status: "done" },
+            { id: "m-other", upstreamNodeId: "node-8", role: "tool", status: "queued" },
           ],
         }),
     ],
@@ -1447,6 +1448,9 @@ test("conversation branches list parents and nodes, and continuing from an assis
   // does not offer to "continue" from it (that button only appears once
   // an assistant node has a real upstream node id).
   assert.ok(within(panel).getByText("无上游节点"));
+  assert.ok(within(panel).getByText("用户 · 已完成"));
+  assert.ok(within(panel).getByText("助手 · 生成中"));
+  assert.ok(within(panel).getByText("其他角色 · 其他状态"));
   fireEvent.click(continueButton);
   await screen.findByText("已加载");
   assert.deepEqual(branchBody, { messageId: "m-asst" });
