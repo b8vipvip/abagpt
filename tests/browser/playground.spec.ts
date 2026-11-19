@@ -79,3 +79,23 @@ test("Markdown and text files selected together keep their exact contents and th
  ]);
 });
 });
+
+test("mobile navigation remains available without horizontal page overflow", async ({ page }) => {
+ await page.setViewportSize({ width: 390, height: 844 });
+ await page.goto("/mirror/playground");
+ await expect(page.getByRole("link", { name: "API 文档" })).toBeVisible();
+ await expect(page.getByRole("link", { name: "OpenAPI 规范" })).toBeVisible();
+ const hasHorizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
+ expect(hasHorizontalOverflow).toBe(false);
+});
+test("API documentation is localized without changing the OpenAPI contract", async ({ page }) => {
+ const specResponse = await page.request.get("/mirror/openapi");
+ expect(specResponse.ok()).toBe(true);
+ const spec = await specResponse.json();
+ expect(spec.openapi).toBe("3.1.0");
+ expect(spec.paths["/v1/chat/completions"].post.summary).toBe("创建聊天补全");
+ expect(spec.paths["/v1/chat/completions"].post.requestBody).toBeDefined();
+ await page.goto("/mirror/api-docs");
+ await expect(page.locator(".swagger-ui")).toContainText("授权");
+ await expect(page.locator(".swagger-ui")).toContainText("创建聊天补全");
+});
