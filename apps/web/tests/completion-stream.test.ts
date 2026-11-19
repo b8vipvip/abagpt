@@ -5,8 +5,8 @@ const parse = async (s: string) => { let text=""; const body = new ReadableStrea
 test.describe("web / completion-stream", () => {
 test("completion reader survives UTF-8 boundaries",async()=>{assert.deepEqual(await parse('data: {"choices":[{"delta":{"content":"héllo"},"finish_reason":null}]}\r\n\r\ndata: {"choices":[{"delta":{},"finish_reason":"stop"}]}\n\ndata: [DONE]\n\n'),{text:"héllo",result:"héllo"});});
 test("stream errors never become success",async()=>{await assert.rejects(parse('data: {"error":{"message":"failed"}}\n\ndata: [DONE]\n\n'),/failed/);});
-test("stream errors fall back to a generic message with no error.message",async()=>{await assert.rejects(parse('data: {"error":{}}\n\ndata: [DONE]\n\n'),/Generation failed/);});
-test("truncated streams never become success",async()=>{await assert.rejects(parse('data: {"choices":[{"delta":{"content":"partial"}}]}\n\n'),/interrupted/);});
+test("stream errors fall back to a generic message with no error.message",async()=>{await assert.rejects(parse('data: {"error":{}}\n\ndata: [DONE]\n\n'),/生成失败/);});
+test("truncated streams never become success",async()=>{await assert.rejects(parse('data: {"choices":[{"delta":{"content":"partial"}}]}\n\n'),/响应在完成前中断/);});
 
 test("a mirror-conversation-id comment line is reported via onConversation", async () => {
   const seen: string[] = [];
