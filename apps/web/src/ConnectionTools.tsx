@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { localizeUiError } from "./ui-errors.js";
 
 export function ConnectionTools({ domain, apiKey, generationSucceeded }: { domain: string; apiKey: string; generationSucceeded: boolean }) {
   const [diagnostics, setDiagnostics] = useState<unknown>(null);
