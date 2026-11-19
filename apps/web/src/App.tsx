@@ -60,7 +60,7 @@ interface StoredMessageDto {
   content: string;
 }
 
-const FALLBACK_SYSTEM_INSTRUCTIONS = "You are a helpful assistant.";
+const FALLBACK_SYSTEM_INSTRUCTIONS = "你是一名乐于助人的助手。";
 const DEFAULT_MESSAGES: PlaygroundMessage[] = [
   { role: "system", content: FALLBACK_SYSTEM_INSTRUCTIONS },
   { role: "user", content: "请用一句简短的话打个招呼。" },
