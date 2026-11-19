@@ -33,6 +33,6 @@ export function ConnectionTools({ domain, apiKey, generationSucceeded }: { domai
     <p>诊断信息描述当前 Mirror 实例的状态；模型列表检查会测试所选服务器地址。</p>
     <pre tabIndex={0}>{snippet}</pre>
     <button onClick={() => void navigator.clipboard.writeText(snippet).then(() => setStatus("客户端配置代码已复制"), () => setStatus("请选中并复制上方的配置代码"))}>复制配置代码</button>
-    <p>cm 使用服务器根地址： <code>CM_BASE_URL=http://127.0.0.1:8799</code>。ChatGPTBox 使用兼容 OpenAI 的服务提供方、Mirror 模型 ID，以及以 <code>/v1/chat/completions</code> 结尾的完整接口地址。</p>
+    <p>cm 客户端使用服务器根地址： <code>CM_BASE_URL=http://127.0.0.1:8799</code>。ChatGPTBox 使用兼容 OpenAI 的服务提供方、Mirror 模型 ID，以及以 <code>/v1/chat/completions</code> 结尾的完整接口地址。</p>
   </details>;
 }
