@@ -349,7 +349,7 @@ export default function App() {
 
   async function loadConversation(id: string) {
     if (!id || readingFilesRef.current) return;
-    setStatus("加载中…");
+    setStatus("Loading…");
     try {
       const res = await fetch(
         `${location.origin}/api/conversations/${encodeURIComponent(id)}`,
@@ -376,9 +376,9 @@ export default function App() {
         setModel(body.conversation.model);
       if (typeof body.conversation?.private === "boolean")
         setPrivateChat(body.conversation.private);
-      setStatus("已加载");
+      setStatus("Loaded");
     } catch (error) {
-      setStatus("出错");
+      setStatus("Error");
       setRaw(String((error as Error).message ?? error));
       setShowRaw(true);
     }
@@ -457,7 +457,7 @@ export default function App() {
     if (runningRef.current || readingFilesRef.current || !files.length) return;
     readingFilesRef.current = true;
     setReadingFiles(true);
-    setStatus("正在读取文件…");
+    setStatus("Reading files…");
     try {
       // Commit the entire selection together. Separate async updates based on
       // the captured messages array overwrite each other's files.
@@ -470,9 +470,9 @@ export default function App() {
         addPlaygroundAttachment(updated, index, attachment, Boolean(conversationId.trim())).messages,
         current,
       ));
-      setStatus("就绪");
+      setStatus("Ready");
     } catch (error) {
-      setStatus("出错");
+      setStatus("Error");
       setRaw(String((error as Error).message ?? error));
       setShowRaw(true);
     } finally {
@@ -528,7 +528,7 @@ export default function App() {
     // of its own attached to it.
     if (runningRef.current || readingFilesRef.current) return;
     if (!canRun) {
-      setStatus("已阻止");
+      setStatus("Blocked");
       setRaw(runBlockedReason!);
       setShowRaw(true);
       return;
@@ -539,7 +539,7 @@ export default function App() {
     setRunning(true);
     setOutput("");
     setRaw("");
-    setStatus("运行中…");
+    setStatus("Running…");
     try {
       const metadata: Record<string, string> = {};
       if (privateChat) metadata.private = "true";
@@ -598,12 +598,12 @@ export default function App() {
           { role: "user", content: "" },
         ]);
       }
-      setStatus("已完成");
+      setStatus("Completed");
       if (!oneShot) void refreshConversations();
     } catch (error) {
-      if ((error as Error).name === "AbortError") setStatus("已停止");
+      if ((error as Error).name === "AbortError") setStatus("Stopped");
       else {
-        setStatus("出错");
+        setStatus("Error");
         setRaw(String((error as Error).message ?? error));
         setShowRaw(true);
       }
@@ -618,7 +618,7 @@ export default function App() {
     if (runningRef.current || readingFilesRef.current || next === mode) return;
     setMode(next);
     setPath(next === "responses" ? "/v1/responses" : "/v1/chat/completions");
-    setOutput(""); setRaw(""); setShowRaw(false); setStatus("就绪");
+    setOutput(""); setRaw(""); setShowRaw(false); setStatus("Ready");
   }
 
   return (
