@@ -115,7 +115,7 @@
   "apps/web/tests/main.test.ts": "c1188bdfa191c5b5701ba111f0b28b662a942cbdb5645aa5eebfc7ba2474dc39",
   "apps/web/tests/playground-history.test.ts": "78fb8b3be9b692a41c2fe9692b6f2c01c3fa4cc9cdff00043c375137387871c1",
   "apps/web/tests/responses-stream.test.ts": "b5974001e1933bfaba41eb131cecc0f65136aa6690c72e932d1e6ef8e4590e4e",
-  "apps/web/tests/ui-errors.test.ts": "9c6916da7e7093aea64bc5ca1de3776d0be491ccbc5e99097da0c2c0ec40d936",
+  "apps/web/tests/ui-errors.test.ts": "5dab06a1319d1ffb4a390cc199d9c7646d6090f7cbdefe0841f49f0d847b0ab0",
   "apps/web/tsconfig.json": "a72e6e366a504b410142981538816763d0f4d248f3b8160e86a69c96f4f1c954",
   "apps/web/vite.config.ts": "b382e286fbd1acfcff34b13fb81df777dc194224a6baeb2becfcf7d2efee7833",
   "ASSET-RENDERING-REGRESSION.md": "3af6426fd807fcebd333deba2c0ff95d9e38694ae47f3f7ada7b0db84f3acf3a",
