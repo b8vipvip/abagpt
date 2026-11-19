@@ -12,7 +12,7 @@ export async function readCompletionStream(body: ReadableStream<Uint8Array>, onT
     if (data === "[DONE]") { doneMarker = true; return; }
     raw += data + "\n"; onRaw(raw);
     const chunk = JSON.parse(data);
-    if (chunk.error) throw new Error(chunk.error.message ?? "Generation failed");
+    if (chunk.error) throw new Error(chunk.error.message ?? "生成失败，请稍后重试。");
     text += chunk.choices?.[0]?.delta?.content ?? "";
     if (chunk.choices?.[0]?.finish_reason != null) finished = true;
     onText(text);
@@ -25,7 +25,7 @@ export async function readCompletionStream(body: ReadableStream<Uint8Array>, onT
       for (const value of frames) frame(value);
       if (result.done) { if (buffer.trim()) frame(buffer); break; }
     }
-    if (!doneMarker || !finished) throw new Error("Response interrupted before completion; partial output is preserved.");
+    if (!doneMarker || !finished) throw new Error("响应在完成前中断，已保留部分输出。");
     return text;
   } finally { await reader.cancel().catch(() => undefined); reader.releaseLock(); }
 }
