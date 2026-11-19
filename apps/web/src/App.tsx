@@ -103,7 +103,7 @@ function loadStoredMessages(): PlaygroundMessage[] {
   return DEFAULT_MESSAGES;
 }
 
-function localizedStatus(status: string): string {
+export function localizedStatus(status: string): string {
   const labels: Record<string, string> = {
     "Ready": "就绪",
     "Loading…": "加载中…",
@@ -118,7 +118,7 @@ function localizedStatus(status: string): string {
   return labels[status] ?? status;
 }
 
-function localizedRole(role: string): string {
+export function localizedRole(role: string): string {
   const labels: Record<string, string> = {
     system: "系统",
     developer: "开发者",
