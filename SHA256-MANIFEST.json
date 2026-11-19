@@ -80,7 +80,7 @@
   "apps/server/tests/store-migrations.test.mjs": "2ef2a7a16a3fcfa18c9bbf3101bc3deecb32079a42644d3baf6e59b7ba52602b",
   "apps/server/tests/store.test.mjs": "3a40de6c05da21732eda279ca811c96ca0a38988458083e547b343f83e898bee",
   "apps/server/tests/todo-contract.test.mjs": "81302afd7db19fafe5e98c7663257350928bc8d70cad05b736210bbc70654dca",
-  "apps/server/tests/tool-bridge-route.test.mjs": "f8fcef17c4bc25e343243039d2afb3e80c456b17bebcacabc1f0cace91df2f9b",
+  "apps/server/tests/tool-bridge-route.test.mjs": "5d91218a4c4b19d3077ec501d8b3657165c1828eaf85a50fbffad954a5022a32",
   "apps/server/tests/tool-bridge.test.mjs": "74646316fdfbe0a303411f05afabdb8aabeda7d9cf1778d77e0ef89abd68f16d",
   "apps/server/tests/turnstile-api.test.mjs": "f58b0c57c07abd6ddcc82280f043823a59950cedabc91431da9740202c804dd0",
   "apps/server/tests/turnstile.test.mjs": "a1e181e0528523d7d8173eaa92cf8ce6ba56b5b53034a045e13c87e4e0103bab",
