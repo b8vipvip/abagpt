@@ -14,6 +14,7 @@ test.describe("browser / official UI decoder challenges", () => {
   let conversionCalls: any[];
   test.beforeEach(async ({ page }) => {
     app = Fastify(); registerDecoderChallengeRoutes(app, () => "browser-fixture");
+    await app.ready();
     generated = null;
     conversionCalls = [];
     await page.route("**/api/session", route => route.fulfill({ json: { configured: true } }));
@@ -24,7 +25,8 @@ test.describe("browser / official UI decoder challenges", () => {
     });
     await page.route("**/api/decoder-challenges**", async route => {
       const req = route.request();
-      const response = await app.inject({ method: req.method() as any, url: new URL(req.url()).pathname, headers: { "content-type": "application/json" }, payload: req.postData() || undefined });
+      const payload = req.postData() === null ? undefined : req.postDataJSON();
+      const response = await app.inject({ method: req.method() as any, url: new URL(req.url()).pathname, headers: { "content-type": "application/json" }, payload });
       if (req.method() === "POST" && req.url().endsWith("/api/decoder-challenges") && response.statusCode === 200) generated = response.json();
       await route.fulfill({ status: response.statusCode, contentType: String(response.headers["content-type"]), body: response.rawPayload });
     });
