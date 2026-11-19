@@ -65,7 +65,7 @@ test("typing searches (debounced) against /api/conversations/search and lists re
   await wait(250);
   assert.ok(screen.getByRole("button", { name: "Rust question" }));
   // An untitled result falls back to a readable placeholder.
-  assert.ok(screen.getByRole("button", { name: "Untitled" }));
+  assert.ok(screen.getByRole("button", { name: "未命名会话" }));
 });
 
 test("an empty query clears results without fetching", async () => {
