@@ -123,7 +123,7 @@ test("Convert actions insert prompts and attachments into the correct chat turn"
   fireEvent.click(screen.getByRole("button", { name: /添加到对话附件/ }));
   await screen.findByText("已添加到下方当前对话消息的附件中。");
   fireEvent.click(screen.getByRole("button", { name: /将解码提示词插入对话/ }));
-  await screen.findByText(/Prompt inserted into the current chat message below\./);
+  await screen.findByText(/已将提示词插入下方当前对话消息。/);
   fireEvent.click(screen.getByRole("button", { name: "输出" }));
   fireEvent.click(runButton());
   await screen.findAllByText(/result\.png/);
@@ -228,7 +228,7 @@ test("toggling the model field between list and freeform, and revealing the gizm
 test("with no remember-history flag set, defaults are used and nothing is hydrated from storage", async () => {
   await renderApp();
   assert.equal(screen.getAllByRole("textbox").filter((el) => el.tagName === "TEXTAREA").length, 2);
-  const conversationIdInput = screen.getByPlaceholderText(/auto \(filled in/);
+  const conversationIdInput = screen.getByPlaceholderText(/自动生成/);
   assert.equal((conversationIdInput as HTMLInputElement).value, "");
 });
 
@@ -248,7 +248,7 @@ test("a valid remembered snapshot hydrates model, pickedModel, privateChat, conv
     }),
   );
   await renderApp();
-  const conversationIdInput = screen.getByPlaceholderText(/auto \(filled in/);
+  const conversationIdInput = screen.getByPlaceholderText(/自动生成/);
   assert.equal((conversationIdInput as HTMLInputElement).value, "conv-remembered");
   assert.ok(screen.getByDisplayValue("remembered system"));
   assert.ok(screen.getByDisplayValue("remembered user"));
@@ -261,7 +261,7 @@ test("a malformed remembered snapshot falls back to the defaults instead of thro
   localStorage.setItem("mirror-playground-snapshot", "{not json");
   await renderApp();
   assert.equal(screen.getAllByRole("textbox").filter((el) => el.tagName === "TEXTAREA").length, 2);
-  const conversationIdInput = screen.getByPlaceholderText(/auto \(filled in/);
+  const conversationIdInput = screen.getByPlaceholderText(/自动生成/);
   assert.equal((conversationIdInput as HTMLInputElement).value, "");
 });
 
@@ -325,7 +325,7 @@ test("populates the model dropdown from /v1/models, labelling gizmos/projects an
         }),
     ],
   ]);
-  const select = screen.getByLabelText("Model") as HTMLSelectElement;
+  const select = screen.getByLabelText("模型") as HTMLSelectElement;
   const optionTexts = Array.from(select.options).map((o) => o.textContent);
   assert.ok(optionTexts.includes("gpt-plain"));
   assert.ok(optionTexts.includes("gpt-unsupported (unsupported)"));
@@ -337,20 +337,20 @@ test("populates the model dropdown from /v1/models, labelling gizmos/projects an
 
 test("a failed model-discovery fetch is swallowed silently, leaving only the auto option", async () => {
   await renderApp([[/^\/v1\/models$/, () => { throw new Error("network down"); }]]);
-  const select = screen.getByLabelText("Model") as HTMLSelectElement;
+  const select = screen.getByLabelText("模型") as HTMLSelectElement;
   assert.equal(select.options.length, 1);
   assert.equal(select.options[0].value, "auto");
 });
 
 test("a non-ok model-discovery response is swallowed silently", async () => {
   await renderApp([[/^\/v1\/models$/, () => jsonResponse({ error: "nope" }, { status: 500 })]]);
-  const select = screen.getByLabelText("Model") as HTMLSelectElement;
+  const select = screen.getByLabelText("模型") as HTMLSelectElement;
   assert.equal(select.options.length, 1);
 });
 
 test("a model-discovery response whose data isn't an array is ignored", async () => {
   await renderApp([[/^\/v1\/models$/, () => jsonResponse({ data: "not-an-array" })]]);
-  const select = screen.getByLabelText("Model") as HTMLSelectElement;
+  const select = screen.getByLabelText("模型") as HTMLSelectElement;
   assert.equal(select.options.length, 1);
 });
 
@@ -496,7 +496,7 @@ test("a non-streaming run posts the right body/headers, shows the raw JSON, appe
   assert.equal((capturedBody as unknown as { model: string }).model, "auto");
   assert.deepEqual((capturedBody as unknown as { metadata: unknown }).metadata, { private: "true" });
   assert.equal(capturedHeaders.authorization, "Bearer sk-run");
-  assert.equal((screen.getByPlaceholderText(/auto \(filled in/) as HTMLInputElement).value, "conv-xyz");
+  assert.equal((screen.getByPlaceholderText(/自动生成/) as HTMLInputElement).value, "conv-xyz");
   fireEvent.click(screen.getByRole("button", { name: /原始响应/ }));
   assert.match(screen.getByText(/"content": "Hello there"/).textContent ?? "", /Hello there/);
   assert.ok(screen.getByDisplayValue("Hello there"));
@@ -525,7 +525,7 @@ test("a streaming run reads SSE frames, updates the conversation id mid-stream, 
   fireEvent.click(runButton());
   await screen.findByText("已完成");
   assert.ok(screen.getByDisplayValue("Hi"));
-  assert.equal((screen.getByPlaceholderText(/auto \(filled in/) as HTMLInputElement).value, "stream-conv-1");
+  assert.equal((screen.getByPlaceholderText(/自动生成/) as HTMLInputElement).value, "stream-conv-1");
 });
 
 test("one-shot runs don't append the reply to the transcript and don't refresh conversations", async () => {
@@ -556,9 +556,9 @@ test("a gizmo model with a picked sub-model sends mirror_model metadata, and an 
     ],
   ]);
   fireEvent.click(screen.getByRole("button", { name: "手动输入" }));
-  fireEvent.change(screen.getByLabelText("Model"), { target: { value: "g-1" } });
+  fireEvent.change(screen.getByLabelText("模型"), { target: { value: "g-1" } });
   fireEvent.change(screen.getByLabelText(/此 GPT／项目使用的模型/), { target: { value: "gpt-5-6" } });
-  fireEvent.change(screen.getByPlaceholderText(/auto \(filled in/), { target: { value: "existing-conv" } });
+  fireEvent.change(screen.getByPlaceholderText(/自动生成/), { target: { value: "existing-conv" } });
   fireEvent.click(screen.getByLabelText("流式输出"));
   fireEvent.click(runButton());
   await screen.findByText("已完成");
@@ -660,9 +660,9 @@ test("loading a conversation with a gizmo hydrates instructions, messages, model
   assert.ok(screen.getByDisplayValue("custom instructions"));
   assert.ok(screen.getByDisplayValue("hi"));
   assert.ok(screen.getByDisplayValue("hello!"));
-  assert.equal((screen.getByPlaceholderText(/auto \(filled in/) as HTMLInputElement).value, "c1");
+  assert.equal((screen.getByPlaceholderText(/自动生成/) as HTMLInputElement).value, "c1");
   assert.ok((screen.getByLabelText("私密对话") as HTMLInputElement).checked);
-  assert.equal((screen.getByLabelText("Model") as HTMLSelectElement).value, "g-1");
+  assert.equal((screen.getByLabelText("模型") as HTMLSelectElement).value, "g-1");
 });
 
 test("loading a non-gizmo, non-auto conversation adopts its model and clears the picked-model field", async () => {
@@ -689,7 +689,7 @@ test("loading a non-gizmo, non-auto conversation adopts its model and clears the
   ]);
   fireEvent.click(await screen.findByText("Plain chat"));
   await screen.findByText("已加载");
-  assert.equal((screen.getByLabelText("Model") as HTMLSelectElement).value, "gpt-x");
+  assert.equal((screen.getByLabelText("模型") as HTMLSelectElement).value, "gpt-x");
 });
 
 test("loading a conversation whose model is 'auto' leaves the currently selected model untouched", async () => {
@@ -711,7 +711,7 @@ test("loading a conversation whose model is 'auto' leaves the currently selected
   ]);
   fireEvent.click(await screen.findByText("Auto chat"));
   await screen.findByText("已加载");
-  assert.equal((screen.getByLabelText("Model") as HTMLSelectElement).value, "auto");
+  assert.equal((screen.getByLabelText("模型") as HTMLSelectElement).value, "auto");
 });
 
 test("a failed conversation load reports the status/body as an error", async () => {
@@ -786,10 +786,10 @@ test("an assistant message row is read-only and cannot be removed", async () => 
 
 test("the New button resets the conversation id and the transcript to the defaults", async () => {
   await renderApp();
-  fireEvent.change(screen.getByPlaceholderText(/auto \(filled in/), { target: { value: "some-conv" } });
+  fireEvent.change(screen.getByPlaceholderText(/自动生成/), { target: { value: "some-conv" } });
   fireEvent.change(lastUserTextarea(), { target: { value: "custom prompt" } });
   fireEvent.click(screen.getByRole("button", { name: "新建" }));
-  assert.equal((screen.getByPlaceholderText(/auto \(filled in/) as HTMLInputElement).value, "");
+  assert.equal((screen.getByPlaceholderText(/自动生成/) as HTMLInputElement).value, "");
   assert.ok(screen.getByDisplayValue("You are a helpful assistant."));
   assert.equal(screen.getAllByRole("textbox").filter((el) => el.tagName === "TEXTAREA").length, 2);
 });
@@ -1080,8 +1080,8 @@ test("remembering history with no snapshot ever saved yet falls back cleanly thr
   localStorage.setItem("mirror-playground-remember-history", "true");
   // Deliberately no "mirror-playground-snapshot" key at all.
   await renderApp();
-  assert.equal((screen.getByLabelText("Model") as HTMLSelectElement).value, "auto");
-  assert.equal((screen.getByPlaceholderText(/auto \(filled in/) as HTMLInputElement).value, "");
+  assert.equal((screen.getByLabelText("模型") as HTMLSelectElement).value, "auto");
+  assert.equal((screen.getByPlaceholderText(/自动生成/) as HTMLInputElement).value, "");
   assert.ok(screen.getByDisplayValue("请用一句简短的话打个招呼。"));
 });
 
@@ -1145,7 +1145,7 @@ test("loading a conversation whose response omits the conversation object falls 
   ]);
   fireEvent.click(await screen.findByText("No conv object"));
   await screen.findByText("已加载");
-  assert.equal((screen.getByPlaceholderText(/auto \(filled in/) as HTMLInputElement).value, "c-no-conv");
+  assert.equal((screen.getByPlaceholderText(/自动生成/) as HTMLInputElement).value, "c-no-conv");
 });
 
 test("a non-Error value thrown while loading a conversation still surfaces something readable", async () => {
@@ -1395,7 +1395,7 @@ test("searching local history renders matches and a result count, and selecting 
   const resultButton = within(panel).getByRole("button", { name: "Found conversation" });
   fireEvent.click(resultButton);
   await screen.findByText("已加载");
-  assert.equal((screen.getByPlaceholderText(/auto \(filled in/) as HTMLInputElement).value, "found-1");
+  assert.equal((screen.getByPlaceholderText(/自动生成/) as HTMLInputElement).value, "found-1");
 });
 
 test("a failed local search reports the error instead of throwing", async () => {
@@ -1445,7 +1445,7 @@ test("conversation branches list parents and nodes, and continuing from an assis
   fireEvent.click(continueButton);
   await screen.findByText("已加载");
   assert.deepEqual(branchBody, { messageId: "m-asst" });
-  assert.equal((screen.getByPlaceholderText(/auto \(filled in/) as HTMLInputElement).value, "conv-branched");
+  assert.equal((screen.getByPlaceholderText(/自动生成/) as HTMLInputElement).value, "conv-branched");
   // Selecting a branch resets the branch listing itself (it belonged to the
   // conversation we just navigated away from).
   assert.equal(within(panel).queryByRole("button", { name: "从此助手消息继续" }), null);
@@ -1470,7 +1470,7 @@ test("selecting a listed branch (not the current one) loads it", async () => {
   fireEvent.click(within(panel).getByRole("button", { name: "查看会话分支" }));
   fireEvent.click(await within(panel).findByRole("button", { name: "Saved branch" }));
   await screen.findByText("已加载");
-  assert.equal((screen.getByPlaceholderText(/auto \(filled in/) as HTMLInputElement).value, "conv-saved");
+  assert.equal((screen.getByPlaceholderText(/自动生成/) as HTMLInputElement).value, "conv-saved");
 });
 
 test("a failed request to create a branch reports the error instead of throwing", async () => {
