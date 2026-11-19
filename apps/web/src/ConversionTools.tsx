@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { PlaygroundAttachment } from "./playground-history.js";
+import { localizeUiError } from "./ui-errors.js";
 
 type FormatId = "loaf" | "pngspeak" | "gptgif" | "gptgif-v4";
 
@@ -55,7 +56,15 @@ function tryFromBase64(base64: string): string | null {
 async function postJson(url: string, body: unknown): Promise<any> {
   const res = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
   const json = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(json.error || `${url} returned HTTP ${res.status}`);
+  if (!res.ok) {
+    const value = json.error;
+    const message = typeof value === "string"
+      ? value
+      : value && typeof value === "object" && typeof value.message === "string"
+        ? value.message
+        : `HTTP ${res.status}`;
+    throw new Error(message);
+  }
   return json;
 }
 
