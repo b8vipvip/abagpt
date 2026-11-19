@@ -80,6 +80,7 @@ test("Markdown and text files selected together keep their exact contents and th
 });
 });
 
+test.describe("browser / localized interface", () => {
 test("mobile navigation remains available without horizontal page overflow", async ({ page }) => {
  await page.setViewportSize({ width: 390, height: 844 });
  await page.goto("/mirror/playground");
@@ -98,4 +99,6 @@ test("API documentation is localized without changing the OpenAPI contract", asy
  await page.goto("/mirror/api-docs");
  await expect(page.locator(".swagger-ui")).toContainText("授权");
  await expect(page.locator(".swagger-ui")).toContainText("创建聊天补全");
+});
+
 });
