@@ -85,7 +85,7 @@ import {
   ownsUpstreamConversation,
 } from "./store.js";
 
-const swaggerUiZhCnScript = String.raw`(() => {
+const swaggerUiZhCnScript = String.raw\`(() => {
   const translations = new Map([
     ["Swagger UI", "接口文档"],
     ["Authorize", "授权"],
@@ -139,7 +139,6 @@ const swaggerUiZhCnScript = String.raw`(() => {
     ["Expand Operations", "展开接口"],
     ["Collapse Operations", "收起接口"],
     ["Available values", "可选值"],
-    ["default", "默认值"],
     ["Undocumented", "未在文档中说明"],
     ["Logout", "退出"],
     ["Close", "关闭"],
@@ -148,6 +147,7 @@ const swaggerUiZhCnScript = String.raw`(() => {
     ["Select a definition", "选择 API 定义"]
   ]);
   const translatedAttributes = ["aria-label", "placeholder", "title"];
+  const skipSelectors = "pre, code, .microlight, .highlight-code, .model-box";
 
   function visit(node) {
     if (node.nodeType === Node.TEXT_NODE) {
@@ -159,7 +159,7 @@ const swaggerUiZhCnScript = String.raw`(() => {
       }
       return;
     }
-    if (node.nodeType !== Node.ELEMENT_NODE) return;
+    if (node.nodeType !== Node.ELEMENT_NODE || node.matches(skipSelectors)) return;
     for (const name of translatedAttributes) {
       const value = node.getAttribute(name);
       if (!value) continue;
@@ -171,6 +171,8 @@ const swaggerUiZhCnScript = String.raw`(() => {
 
   function start() {
     if (!document.body) return;
+    document.documentElement.lang = "zh-CN";
+    document.title = "Mirror API 接口文档";
     visit(document.body);
     const observer = new MutationObserver((records) => {
       for (const record of records) {
@@ -192,8 +194,7 @@ const swaggerUiZhCnScript = String.raw`(() => {
   } else {
     start();
   }
-})();`;
-const swaggerUiZhCnCss = String.raw`
+})();\`;\nconst swaggerUiZhCnCss = String.raw`
 .swagger-ui {
   font-family: Inter, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
 }
