@@ -1551,7 +1551,7 @@ for (const transport of ["stream", "metadata", "header"]) test(`Responses mode $
 // ---------------------------------------------------------------------------
 
 function lastAttachInput() {
-  const inputs = screen.getAllByLabelText("\uD83D\uDCCE Attach file") as HTMLInputElement[];
+  const inputs = screen.getAllByLabelText("\uD83D\uDCCE 添加附件") as HTMLInputElement[];
   return inputs.at(-1) as HTMLInputElement;
 }
 
