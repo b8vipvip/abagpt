@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { localizeUiError } from "./ui-errors.js";
 
 interface Item {
   id: string;
@@ -12,6 +13,12 @@ interface Node {
   role: string;
   status: string;
 }
+
+const NODE_ROLE_LABELS: Record<string, string> = { user: "用户", assistant: "助手" };
+const NODE_STATUS_LABELS: Record<string, string> = {
+  done: "已完成", finished_successfully: "已完成", streaming: "生成中",
+  in_progress: "进行中", pending: "等待中", error: "失败", failed: "失败",
+};
 
 interface Branches {
   selected: string;
@@ -155,7 +162,7 @@ export function ConversationTools({
                       style={isNextParent ? { fontWeight: 600 } : undefined}
                     >
                       <span>
-                        {node.role} · {node.status}
+                        {NODE_ROLE_LABELS[node.role] ?? "其他角色"} · {NODE_STATUS_LABELS[node.status] ?? "其他状态"}
                       </span>{" "}
                       · <code>{node.upstreamNodeId ?? "无上游节点"}</code>
                       {isNextParent && <strong>（下一轮父节点）</strong>}
