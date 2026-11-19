@@ -67,7 +67,7 @@ export function HotkeySettings({
                     disabled={disabled}
                     onClick={() => setRecording(action.id)}
                   >
-                    Change
+                    修改
                   </button>{" "}
                   {!isDefault && (
                     <button
@@ -80,7 +80,7 @@ export function HotkeySettings({
                         setStatus(`“${action.label}”已恢复默认设置`);
                       }}
                     >
-                      Reset to default
+                      恢复默认
                     </button>
                   )}
                 </>
