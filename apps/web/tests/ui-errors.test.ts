@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { localizeUiError } from "../src/ui-errors.js";
 
+test.describe("web / UI error localization", () => {
+
 test("localizeUiError preserves Chinese messages and trims surrounding whitespace", () => {
   assert.equal(localizeUiError(new Error("  会话已过期，请重新连接。  "), "操作失败"), "会话已过期，请重新连接。");
 });
@@ -29,4 +31,5 @@ test("localizeUiError uses a safe fallback for unknown HTTP codes and unknown me
 test("localizeUiError handles empty messages and unsupported thrown values", () => {
   assert.equal(localizeUiError(new Error("   "), "操作失败"), "操作失败");
   assert.equal(localizeUiError({ message: "failed" }, "操作失败"), "操作失败");
+});
 });
