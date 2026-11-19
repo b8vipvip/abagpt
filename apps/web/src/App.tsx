@@ -36,7 +36,7 @@ function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(reader.error ?? new Error("Could not read file"));
+    reader.onerror = () => reject(reader.error ?? new Error("无法读取文件"));
     reader.readAsDataURL(file);
   });
 }
@@ -136,7 +136,7 @@ function Header() {
         <b>Mirror API</b>
       </a>
       <nav>
-        <a href="/">ChatGPT</a>
+        <a href="/">ChatGPT 聊天</a>
         <a className="active" href="/mirror/playground">
           API 测试台
         </a>
@@ -280,7 +280,7 @@ export default function App() {
 
   useEffect(() => {
     fetch(`${domain.replace(/\/$/, "")}/v1/models`, { headers: apiKey ? { authorization: `Bearer ${apiKey}` } : {} })
-      .then(async (res) => { if (!res.ok) throw new Error(`Model discovery failed: ${res.status}`); return res.json(); })
+      .then(async (res) => { if (!res.ok) throw new Error(`模型列表获取失败： ${res.status}`); return res.json(); })
       .then((body) => {
         if (Array.isArray(body.data)) setModels(body.data);
       })
@@ -349,7 +349,7 @@ export default function App() {
 
   async function loadConversation(id: string) {
     if (!id || readingFilesRef.current) return;
-    setStatus("Loading…");
+    setStatus("加载中…");
     try {
       const res = await fetch(
         `${location.origin}/api/conversations/${encodeURIComponent(id)}`,
@@ -376,9 +376,9 @@ export default function App() {
         setModel(body.conversation.model);
       if (typeof body.conversation?.private === "boolean")
         setPrivateChat(body.conversation.private);
-      setStatus("Loaded");
+      setStatus("已加载");
     } catch (error) {
-      setStatus("Error");
+      setStatus("出错");
       setRaw(String((error as Error).message ?? error));
       setShowRaw(true);
     }
@@ -457,7 +457,7 @@ export default function App() {
     if (runningRef.current || readingFilesRef.current || !files.length) return;
     readingFilesRef.current = true;
     setReadingFiles(true);
-    setStatus("Reading files…");
+    setStatus("正在读取文件…");
     try {
       // Commit the entire selection together. Separate async updates based on
       // the captured messages array overwrite each other's files.
@@ -470,9 +470,9 @@ export default function App() {
         addPlaygroundAttachment(updated, index, attachment, Boolean(conversationId.trim())).messages,
         current,
       ));
-      setStatus("Ready");
+      setStatus("就绪");
     } catch (error) {
-      setStatus("Error");
+      setStatus("出错");
       setRaw(String((error as Error).message ?? error));
       setShowRaw(true);
     } finally {
@@ -528,7 +528,7 @@ export default function App() {
     // of its own attached to it.
     if (runningRef.current || readingFilesRef.current) return;
     if (!canRun) {
-      setStatus("Blocked");
+      setStatus("已阻止");
       setRaw(runBlockedReason!);
       setShowRaw(true);
       return;
@@ -539,7 +539,7 @@ export default function App() {
     setRunning(true);
     setOutput("");
     setRaw("");
-    setStatus("Running…");
+    setStatus("运行中…");
     try {
       const metadata: Record<string, string> = {};
       if (privateChat) metadata.private = "true";
@@ -578,14 +578,14 @@ export default function App() {
           finalText = responseText(body);
           nextConversationId = body.metadata?.conversation_id ?? nextConversationId;
         } else {
-          if (typeof body.choices?.[0]?.message?.content !== "string") throw new Error("Unsupported completion response; no assistant content was returned.");
+          if (typeof body.choices?.[0]?.message?.content !== "string") throw new Error("不支持的补全响应：未返回助手内容。");
           finalText = body.choices[0].message.content;
         }
         setOutput(finalText);
       } else if (response.body) {
         finalText = await (mode === "responses" ? readResponsesStream : readCompletionStream)(response.body, setOutput, setRaw, id => { nextConversationId = id; });
       } else {
-        throw new Error("Response has no stream body");
+        throw new Error("响应不包含流式数据");
       }
       // Keep the exact reply in the visible transcript. The conversation id
       // identifies the upstream thread, while the message prefix lets the
@@ -598,12 +598,12 @@ export default function App() {
           { role: "user", content: "" },
         ]);
       }
-      setStatus("Completed");
+      setStatus("已完成");
       if (!oneShot) void refreshConversations();
     } catch (error) {
-      if ((error as Error).name === "AbortError") setStatus("Stopped");
+      if ((error as Error).name === "AbortError") setStatus("已停止");
       else {
-        setStatus("Error");
+        setStatus("出错");
         setRaw(String((error as Error).message ?? error));
         setShowRaw(true);
       }
@@ -618,7 +618,7 @@ export default function App() {
     if (runningRef.current || readingFilesRef.current || next === mode) return;
     setMode(next);
     setPath(next === "responses" ? "/v1/responses" : "/v1/chat/completions");
-    setOutput(""); setRaw(""); setShowRaw(false); setStatus("Ready");
+    setOutput(""); setRaw(""); setShowRaw(false); setStatus("就绪");
   }
 
   return (
@@ -638,7 +638,7 @@ export default function App() {
         <button className={`side-item ${mode === "responses" ? "active" : ""}`} aria-pressed={mode === "responses"} disabled={running || readingFiles} onClick={() => selectMode("responses")}>
           <span>◇</span> Responses API
         </button>
-        <div className="side-section">Mirror</div>
+        <div className="side-section">Mirror 服务</div>
         <a className="side-item" href="/">
           <span>↗</span> 打开 ChatGPT
         </a>
@@ -708,7 +708,7 @@ export default function App() {
               type="password"
               value={apiKey}
               onChange={(event) => setApiKey(event.target.value)}
-              placeholder="此服务器可不填写"
+              placeholder="如果使用浏览器身份验证，可留空"
             />
           </label>
         </div>
@@ -1067,7 +1067,7 @@ export default function App() {
             <HotkeySettings hotkeys={hotkeys} disabled={running || readingFiles} onSave={saveHotkeys} />
             <ConnectionTools domain={domain} apiKey={apiKey} generationSucceeded={status === "Completed"} />
             <div className="request-preview">
-              <span>Request URL</span>
+              <span>请求地址</span>
               <code>{endpoint}</code>
             </div>
           </aside>
