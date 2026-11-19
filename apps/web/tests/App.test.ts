@@ -194,7 +194,7 @@ test("Run is blocked with an explanatory reason when the last row isn't a fillab
   fireEvent.click(runButton());
   assert.ok(await screen.findByText("已阻止"));
   fireEvent.click(screen.getByRole("button", { name: /原始响应/ }));
-  assert.match(screen.getByText(/最后一条用户消息/).textContent ?? "", /请先在最后一条用户消息中输入内容/);
+  assert.match(screen.getByText(/请先在最后一条用户消息中输入内容/).textContent ?? "", /请先在最后一条用户消息中输入内容/);
 });
 
 test("Run is blocked when the last row's role isn't user at all", async () => {
@@ -328,10 +328,10 @@ test("populates the model dropdown from /v1/models, labelling gizmos/projects an
   const select = screen.getByLabelText("模型") as HTMLSelectElement;
   const optionTexts = Array.from(select.options).map((o) => o.textContent);
   assert.ok(optionTexts.includes("gpt-plain"));
-  assert.ok(optionTexts.includes("gpt-unsupported (unsupported)"));
-  assert.ok(optionTexts.includes("GPT: Helper"));
-  assert.ok(optionTexts.includes("Project: g-p-1"));
-  const unsupportedOption = within(select).getByText("gpt-unsupported (unsupported)") as HTMLOptionElement;
+  assert.ok(optionTexts.includes("gpt-unsupported（不支持）"));
+  assert.ok(optionTexts.includes("GPT：Helper"));
+  assert.ok(optionTexts.includes("项目：g-p-1"));
+  const unsupportedOption = within(select).getByText("gpt-unsupported（不支持）") as HTMLOptionElement;
   assert.equal(unsupportedOption.disabled, true);
 });
 
@@ -404,7 +404,7 @@ test("renders fetched conversations and marks the currently loaded one active", 
     ],
   ]);
   assert.ok(screen.getByText("First chat"));
-  assert.ok(screen.getByText("Untitled"));
+  assert.ok(screen.getByText("未命名会话"));
 });
 
 test("scrolling near the bottom of the conversation list loads the next page", async () => {
@@ -1216,7 +1216,7 @@ test("model selection and switching back from raw output update the visible UI",
 
 test("a malformed completion fails without appending phantom history rows", async () => {
   await renderApp([[/^\/v1\/chat\/completions$/, () => jsonResponse({ choices: [] })]]);
-  fireEvent.click(screen.getByLabelText(/Stream/));
+  fireEvent.click(screen.getByLabelText(/流式输出/));
   fireEvent.click(runButton());
   await screen.findByText("出错");
   assert.equal(document.querySelectorAll(".message-editor").length, 2);
@@ -1307,7 +1307,7 @@ test("Test connection surfaces a failed model-discovery HTTP status", async () =
   ]);
   const panel = connectionToolsPanel();
   fireEvent.click(within(panel).getByRole("button", { name: "测试连接" }));
-  await within(panel).findByText(/Model discovery returned HTTP 503\./);
+  await within(panel).findByText(/模型列表接口返回 HTTP 503/);
 });
 
 test("Test connection rejects a model-discovery response whose data field isn't an array", async () => {
@@ -1533,7 +1533,7 @@ for (const transport of ["stream", "metadata", "header"]) test(`Responses mode $
   fireEvent.click(screen.getByRole("button", { name: /Responses API（响应接口）$/ }));
   assert.ok(screen.getByRole("heading", { name: "Responses API（响应接口）" }));
   fireEvent.click(screen.getByRole("button", { name: /Responses API（响应接口）$/ }));
-  if (transport !== "stream") fireEvent.click(screen.getByRole("checkbox", { name: /Stream/ }));
+  if (transport !== "stream") fireEvent.click(screen.getByRole("checkbox", { name: /流式输出/ }));
   fireEvent.click(runButton());
   await screen.findByText("已完成");
   assert.ok(Array.isArray(posted.input));
