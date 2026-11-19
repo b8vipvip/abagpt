@@ -28,7 +28,7 @@ process.env.MIRROR_DATA_DIR = dir;
 process.env.MIRROR_API_KEY = "test-control-key";
 const store = await import("../dist/store.js");
 const egress = await import("../dist/egress.js");
-const { buildApp } = await import("../dist/index.js");
+const { buildApp, swaggerUiZhCnScript } = await import("../dist/index.js");
 const app = await buildApp();
 test.describe("server / routes", () => {
 test("decoder challenges use the control gate, validate requests, and invalidate on session change", async () => {
@@ -756,6 +756,19 @@ test("POST /api/chat reports a friendly message when the turn is aborted, and th
       assert.ok(!res.body.includes("生成已停止。"));
     },
   ));
+
+test("Swagger UI includes Simplified Chinese labels for remaining dynamic controls", () => {
+  for (const entry of [
+    '["Errors", "错误"]',
+    '["Links", "链接"]',
+    '["No parameters", "没有请求参数"]',
+    '["No examples", "没有可用示例"]',
+    '["Security Schemes", "安全方案"]',
+    '["Show More", "显示更多"]',
+    '["Show Less", "收起更多"]',
+    '["Could not render this component, see the console.", "无法渲染此组件，请查看浏览器控制台。"]',
+  ]) assert.ok(swaggerUiZhCnScript.includes(entry), `Missing Swagger translation: ${entry}`);
+});
 
 // --- /mirror/openapi, static assets, notFoundHandler --------------------------
 
