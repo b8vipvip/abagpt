@@ -533,6 +533,33 @@ test("a streaming run reads SSE frames, updates the conversation id mid-stream, 
   assert.equal((screen.getByPlaceholderText(/自动生成/) as HTMLInputElement).value, "stream-conv-1");
 });
 
+test("a streaming error preserves partial output and shows a localized notice", async () => {
+  const sse =
+    `data: ${JSON.stringify({ choices: [{ delta: { content: "部分结果" }, finish_reason: null }] })}\n\n` +
+    `data: ${JSON.stringify({ error: { message: "upstream exploded" } })}\n\n`;
+  await renderApp([
+    [
+      /^\/v1\/chat\/completions$/,
+      () => {
+        const stream = new ReadableStream<Uint8Array>({
+          start(controller) {
+            controller.enqueue(new TextEncoder().encode(sse));
+            controller.close();
+          },
+        });
+        return new Response(stream, { status: 200, headers: { "content-type": "text/event-stream" } });
+      },
+    ],
+  ]);
+  fireEvent.click(runButton());
+  await screen.findByText("出错");
+  const output = screen.getByText(/部分结果/).textContent ?? "";
+  assert.match(output, /部分结果/);
+  assert.match(output, /请求失败，请检查服务器地址、API 密钥和 ChatGPT 会话后重试。/);
+  fireEvent.click(screen.getByRole("button", { name: /原始响应/ }));
+  assert.match(screen.getByText(/upstream exploded/).textContent ?? "", /upstream exploded/);
+});
+
 test("one-shot runs don't append the reply to the transcript and don't refresh conversations", async () => {
   let conversationsFetchCount = 0;
   await renderApp([
