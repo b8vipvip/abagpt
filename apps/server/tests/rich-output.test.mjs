@@ -119,7 +119,7 @@ test("alternate citation containers and late patch merging preserve every refere
 test("sandbox and image pointers keep Markdown positions; duplicate pointer snapshots resolve once", async () => {
   const value = "First [report](sandbox:/mnt/data/report.csv) then ![plot](sediment://file-plot) done.";
   const result = await renderRichOutput([text(value), text(value)], "", async () => url);
-  assert.equal(result.text, `First 下载文件：[report.csv](<${url}>) then ![file-plot](<${url}>)\n\n下载文件：[file-plot](<${url}>) done.`);
+  assert.equal(result.text, `First 下载文件：[report.csv](<${url}>) then ![图片](<${url}>)\n\n下载文件：[图片](<${url}>) done.`);
   assert.equal(result.assets.length, 2);
 });
 test("sandbox metadata alias uses its file id without a second failed download", async () => {
