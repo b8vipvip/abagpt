@@ -129,7 +129,7 @@ function build(){
     +'<section class="md-card" data-md="workshop"><strong>GPT 创作工坊</strong><p>描述你希望 GPT 创建、改编或解释的内容。Mirror 会生成一份针对所选格式的详细需求，要求 GPT 输出可用文件和简明的变更记录。</p><label>创作需求<textarea data-md="brief" rows="3" placeholder="制作一个有三个房间和隐藏结局的简短互动冒险故事。"></textarea></label><div class="md-actions"><button class="md-primary" data-md="build">让 GPT 按需求创作</button><button data-md="remix">让 GPT 改编此格式</button><button data-md="explain">让 GPT 解释此格式</button></div></section>'
     +'<section class="md-card" data-md="challenge" hidden><strong>解码挑战</strong><div class="md-meta" data-md="meta"></div><div class="md-actions"><button class="md-primary" data-md="insert">插入对话</button><button data-md="copy">复制提示词</button><a data-md="download">下载编码文件</a><button data-md="packet">下载提示词</button><button data-md="kit">下载此套件</button></div>'
     +'<p data-md="size-note"></p>'
-    +'<details><summary>查看挑战提示词</summary><textarea data-md="prompt" aria-label="Challenge prompt" rows="7" readonly></textarea></details>'
+    +'<details><summary>查看挑战提示词</summary><textarea data-md="prompt" aria-label="挑战提示词" rows="7" readonly></textarea></details>'
     +'<div class="md-card"><strong>2. 校验恢复出的字节</strong><div class="md-actions"><button data-md="latest">检查 GPT 最新回复</button></div><label>或粘贴恢复出的十六进制内容 / 带标记的答案行<textarea data-md="answer" rows="3" maxlength="8192" spellcheck="false" placeholder="在此粘贴 GPT 返回的十六进制答案"></textarea></label><div class="md-actions"><button data-md="verify">校验粘贴的答案</button></div><div class="md-meta" data-md="expiry"></div></div></section>';
   document.body.appendChild(dialog);
   dialog.querySelector('.md-close').onclick=function(){dialog.close();};
@@ -150,7 +150,7 @@ function build(){
     var note=kind==='explain'?'Explain how the format represents bytes, then demonstrate with a tiny valid example. If code execution is available, generate and inspect the exact bytes.':'Produce the actual artifact bytes or a complete reproducible script that creates them. Keep a manifest of files/bytes, describe format-specific tradeoffs, and end with a short CHANGELOG for the next iteration. Do not pretend an image is ordinary visual art if it is carrying data.';
     var response=await fetch('/api/convert/gpt-prompt',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({dataBase64:briefBase64(brief),format:format,filename:'format-lab-brief.txt',note:note})});
     var data=await response.json();
-    if(!response.ok)throw Error(data.error||'The conversion API could not build this format prompt.');
+    if(!response.ok)throw Error(data.error||'转换接口无法生成此格式的提示词。');
     return data.prompt+'\n\nYou are collaborating with Mirror Format Lab. '+lead+' a '+format+' artifact for this brief: '+brief+'\nUse the format exactly as described above, preserve Unicode and binary bytes, and clearly label anything that is a lossy visual experiment. Mirror will display the resulting file and can feed a later remix back to you.';
   }
   async function putWorkshopPrompt(kind){var text=await workshopPrompt(kind);field('prompt').value=text;field('prompt').closest('details').open=true;status('创作需求已准备就绪。请将其插入对话，或复制后发送给 GPT。');}
@@ -166,7 +166,7 @@ function build(){
       var next=await request('/api/decoder-challenges',{format:format,guidance:field('guidance').value,payload:field('payload').value});
       remember(next);ids.push(next.id);
     }
-    await downloadKit(ids);status('All four kits downloaded. Use 最近的挑战 to select the one you want to check.');
+    await downloadKit(ids);status('四种格式的挑战套件已全部下载。请在“最近的挑战”中选择要校验的项目。');
   });};
   field('insert').onclick=function(){run(async function(){insertPrompt();});};
   field('copy').onclick=function(){run(async function(){
