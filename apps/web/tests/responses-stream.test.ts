@@ -28,7 +28,7 @@ test("Responses validates terminal envelopes and assistant text parts", async ()
     { status: "completed", output: [] },
     { status: "completed", output: [{ type: "message", role: "assistant" }] },
     { status: "completed", output: [{ type: "message", role: "assistant", content: [{ type: "output_text", text: 1 }] }] }]) {
-    assert.throws(() => responseText(value), /failure|complete|assistant text/i);
+    assert.throws(() => responseText(value), /响应未能成功完成|Explicit failure|不支持的响应格式/);
   }
   assert.equal(responseText({ status: "completed", output: [
     { type: "reasoning" }, { type: "message", role: "user" },
@@ -46,10 +46,10 @@ test("Responses ignores SSE comments and flushes a final unterminated frame", as
 
 test("Responses reports invalid deltas and every supported error envelope", async () => {
   for (const [event, expected] of [
-    [{ type: "response.output_text.delta", delta: 42 }, /Invalid response text delta/],
+    [{ type: "response.output_text.delta", delta: 42 }, /响应文本增量格式无效/],
     [{ type: "error", error: { message: "nested error" } }, /nested error/],
     [{ type: "error", message: "flat error" }, /flat error/],
-    [{ type: "response.incomplete" }, /partial output is preserved/],
+    [{ type: "response.incomplete" }, /已保留部分输出/],
   ] as const) {
     await assert.rejects(readResponsesStream(stream([event]), () => {}, () => {}, () => {}), expected);
   }
