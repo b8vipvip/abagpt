@@ -26,11 +26,38 @@ test.describe('server / tool bridge route', () => {
     })));
     try {
       return await app.inject({ method: 'POST', url: '/v1/chat/completions', headers: { authorization: 'Bearer fixture-mirror-key' },
-        payload: { messages, tools, stream, stream_options: { include_usage: true }, reasoning_effort: 'high' } });
+        payload: { model: 'auto', messages, tools, stream, stream_options: { include_usage: true }, reasoning_effort: 'high', ...options.payload } });
     } finally { test.mock.restoreAll(); await app.close(); }
   }
+  test('defaults missing tool definitions to an empty list when prior tool-call messages are present', async () => {
+    const response = await request(false, '{"content":"done"}', [
+      { role: 'user', content: 'Read a.txt' },
+      { role: 'assistant', content: null, tool_calls: [] },
+    ], { payload: { tools: undefined } });
+    assert.equal(response.statusCode, 200, response.body);
+    assert.equal(response.json().choices[0].message.content, 'done');
+  });
+
+  test('rejects Work Mode models before starting a tool-bridge turn', async () => {
+    const response = await request(false, '{"content":"unused"}', undefined, {
+      payload: { model: 'g-1', metadata: { mirror_model: 'gpt-5-wm' } },
+    });
+    assert.equal(response.statusCode, 400, response.body);
+    assert.match(response.json().error.message, /Work Mode/);
+  });
+
+  test('preserves a non-Error rejection as the tool-bridge fallback message', async () => {
+    const response = await request(false, 'unused', undefined, {
+      sendMessage: async () => { throw 'non-error rejection'; },
+    });
+    assert.equal(response.statusCode, 502, response.body);
+    assert.equal(response.json().error.message, 'Tool bridge failed');
+  });
+
   test('returns a nonstreamed function request', async () => {
-    const response = await request(false, '{"tool_calls":[{"name":"read_file","arguments":{"path":"a.txt"}}]}');
+    const response = await request(false, '{"tool_calls":[{"name":"read_file","arguments":{"path":"a.txt"}}]}', [
+      { role: 'user', name: 'requester', content: 'Read a.txt' },
+    ]);
     assert.equal(response.statusCode, 200, response.body);
     assert.equal(response.json().choices[0].finish_reason, 'tool_calls');
     assert.equal(response.json().choices[0].message.tool_calls[0].function.name, 'read_file');
