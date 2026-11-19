@@ -166,13 +166,13 @@ function build(){
     return btoa(binary);
   }
   async function workshopPrompt(kind){
-    var format=field('format').value, brief=field('brief').value.trim()||'a tiny interactive story with a surprising ending';
-    var lead=kind==='build'?'Create':kind==='remix'?'Remix':'Explain';
-    var note=kind==='explain'?'Explain how the format represents bytes, then demonstrate with a tiny valid example. If code execution is available, generate and inspect the exact bytes.':'Produce the actual artifact bytes or a complete reproducible script that creates them. Keep a manifest of files/bytes, describe format-specific tradeoffs, and end with a short CHANGELOG for the next iteration. Do not pretend an image is ordinary visual art if it is carrying data.';
+    var format=field('format').value, brief=field('brief').value.trim()||'一个带有意外结局的微型互动故事';
+    var lead=kind==='build'?'创建':kind==='remix'?'改编':'解释';
+    var note=kind==='explain'?'请用简体中文解释该格式如何表示字节，并展示一个简短、有效的示例。如果支持代码执行，请生成并检查精确的字节。':'请生成实际的文件字节，或提供可完整复现的生成脚本。请用清单记录文件和字节，说明该格式的特点与取舍，并以简短的“变更记录（CHANGELOG）”结束，便于下一轮迭代。若图像承载数据，请明确说明其数据载荷属性，不要将其描述成普通视觉艺术作品。';
     var response=await fetch('/api/convert/gpt-prompt',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({dataBase64:briefBase64(brief),format:format,filename:'format-lab-brief.txt',note:note})});
     var data=await response.json();
     if(!response.ok){var err=data.error;var message=typeof err==='string'?err:(err&&typeof err.message==='string'?err.message:'');throw Error(message?message+' (HTTP '+response.status+')':'HTTP '+response.status);}
-    return data.prompt+'\n\nYou are collaborating with Mirror Format Lab. '+lead+' a '+format+' artifact for this brief: '+brief+'\nUse the format exactly as described above, preserve Unicode and binary bytes, and clearly label anything that is a lossy visual experiment. Mirror will display the resulting file and can feed a later remix back to you.';
+    return data.prompt+'\n\n你正在与 Mirror 格式实验室协作。请根据以下需求'+lead+'一个 '+format+' 格式的文件：'+brief+'\n请严格遵循上文的格式说明，完整保留 Unicode 字符和二进制字节，并明确标注任何有损的视觉实验。Mirror 会展示生成的文件，并可在后续迭代中将改编结果再次交给你。';
   }
   async function putWorkshopPrompt(kind){var text=await workshopPrompt(kind);field('prompt').value=text;field('prompt').closest('details').open=true;status('创作需求已准备就绪。请将其插入对话，或复制后发送给 GPT。');}
   field('build').onclick=function(){run(async function(){await putWorkshopPrompt('build');});};
