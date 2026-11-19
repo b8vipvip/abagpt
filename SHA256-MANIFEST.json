@@ -34,7 +34,7 @@
   "apps/server/src/conversion-routes.ts": "3c7cda43b783d7c3a564fb5e6a25e3eaae19a1c4b819db75793dc3902010a793",
   "apps/server/src/deadlines.ts": "760b2ea432b4ca0d33a8664dfce2fa4daeafd4e648698453c9ae9d4fa82e6787",
   "apps/server/src/decoder-challenge-guides.ts": "3cebe57a42051b96922f48888bfe97a59635cbc0429e135f9a35e6728745ab6d",
-  "apps/server/src/decoder-challenge-ui.ts": "b806dae0a50e668b21fdfa54e4b6a0ba5b46d2e6aab6dc61816235aa1ba7da64",
+  "apps/server/src/decoder-challenge-ui.ts": "c542b262fbcc7355726e79675ba984afb819bb70d7b36b5d99ac516e72224442",
   "apps/server/src/decoder-challenges.ts": "b09dfc5d4bc7d22a0a971e98ad614318f9b63de1ac6f908be481d21669bf0771",
   "apps/server/src/egress.ts": "75f878f1d22d6ea4acda030b02ad6a661d01b169ee29c3c743fac2ee7f3469ec",
   "apps/server/src/gif89a.ts": "83f122d06b7cc1de32be38568701c5daf7a00fc1873504fc140e5b6c4bf4c5e8",
@@ -164,7 +164,7 @@
   "scripts/protocol-canary.mjs": "a1bb2f0b63dd077a0c18b6d2da4bfc3b256a6eb13ace8d958ef999ad26920c32",
   "scripts/restore-drill.mjs": "05917168b3b909b7403c6ecb6e1d6939482e8e30c254a6103b7968cf077dbd08",
   "scripts/storage.mjs": "1df9e21d08fd0a99d17698c0ecc079a599499d6873a99398ec95e4dead11d1bf",
-  "tests/browser/decoder-challenges.spec.ts": "548a30ff7913f1eb9f78a159740085d370be04840f9e2344cea1fcdbca018e43",
+  "tests/browser/decoder-challenges.spec.ts": "4869c9f8560f1af05a261af9daad22e8cee99bb229dad40233b13e6f4c6246c1",
   "tests/browser/playground.spec.ts": "d9f177445d5689b6aa7e5d70bc5f605e5a80c731528afc25184a002d43e64ecb",
   "tests/browser/server.mjs": "f533bfd6c46958c88f04d4e1dd8ad818c35676e85e52e96843c69e56ea458d9a",
   "tsconfig.base.json": "ea903f97b8096f3cea4d123a67c5f816f1501980dd5317408a0fbc8f411be4e4"
