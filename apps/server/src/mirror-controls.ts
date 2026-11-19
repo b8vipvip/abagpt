@@ -137,7 +137,35 @@ function isReallyVisible(el){
   }
   return el.getBoundingClientRect().width>0;
 }
+function isLoginButton(button){
+  var label=(button.textContent||'').trim();
+  return label==='Log in'||label==='登录';
+}
+function localizeLoginButtons(){
+  var buttons=document.querySelectorAll('button');
+  for(var i=0;i<buttons.length;i++){
+    var button=buttons[i];
+    if((button.textContent||'').trim()!=='Log in')continue;
+    var walker=document.createTreeWalker(button,NodeFilter.SHOW_TEXT),node,nodes=[],combined='';
+    while((node=walker.nextNode())){
+      nodes.push(node);
+      combined+=node.nodeValue||'';
+    }
+    if(combined.trim()==='Log in'&&nodes.length){
+      var leading=(nodes[0].nodeValue.match(/^\s*/)||[''])[0];
+      var trailing=(nodes[nodes.length-1].nodeValue.match(/\s*$/)||[''])[0];
+      nodes[0].nodeValue=leading+'登录'+trailing;
+      for(var j=1;j<nodes.length;j++)nodes[j].nodeValue='';
+    }
+    if((button.textContent||'').trim()==='登录'){
+      button.setAttribute('aria-label','登录');
+      button.setAttribute('title','登录');
+      button.dataset.mirrorLoginLocalized='1';
+    }
+  }
+}
 function findLoggedOutAnchor(){
+  localizeLoginButtons();
   // Logged-out users have no accounts-profile-button in the visible sidebar
   // (only a hidden copy inside the collapsed icon rail, which stays present
   // but invisible in the DOM regardless of login state). Instead the
@@ -149,7 +177,7 @@ function findLoggedOutAnchor(){
   var buttons=document.querySelectorAll('button');
   for(var i=0;i<buttons.length;i++){
     var b=buttons[i];
-    if((b.textContent||'').trim()!=='Log in')continue;
+    if(!isLoginButton(b))continue;
     if(b.closest('#page-header'))continue;
     if(!isReallyVisible(b))continue;
     return b;
@@ -214,11 +242,12 @@ setInterval(tryMount,1000);
 // on the same interval as tryMount since React can swap these nodes out.
 function interceptLoginButtons(){
   if(!widgetRoot)return;
+  localizeLoginButtons();
   var buttons=document.querySelectorAll('button');
   for(var i=0;i<buttons.length;i++){
     var b=buttons[i];
     if(b.dataset.mirrorIntercepted)continue;
-    if((b.textContent||'').trim()!=='Log in')continue;
+    if(!isLoginButton(b))continue;
     b.dataset.mirrorIntercepted='1';
     b.addEventListener('click',function(e){
       e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
