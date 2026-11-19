@@ -6,7 +6,7 @@ import { DEFAULT_HOTKEYS, describeHotkey } from "./hotkeys.js";
 // entry in DEFAULT_HOTKEYS) the next time a new hotkey is introduced -
 // this panel and the per-account save/reset behavior come for free.
 const ACTIONS: Array<{ id: string; label: string }> = [
-  { id: "commandPalette", label: "Quick-open conversation search" },
+  { id: "commandPalette", label: "快速搜索并打开会话" },
 ];
 
 export function HotkeySettings({
@@ -36,12 +36,12 @@ export function HotkeySettings({
     const combo = parts.join("+");
     onSave({ ...hotkeys, [actionId]: combo });
     setRecording(null);
-    setStatus(`${label} set to ${describeHotkey(combo)}`);
+    setStatus(`“${label}”已设置为 ${describeHotkey(combo)}`);
   }
 
   return (
     <details className="utility-panel">
-      <summary>Keyboard shortcuts</summary>
+      <summary>键盘快捷键</summary>
       <p role="status">{status}</p>
       <ul>
         {ACTIONS.map((action) => {
@@ -54,8 +54,8 @@ export function HotkeySettings({
                 <input
                   autoFocus
                   readOnly
-                  aria-label={`Press a key combo for ${action.label}`}
-                  value="Press a key combo… (Esc to cancel)"
+                  aria-label={`请为“${action.label}”按下快捷键组合`}
+                  value="请按下快捷键组合…（按 Esc 取消）"
                   onKeyDown={(event) => captureKey(action.id, action.label, event)}
                   onBlur={() => setRecording(null)}
                 />
@@ -77,7 +77,7 @@ export function HotkeySettings({
                         const next = { ...hotkeys };
                         delete next[action.id];
                         onSave(next);
-                        setStatus(`${action.label} reset to default`);
+                        setStatus(`“${action.label}”已恢复默认设置`);
                       }}
                     >
                       Reset to default
