@@ -8,6 +8,7 @@ test.describe("server / preflight", () => {
     const result = classifyStartupFailure(error);
     assert.equal(result.category, "port-in-use");
     assert.match(result.nextAction, /PORT|MIRROR_PORT/);
+    assert.match(result.nextAction, /另一个进程正在使用此端口/);
   });
 
   test("classifies a WARP egress verification failure", () => {
@@ -15,6 +16,7 @@ test.describe("server / preflight", () => {
     const result = classifyStartupFailure(error);
     assert.equal(result.category, "warp-egress");
     assert.match(result.nextAction, /WARP_ACCEPT_TOS/);
+    assert.match(result.nextAction, /请确认随附的 WARP 容器/);
   });
 
   test("classifies an unsupported/incompatible database schema version", () => {
@@ -22,6 +24,7 @@ test.describe("server / preflight", () => {
     const result = classifyStartupFailure(error);
     assert.equal(result.category, "database-migration");
     assert.match(result.nextAction, /RELEASE-RECOVERY/);
+    assert.match(result.nextAction, /此数据库由更新版本的 Mirror 创建/);
   });
 
   test("classifies a malformed MIRROR_STORE_KEY", () => {
