@@ -62,7 +62,7 @@ interface StoredMessageDto {
 const FALLBACK_SYSTEM_INSTRUCTIONS = "You are a helpful assistant.";
 const DEFAULT_MESSAGES: PlaygroundMessage[] = [
   { role: "system", content: FALLBACK_SYSTEM_INSTRUCTIONS },
-  { role: "user", content: "Say hello in one short sentence." },
+  { role: "user", content: "请用一句简短的话打个招呼。" },
 ];
 const STORAGE_KEY_CONVERSATION_ID = "mirror-playground-conversation-id";
 const STORAGE_KEY_MESSAGES = "mirror-playground-messages";
@@ -661,7 +661,7 @@ export default function App() {
         <div className="workbench-head">
           <div>
             <h1>{mode === "responses" ? "Responses API（响应接口）" : "对话"}</h1>
-            <p>{mode === "responses" ? "通过 Responses API 测试文本输入和流式输出。" : "测试兼容 OpenAI 的 Chat Completions 接口。"}</p>
+            <p>{mode === "responses" ? "通过 Responses API 测试文本输入和流式输出。" : "测试兼容 OpenAI 的聊天补全接口。"}</p>
             {mode === "responses" && <p>Mirror 支持文本消息和会话 ID；暂不支持工具调用、previous_response_id 和响应检索。</p>}
           </div>
           <div className="run-actions">
