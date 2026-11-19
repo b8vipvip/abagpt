@@ -104,15 +104,15 @@ test("API documentation is localized without changing the OpenAPI contract", asy
  expect(requestSchema.properties.metadata).toBeDefined();
  expect(requestSchema.properties.messages).toBeDefined();
  await page.goto(`${serverBase}/mirror/api-docs`);
- await expect(page.locator(".swagger-ui")).toContainText("授权");
- await expect(page.locator(".swagger-ui")).toContainText("创建聊天补全");
+ await expect(page.locator(".swagger-ui.swagger-container")).toContainText("授权");
+ await expect(page.locator(".swagger-ui.swagger-container")).toContainText("创建聊天补全");
 });
 test("mobile API documentation stays readable without horizontal page overflow", async ({ page }) => {
  await page.setViewportSize({ width: 390, height: 844 });
  await page.goto(`${serverBase}/mirror/playground`);
  await page.goto(`${serverBase}/mirror/api-docs`);
- await expect(page.locator(".swagger-ui")).toBeVisible();
- await expect(page.locator(".swagger-ui")).toContainText("创建聊天补全");
+ await expect(page.locator(".swagger-ui.swagger-container")).toBeVisible();
+ await expect(page.locator(".swagger-ui.swagger-container")).toContainText("创建聊天补全");
  const hasHorizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
  expect(hasHorizontalOverflow).toBe(false);
 });
