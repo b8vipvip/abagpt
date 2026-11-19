@@ -10,7 +10,7 @@ export function InlineMediaPreview({ text }: { text: string }) {
   const media = useMemo(() => detectInlineMedia(text), [text]);
   if (!media.length) return null;
   return (
-    <div className="inline-media-preview" aria-label="Detected files and images">
+    <div className="inline-media-preview" aria-label="检测到的文件和图片">
       {media.map((item, index) =>
         item.kind === "image" ? (
           <a
