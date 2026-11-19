@@ -59,7 +59,7 @@ export function CommandPalette({
         })
         .catch((error) => {
           setResults([]);
-          setStatus(String(error));
+          setStatus(`搜索失败：${error instanceof Error ? error.message : String(error)}`);
         });
     }, 200);
     return () => clearTimeout(timer);
