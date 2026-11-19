@@ -46,7 +46,7 @@ function router(handlers: Array<[RegExp, Handler]>): typeof fetch {
           : (input as Request).url;
     // A base is required for bare relative fetches (e.g.
     // ConnectionTools/ConversationTools deliberately call fetch("/api/...")
-    // directly, unprefixed by the configurable "Server domain" field,
+    // directly, unprefixed by the configurable "服务器地址" field,
     // since those always target this local Mirror instance) - harmless
     // for the already-absolute URLs every other call site here builds.
     const url = new URL(href, location.origin);
@@ -75,7 +75,7 @@ function lastUserTextarea() {
 }
 
 function runButton() {
-  return screen.getByRole("button", { name: /^Run/ });
+  return screen.getByRole("button", { name: /^运行请求/ });
 }
 
 // ---------------------------------------------------------------------------
@@ -84,15 +84,15 @@ function runButton() {
 
 test("renders the platform header, sidebar, and default two-message transcript", async () => {
   await renderApp();
-  assert.ok(screen.getByRole("heading", { name: "Chat" }));
+  assert.ok(screen.getByRole("heading", { name: "对话" }));
   const header = screen.getByRole("banner");
-  assert.ok(within(header).getByRole("link", { name: "ChatGPT" }));
-  assert.ok(within(header).getByRole("link", { name: /Playground/ }));
-  assert.ok(within(header).getByRole("link", { name: /Models/ }));
-  assert.ok(within(header).getByRole("link", { name: /API docs/ }));
-  assert.ok(within(header).getByRole("link", { name: /OpenAPI schema/ }));
+  assert.ok(within(header).getByRole("link", { name: "ChatGPT 聊天" }));
+  assert.ok(within(header).getByRole("link", { name: /API 测试台/ }));
+  assert.ok(within(header).getByRole("link", { name: /模型/ }));
+  assert.ok(within(header).getByRole("link", { name: /API 文档/ }));
+  assert.ok(within(header).getByRole("link", { name: /OpenAPI 规范/ }));
   assert.equal(screen.getAllByRole("textbox").filter((el) => el.tagName === "TEXTAREA").length, 2);
-  assert.equal(screen.getByText("Ready").className, "run-status ready");
+  assert.equal(screen.getByText("就绪").className, "run-status ready");
 });
 
 test("Convert actions insert prompts and attachments into the correct chat turn", async () => {
@@ -104,34 +104,34 @@ test("Convert actions insert prompts and attachments into the correct chat turn"
 
   // Make the last turn an assistant reply first. The conversion callbacks
   // must append a fresh user draft instead of rewriting the assistant row.
-  fireEvent.click(screen.getByRole("button", { name: "Output" }));
-  fireEvent.click(screen.getByLabelText("Stream response"));
+  fireEvent.click(screen.getByRole("button", { name: "输出" }));
+  fireEvent.click(screen.getByLabelText("流式输出"));
   fireEvent.click(runButton());
   await screen.findAllByText(/result\.png/);
   assert.ok(screen.getAllByRole("img", { name: "result" }).length >= 1);
 
-  fireEvent.click(screen.getByRole("button", { name: "Convert" }));
-  fireEvent.click(screen.getByRole("button", { name: "Encode" }));
-  await screen.findByAltText(/Encoded PngSpeak/);
-  fireEvent.click(screen.getByRole("button", { name: /Insert decode-prompt into chat/ }));
-  await screen.findByText("Prompt inserted into the current chat message below.");
+  fireEvent.click(screen.getByRole("button", { name: "转换工具" }));
+  fireEvent.click(screen.getByRole("button", { name: "编码" }));
+  await screen.findByAltText(/已编码的 PngSpeak/);
+  fireEvent.click(screen.getByRole("button", { name: /将解码提示词插入对话/ }));
+  await screen.findByText("已将提示词插入下方当前对话消息。");
   assert.ok(screen.getByDisplayValue("decode this artifact"));
 
   // A later insertion appends to that user draft, and attachment insertion
   // augments it. Running again makes the latest row an assistant turn so the
   // attachment callback also exercises its fresh-user-message path.
-  fireEvent.click(screen.getByRole("button", { name: /Attach to chat/ }));
-  await screen.findByText("Attached to the current chat message below.");
-  fireEvent.click(screen.getByRole("button", { name: /Insert decode-prompt into chat/ }));
+  fireEvent.click(screen.getByRole("button", { name: /添加到对话附件/ }));
+  await screen.findByText("已添加到下方当前对话消息的附件中。");
+  fireEvent.click(screen.getByRole("button", { name: /将解码提示词插入对话/ }));
   await screen.findByText(/Prompt inserted into the current chat message below\./);
-  fireEvent.click(screen.getByRole("button", { name: "Output" }));
+  fireEvent.click(screen.getByRole("button", { name: "输出" }));
   fireEvent.click(runButton());
   await screen.findAllByText(/result\.png/);
-  fireEvent.click(screen.getByRole("button", { name: "Convert" }));
-  fireEvent.click(screen.getByRole("button", { name: "Encode" }));
-  await screen.findByAltText(/Encoded PngSpeak/);
-  fireEvent.click(screen.getByRole("button", { name: /Attach to chat/ }));
-  await screen.findByText("Attached to the current chat message below.");
+  fireEvent.click(screen.getByRole("button", { name: "转换工具" }));
+  fireEvent.click(screen.getByRole("button", { name: "编码" }));
+  await screen.findByAltText(/已编码的 PngSpeak/);
+  fireEvent.click(screen.getByRole("button", { name: /添加到对话附件/ }));
+  await screen.findByText("已添加到下方当前对话消息的附件中。");
 });
 
 test("conversion callbacks cannot mutate the transcript once a run is starting", async () => {
@@ -141,9 +141,9 @@ test("conversion callbacks cannot mutate the transcript once a run is starting",
     [/^\/api\/convert\/gpt-prompt$/, () => jsonResponse({ prompt: "should not land during run" })],
     [/^\/v1\/chat\/completions$/, () => gate.promise],
   ]);
-  fireEvent.click(screen.getByRole("button", { name: "Convert" }));
-  fireEvent.click(screen.getByRole("button", { name: "Encode" }));
-  await screen.findByAltText(/Encoded PngSpeak/);
+  fireEvent.click(screen.getByRole("button", { name: "转换工具" }));
+  fireEvent.click(screen.getByRole("button", { name: "编码" }));
+  await screen.findByAltText(/已编码的 PngSpeak/);
   const originalDraft = lastUserTextarea().value;
 
   // React has not committed the disabled state yet inside this synchronous
@@ -151,8 +151,8 @@ test("conversion callbacks cannot mutate the transcript once a run is starting",
   // the network. This reproduces a fast user double-action on the same turn.
   act(() => {
     fireEvent.click(runButton());
-    fireEvent.click(screen.getByRole("button", { name: /Insert decode-prompt into chat/ }));
-    fireEvent.click(screen.getByRole("button", { name: /Attach to chat/ }));
+    fireEvent.click(screen.getByRole("button", { name: /将解码提示词插入对话/ }));
+    fireEvent.click(screen.getByRole("button", { name: /添加到对话附件/ }));
   });
   assert.equal(lastUserTextarea().value, originalDraft);
   assert.equal(screen.queryByText("should not land during run"), null);
@@ -165,25 +165,25 @@ test("conversion tools create a fresh user row when the transcript has no user d
     [/^\/api\/convert\/pngspeak\/encode$/, () => jsonResponse({ bytes: 3, dataBase64: "AQID" })],
     [/^\/api\/convert\/gpt-prompt$/, () => jsonResponse({ prompt: "fresh prompt row" })],
   ]);
-  fireEvent.click(screen.getByRole("button", { name: /Add message/ }));
-  fireEvent.change(screen.getByLabelText("Message 3 role"), { target: { value: "assistant" } });
-  fireEvent.click(screen.getByRole("button", { name: "Convert" }));
-  fireEvent.click(screen.getByRole("button", { name: "Encode" }));
-  await screen.findByAltText(/Encoded PngSpeak/);
-  fireEvent.click(screen.getByRole("button", { name: /Insert decode-prompt into chat/ }));
+  fireEvent.click(screen.getByRole("button", { name: /添加消息/ }));
+  fireEvent.change(screen.getByLabelText("第 3 条消息的角色"), { target: { value: "assistant" } });
+  fireEvent.click(screen.getByRole("button", { name: "转换工具" }));
+  fireEvent.click(screen.getByRole("button", { name: "编码" }));
+  await screen.findByAltText(/已编码的 PngSpeak/);
+  fireEvent.click(screen.getByRole("button", { name: /将解码提示词插入对话/ }));
   await screen.findByDisplayValue("fresh prompt row");
-  fireEvent.click(screen.getByRole("button", { name: /Attach to chat/ }));
+  fireEvent.click(screen.getByRole("button", { name: /添加到对话附件/ }));
   await screen.findByText(/mirror-convert\.pngspk\.png/);
 });
 
 test("conversion attachment creates a fresh draft after an assistant-only final turn", async () => {
   await renderApp([[/^\/api\/convert\/pngspeak\/encode$/, () => jsonResponse({ bytes: 3, dataBase64: "AQID" })]]);
-  fireEvent.click(screen.getByRole("button", { name: /Add message/ }));
-  fireEvent.change(screen.getByLabelText("Message 3 role"), { target: { value: "assistant" } });
-  fireEvent.click(screen.getByRole("button", { name: "Convert" }));
-  fireEvent.click(screen.getByRole("button", { name: "Encode" }));
-  await screen.findByAltText(/Encoded PngSpeak/);
-  fireEvent.click(screen.getByRole("button", { name: /Attach to chat/ }));
+  fireEvent.click(screen.getByRole("button", { name: /添加消息/ }));
+  fireEvent.change(screen.getByLabelText("第 3 条消息的角色"), { target: { value: "assistant" } });
+  fireEvent.click(screen.getByRole("button", { name: "转换工具" }));
+  fireEvent.click(screen.getByRole("button", { name: "编码" }));
+  await screen.findByAltText(/已编码的 PngSpeak/);
+  fireEvent.click(screen.getByRole("button", { name: /添加到对话附件/ }));
   assert.ok(await screen.findByText("mirror-convert.pngspk.png"));
 });
 
@@ -192,9 +192,9 @@ test("Run is blocked with an explanatory reason when the last row isn't a fillab
   // Default last row IS a filled user row - clear it first.
   fireEvent.change(lastUserTextarea(), { target: { value: "   " } });
   fireEvent.click(runButton());
-  assert.ok(await screen.findByText("Blocked"));
-  fireEvent.click(screen.getByRole("button", { name: /Raw response/ }));
-  assert.match(screen.getByText(/user.*row/i).textContent ?? "", /Type a message/);
+  assert.ok(await screen.findByText("已阻止"));
+  fireEvent.click(screen.getByRole("button", { name: /原始响应/ }));
+  assert.match(screen.getByText(/最后一条用户消息/).textContent ?? "", /请先在最后一条用户消息中输入内容/);
 });
 
 test("Run is blocked when the last row's role isn't user at all", async () => {
@@ -202,22 +202,22 @@ test("Run is blocked when the last row's role isn't user at all", async () => {
   const selects = screen.getAllByRole("combobox").filter((el) => el.closest(".message-editor"));
   fireEvent.change(selects.at(-1) as HTMLSelectElement, { target: { value: "system" } });
   fireEvent.click(runButton());
-  assert.ok(await screen.findByText("Blocked"));
-  fireEvent.click(screen.getByRole("button", { name: /Raw response/ }));
-  assert.match(screen.getByText(/must be from the user/).textContent ?? "", /must be from the user/);
+  assert.ok(await screen.findByText("已阻止"));
+  fireEvent.click(screen.getByRole("button", { name: /原始响应/ }));
+  assert.match(screen.getByText(/最后一条消息必须来自用户/).textContent ?? "", /最后一条消息必须来自用户/);
 });
 
 test("toggling the model field between list and freeform, and revealing the gizmo picker for g- models", async () => {
   await renderApp([
     [/^\/v1\/models$/, () => jsonResponse({ data: [{ id: "gpt-x", owned_by: "openai" }] })],
   ]);
-  assert.equal(screen.queryByPlaceholderText(/Picked model/), null);
-  fireEvent.click(screen.getByRole("button", { name: "Type manually" }));
-  const modelInput = screen.getByPlaceholderText(/official model/);
+  assert.equal(screen.queryByPlaceholderText(/此 GPT／项目使用的模型/), null);
+  fireEvent.click(screen.getByRole("button", { name: "手动输入" }));
+  const modelInput = screen.getByPlaceholderText(/官方模型 ID/);
   fireEvent.change(modelInput, { target: { value: "g-12345" } });
-  assert.ok(screen.getByLabelText(/Picked model/));
-  fireEvent.click(screen.getByRole("button", { name: "Use list" }));
-  assert.ok(screen.getByRole("combobox", { name: /Model/ }) || true);
+  assert.ok(screen.getByLabelText(/此 GPT／项目使用的模型/));
+  fireEvent.click(screen.getByRole("button", { name: "使用列表选择" }));
+  assert.ok(screen.getByRole("combobox", { name: /模型/ }) || true);
 });
 
 // ---------------------------------------------------------------------------
@@ -252,8 +252,8 @@ test("a valid remembered snapshot hydrates model, pickedModel, privateChat, conv
   assert.equal((conversationIdInput as HTMLInputElement).value, "conv-remembered");
   assert.ok(screen.getByDisplayValue("remembered system"));
   assert.ok(screen.getByDisplayValue("remembered user"));
-  assert.ok((screen.getByLabelText("Private chat") as HTMLInputElement).checked);
-  assert.ok(screen.getByLabelText(/Picked model/));
+  assert.ok((screen.getByLabelText("私密对话") as HTMLInputElement).checked);
+  assert.ok(screen.getByLabelText(/此 GPT／项目使用的模型/));
 });
 
 test("a malformed remembered snapshot falls back to the defaults instead of throwing", async () => {
@@ -272,14 +272,14 @@ test("a remembered snapshot whose messages fail shape validation falls back to t
     JSON.stringify({ messages: [{ role: "not-a-real-role", content: "x" }] }),
   );
   await renderApp();
-  assert.ok(screen.getByDisplayValue("Say hello in one short sentence."));
+  assert.ok(screen.getByDisplayValue("请用一句简短的话打个招呼。"));
 });
 
 test("a remembered snapshot with an empty messages array falls back to the defaults", async () => {
   localStorage.setItem("mirror-playground-remember-history", "true");
   localStorage.setItem("mirror-playground-snapshot", JSON.stringify({ messages: [] }));
   await renderApp();
-  assert.ok(screen.getByDisplayValue("Say hello in one short sentence."));
+  assert.ok(screen.getByDisplayValue("请用一句简短的话打个招呼。"));
 });
 
 // ---------------------------------------------------------------------------
@@ -288,7 +288,7 @@ test("a remembered snapshot with an empty messages array falls back to the defau
 
 test("turning Remember history on persists a snapshot; turning it off removes it", async () => {
   await renderApp();
-  const checkbox = screen.getByLabelText("Remember prompt history on this device");
+  const checkbox = screen.getByLabelText("在此设备记住提示词历史");
   fireEvent.click(checkbox);
   await waitFor(() => assert.ok(localStorage.getItem("mirror-playground-snapshot")));
   const saved = JSON.parse(localStorage.getItem("mirror-playground-snapshot") as string);
@@ -299,9 +299,9 @@ test("turning Remember history on persists a snapshot; turning it off removes it
 
 test("enabling one-shot while remembering history still clears the persisted snapshot", async () => {
   await renderApp();
-  fireEvent.click(screen.getByLabelText("Remember prompt history on this device"));
+  fireEvent.click(screen.getByLabelText("在此设备记住提示词历史"));
   await waitFor(() => assert.ok(localStorage.getItem("mirror-playground-snapshot")));
-  fireEvent.click(screen.getByLabelText(/One-shot/));
+  fireEvent.click(screen.getByLabelText(/单次请求/));
   await waitFor(() => assert.equal(localStorage.getItem("mirror-playground-snapshot"), null));
 });
 
@@ -365,7 +365,7 @@ test("the bearer credential is sent as an authorization header on model discover
       },
     ],
   ]);
-  fireEvent.change(screen.getByLabelText("Bearer credential"), { target: { value: "sk-test" } });
+  fireEvent.change(screen.getByLabelText("API 密钥（Bearer）"), { target: { value: "sk-test" } });
   await waitFor(() => assert.ok(seen.includes("Bearer sk-test")));
 });
 
@@ -380,9 +380,9 @@ test("shows a loading state, then an empty state when there are no conversations
   await act(async () => {
     utils = render(React.createElement(App));
   });
-  assert.ok(screen.getByText("Loading…"));
+  assert.ok(screen.getByText("加载中…"));
   gate.resolve(jsonResponse({ items: [], hasMore: false }));
-  await screen.findByText("No conversations yet");
+  await screen.findByText("暂无会话");
 });
 
 test("renders fetched conversations and marks the currently loaded one active", async () => {
@@ -450,13 +450,13 @@ test("the Refresh button re-syncs the conversation list from the top with resync
       },
     ],
   ]);
-  fireEvent.click(screen.getByText("Refresh"));
+  fireEvent.click(screen.getByText("刷新"));
   await waitFor(() => assert.ok(sawResync));
 });
 
 test("a failed conversations fetch is swallowed and the list just stays empty", async () => {
   await renderApp([[/^\/api\/conversations$/, () => { throw new Error("boom"); }]]);
-  assert.ok(screen.getByText("No conversations yet"));
+  assert.ok(screen.getByText("暂无会话"));
 });
 
 // ---------------------------------------------------------------------------
@@ -487,17 +487,17 @@ test("a non-streaming run posts the right body/headers, shows the raw JSON, appe
       },
     ],
   ]);
-  fireEvent.change(screen.getByLabelText("Bearer credential"), { target: { value: "sk-run" } });
-  fireEvent.click(screen.getByLabelText("Stream response")); // turn OFF streaming
-  fireEvent.click(screen.getByLabelText("Private chat"));
+  fireEvent.change(screen.getByLabelText("API 密钥（Bearer）"), { target: { value: "sk-run" } });
+  fireEvent.click(screen.getByLabelText("流式输出")); // turn OFF streaming
+  fireEvent.click(screen.getByLabelText("私密对话"));
   fireEvent.click(runButton());
-  assert.ok(screen.getByText("Running…"));
-  await screen.findByText("Completed");
+  assert.ok(screen.getByText("运行中…"));
+  await screen.findByText("已完成");
   assert.equal((capturedBody as unknown as { model: string }).model, "auto");
   assert.deepEqual((capturedBody as unknown as { metadata: unknown }).metadata, { private: "true" });
   assert.equal(capturedHeaders.authorization, "Bearer sk-run");
   assert.equal((screen.getByPlaceholderText(/auto \(filled in/) as HTMLInputElement).value, "conv-xyz");
-  fireEvent.click(screen.getByRole("button", { name: /Raw response/ }));
+  fireEvent.click(screen.getByRole("button", { name: /原始响应/ }));
   assert.match(screen.getByText(/"content": "Hello there"/).textContent ?? "", /Hello there/);
   assert.ok(screen.getByDisplayValue("Hello there"));
   await waitFor(() => assert.ok(conversationsFetchCount >= 2));
@@ -523,7 +523,7 @@ test("a streaming run reads SSE frames, updates the conversation id mid-stream, 
     ],
   ]);
   fireEvent.click(runButton());
-  await screen.findByText("Completed");
+  await screen.findByText("已完成");
   assert.ok(screen.getByDisplayValue("Hi"));
   assert.equal((screen.getByPlaceholderText(/auto \(filled in/) as HTMLInputElement).value, "stream-conv-1");
 });
@@ -534,11 +534,11 @@ test("one-shot runs don't append the reply to the transcript and don't refresh c
     [/^\/api\/conversations$/, () => { conversationsFetchCount += 1; return jsonResponse({ items: [], hasMore: false }); }],
     [/^\/v1\/chat\/completions$/, () => jsonResponse({ choices: [{ message: { content: "ephemeral" } }] })],
   ]);
-  fireEvent.click(screen.getByLabelText(/One-shot/));
-  fireEvent.click(screen.getByLabelText("Stream response"));
+  fireEvent.click(screen.getByLabelText(/单次请求/));
+  fireEvent.click(screen.getByLabelText("流式输出"));
   const before = conversationsFetchCount;
   fireEvent.click(runButton());
-  await screen.findByText("Completed");
+  await screen.findByText("已完成");
   assert.equal(screen.queryByDisplayValue("ephemeral"), null);
   await new Promise((resolve) => setTimeout(resolve, 20));
   assert.equal(conversationsFetchCount, before);
@@ -555,13 +555,13 @@ test("a gizmo model with a picked sub-model sends mirror_model metadata, and an 
       },
     ],
   ]);
-  fireEvent.click(screen.getByRole("button", { name: "Type manually" }));
+  fireEvent.click(screen.getByRole("button", { name: "手动输入" }));
   fireEvent.change(screen.getByLabelText("Model"), { target: { value: "g-1" } });
-  fireEvent.change(screen.getByLabelText(/Picked model/), { target: { value: "gpt-5-6" } });
+  fireEvent.change(screen.getByLabelText(/此 GPT／项目使用的模型/), { target: { value: "gpt-5-6" } });
   fireEvent.change(screen.getByPlaceholderText(/auto \(filled in/), { target: { value: "existing-conv" } });
-  fireEvent.click(screen.getByLabelText("Stream response"));
+  fireEvent.click(screen.getByLabelText("流式输出"));
   fireEvent.click(runButton());
-  await screen.findByText("Completed");
+  await screen.findByText("已完成");
   assert.deepEqual((capturedBody as unknown as { metadata: unknown }).metadata, {
     mirror_model: "gpt-5-6",
     conversation_id: "existing-conv",
@@ -577,8 +577,8 @@ test("a non-ok response from the run endpoint surfaces the status and body as an
     [/^\/v1\/chat\/completions$/, () => new Response("upstream exploded", { status: 502 })],
   ]);
   fireEvent.click(runButton());
-  await screen.findByText("Error");
-  fireEvent.click(screen.getByRole("button", { name: /Raw response/ }));
+  await screen.findByText("出错");
+  fireEvent.click(screen.getByRole("button", { name: /原始响应/ }));
   assert.match(screen.getByText(/502/).textContent ?? "", /502.*upstream exploded/s);
 });
 
@@ -587,8 +587,8 @@ test("a rejected fetch during run() surfaces the error message", async () => {
     [/^\/v1\/chat\/completions$/, () => { throw new Error("DNS failure"); }],
   ]);
   fireEvent.click(runButton());
-  await screen.findByText("Error");
-  fireEvent.click(screen.getByRole("button", { name: /Raw response/ }));
+  await screen.findByText("出错");
+  fireEvent.click(screen.getByRole("button", { name: /原始响应/ }));
   assert.match(screen.getByText(/DNS failure/).textContent ?? "", /DNS failure/);
 });
 
@@ -597,9 +597,9 @@ test("a streaming run with no response body reports the missing-stream error", a
     [/^\/v1\/chat\/completions$/, () => new Response(null, { status: 200 })],
   ]);
   fireEvent.click(runButton());
-  await screen.findByText("Error");
-  fireEvent.click(screen.getByRole("button", { name: /Raw response/ }));
-  assert.match(screen.getByText(/no stream body/).textContent ?? "", /no stream body/);
+  await screen.findByText("出错");
+  fireEvent.click(screen.getByRole("button", { name: /原始响应/ }));
+  assert.match(screen.getByText(/响应不包含流式数据/).textContent ?? "", /响应不包含流式数据/);
 });
 
 test("clicking Stop aborts the in-flight run and reports Stopped, not Error", async () => {
@@ -618,9 +618,9 @@ test("clicking Stop aborts the in-flight run and reports Stopped, not Error", as
     ],
   ]);
   fireEvent.click(runButton());
-  await screen.findByText("Running…");
-  fireEvent.click(screen.getByRole("button", { name: "Stop" }));
-  await screen.findByText("Stopped");
+  await screen.findByText("运行中…");
+  fireEvent.click(screen.getByRole("button", { name: "停止" }));
+  await screen.findByText("已停止");
   void gate;
 });
 
@@ -656,12 +656,12 @@ test("loading a conversation with a gizmo hydrates instructions, messages, model
     ],
   ]);
   fireEvent.click(await screen.findByText("Gizmo chat"));
-  await screen.findByText("Loaded");
+  await screen.findByText("已加载");
   assert.ok(screen.getByDisplayValue("custom instructions"));
   assert.ok(screen.getByDisplayValue("hi"));
   assert.ok(screen.getByDisplayValue("hello!"));
   assert.equal((screen.getByPlaceholderText(/auto \(filled in/) as HTMLInputElement).value, "c1");
-  assert.ok((screen.getByLabelText("Private chat") as HTMLInputElement).checked);
+  assert.ok((screen.getByLabelText("私密对话") as HTMLInputElement).checked);
   assert.equal((screen.getByLabelText("Model") as HTMLSelectElement).value, "g-1");
 });
 
@@ -688,7 +688,7 @@ test("loading a non-gizmo, non-auto conversation adopts its model and clears the
     ],
   ]);
   fireEvent.click(await screen.findByText("Plain chat"));
-  await screen.findByText("Loaded");
+  await screen.findByText("已加载");
   assert.equal((screen.getByLabelText("Model") as HTMLSelectElement).value, "gpt-x");
 });
 
@@ -710,7 +710,7 @@ test("loading a conversation whose model is 'auto' leaves the currently selected
     ],
   ]);
   fireEvent.click(await screen.findByText("Auto chat"));
-  await screen.findByText("Loaded");
+  await screen.findByText("已加载");
   assert.equal((screen.getByLabelText("Model") as HTMLSelectElement).value, "auto");
 });
 
@@ -729,8 +729,8 @@ test("a failed conversation load reports the status/body as an error", async () 
     [/^\/api\/conversations\/c4$/, () => new Response("nope", { status: 404 })],
   ]);
   fireEvent.click(await screen.findByText("Broken chat"));
-  await screen.findByText("Error");
-  fireEvent.click(screen.getByRole("button", { name: /Raw response/ }));
+  await screen.findByText("出错");
+  fireEvent.click(screen.getByRole("button", { name: /原始响应/ }));
   assert.match(screen.getByText(/404/).textContent ?? "", /404.*nope/s);
 });
 
@@ -740,9 +740,9 @@ test("a failed conversation load reports the status/body as an error", async () 
 
 test("adding, editing, and removing messages updates the transcript", async () => {
   await renderApp();
-  fireEvent.click(screen.getByRole("button", { name: /Add message/ }));
+  fireEvent.click(screen.getByRole("button", { name: /添加消息/ }));
   assert.equal(screen.getAllByRole("textbox").filter((el) => el.tagName === "TEXTAREA").length, 3);
-  const removeButtons = screen.getAllByRole("button", { name: "Remove message" });
+  const removeButtons = screen.getAllByRole("button", { name: "删除消息" });
   fireEvent.click(removeButtons[0]);
   assert.equal(screen.getAllByRole("textbox").filter((el) => el.tagName === "TEXTAREA").length, 2);
   fireEvent.change(lastUserTextarea(), { target: { value: "edited content" } });
@@ -752,18 +752,18 @@ test("adding, editing, and removing messages updates the transcript", async () =
 test("editing and removing are no-ops while a run is in flight, even though the row itself is disabled", async () => {
   const gate = deferred<Response>();
   await renderApp([[/^\/v1\/chat\/completions$/, () => gate.promise]]);
-  fireEvent.click(screen.getByLabelText("Stream response")); // turn off streaming - gate resolves plain JSON
+  fireEvent.click(screen.getByLabelText("流式输出")); // turn off streaming - gate resolves plain JSON
   const originalContent = (lastUserTextarea() as HTMLTextAreaElement).value;
   fireEvent.click(runButton());
-  await screen.findByText("Running…");
+  await screen.findByText("运行中…");
   // Directly dispatch change/click - bypassing the "disabled" DOM attribute
   // the way a stray queued event or a race could - to prove the *runningRef*
   // guard inside updateMessage/removeMessage (not just the disabled attribute)
   // is what's actually doing the blocking.
   fireEvent.change(lastUserTextarea(), { target: { value: "should not stick" } });
-  fireEvent.click(screen.getAllByRole("button", { name: "Remove message" })[0]);
+  fireEvent.click(screen.getAllByRole("button", { name: "删除消息" })[0]);
   gate.resolve(jsonResponse({ choices: [{ message: { content: "done" } }] }));
-  await screen.findByText("Completed");
+  await screen.findByText("已完成");
   const textareas = screen.getAllByRole("textbox").filter((el) => el.tagName === "TEXTAREA") as HTMLTextAreaElement[];
   // [system, original user (untouched), assistant("done"), new empty user draft]
   assert.equal(textareas.length, 4);
@@ -772,15 +772,15 @@ test("editing and removing are no-ops while a run is in flight, even though the 
 
 test("an assistant message row is read-only and cannot be removed", async () => {
   await renderApp([[/^\/v1\/chat\/completions$/, () => jsonResponse({ choices: [{ message: { content: "reply" } }] })]]);
-  fireEvent.click(screen.getByLabelText("Stream response"));
+  fireEvent.click(screen.getByLabelText("流式输出"));
   fireEvent.click(runButton());
-  await screen.findByText("Completed");
+  await screen.findByText("已完成");
   const assistantTextarea = screen.getByDisplayValue("reply") as HTMLTextAreaElement;
   assert.equal(assistantTextarea.readOnly, true);
   const assistantRow = assistantTextarea.closest(".message-editor") as HTMLElement;
   const roleSelect = within(assistantRow).getByRole("combobox") as HTMLSelectElement;
   assert.equal(roleSelect.disabled, true);
-  const removeButton = within(assistantRow).getByRole("button", { name: "Assistant messages cannot be removed" });
+  const removeButton = within(assistantRow).getByRole("button", { name: "助手消息不可删除" });
   assert.equal((removeButton as HTMLButtonElement).disabled, true);
 });
 
@@ -788,7 +788,7 @@ test("the New button resets the conversation id and the transcript to the defaul
   await renderApp();
   fireEvent.change(screen.getByPlaceholderText(/auto \(filled in/), { target: { value: "some-conv" } });
   fireEvent.change(lastUserTextarea(), { target: { value: "custom prompt" } });
-  fireEvent.click(screen.getByRole("button", { name: "New" }));
+  fireEvent.click(screen.getByRole("button", { name: "新建" }));
   assert.equal((screen.getByPlaceholderText(/auto \(filled in/) as HTMLInputElement).value, "");
   assert.ok(screen.getByDisplayValue("You are a helpful assistant."));
   assert.equal(screen.getAllByRole("textbox").filter((el) => el.tagName === "TEXTAREA").length, 2);
@@ -800,7 +800,7 @@ test("New preserves an edited System box instead of resetting it to the fallback
     (el) => el.tagName === "TEXTAREA" && (el as HTMLTextAreaElement).value === "You are a helpful assistant.",
   ) as HTMLTextAreaElement;
   fireEvent.change(systemTextarea, { target: { value: "Always answer in metric." } });
-  fireEvent.click(screen.getByRole("button", { name: "New" }));
+  fireEvent.click(screen.getByRole("button", { name: "新建" }));
   assert.ok(screen.getByDisplayValue("Always answer in metric."));
   assert.equal(screen.queryByDisplayValue("You are a helpful assistant."), null);
 });
@@ -824,7 +824,7 @@ test("New falls back to the default System text when the first row isn't role=sy
   await renderApp();
   const selects = screen.getAllByRole("combobox").filter((el) => el.closest(".message-editor"));
   fireEvent.change(selects[0] as HTMLSelectElement, { target: { value: "developer" } });
-  fireEvent.click(screen.getByRole("button", { name: "New" }));
+  fireEvent.click(screen.getByRole("button", { name: "新建" }));
   assert.ok(screen.getByDisplayValue("You are a helpful assistant."));
 });
 
@@ -867,11 +867,11 @@ test("editing the System box saves it as the new account-wide default after a sh
 
 test("Ctrl/Cmd+Enter triggers a run", async () => {
   await renderApp([[/^\/v1\/chat\/completions$/, () => jsonResponse({ choices: [{ message: { content: "via keyboard" } }] })]]);
-  fireEvent.click(screen.getByLabelText("Stream response"));
+  fireEvent.click(screen.getByLabelText("流式输出"));
   await act(async () => {
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", ctrlKey: true, bubbles: true }));
   });
-  await screen.findByText("Completed");
+  await screen.findByText("已完成");
   assert.ok(screen.getByDisplayValue("via keyboard"));
 });
 
@@ -924,10 +924,10 @@ test("selecting a result in the command palette loads that conversation", async 
   await act(async () => {
     window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true, bubbles: true }));
   });
-  fireEvent.change(screen.getByLabelText("Jump to a conversation"), { target: { value: "picked" } });
+  fireEvent.change(screen.getByLabelText("搜索并跳转到会话"), { target: { value: "picked" } });
   await act(async () => { await new Promise((resolve) => setTimeout(resolve, 250)); });
   fireEvent.click(screen.getByRole("button", { name: "Picked from palette" }));
-  await screen.findByText("Loaded");
+  await screen.findByText("已加载");
   assert.equal(screen.queryByRole("dialog"), null);
 });
 
@@ -939,10 +939,10 @@ test("changing a shortcut in the keyboard-shortcuts panel saves it to the server
       return jsonResponse({ hotkeys: {} });
     }],
   ]);
-  fireEvent.click(screen.getByText("Keyboard shortcuts"));
-  fireEvent.click(screen.getByRole("button", { name: "Change" }));
+  fireEvent.click(screen.getByText("键盘快捷键"));
+  fireEvent.click(screen.getByRole("button", { name: "修改" }));
   fireEvent.keyDown(
-    screen.getByLabelText("Press a key combo for Quick-open conversation search"),
+    screen.getByLabelText("请为“快速搜索并打开会话”按下快捷键组合"),
     { key: "p", ctrlKey: true, shiftKey: true },
   );
   assert.deepEqual(puts.at(-1), { hotkeys: { commandPalette: "mod+shift+p" } });
@@ -954,11 +954,11 @@ test("changing a shortcut in the keyboard-shortcuts panel saves it to the server
 
 test("a second Run control appears under the newest user message and sends the same request", async () => {
   await renderApp([[/^\/v1\/chat\/completions$/, () => jsonResponse({ choices: [{ message: { content: "via inline run" } }] })]]);
-  fireEvent.click(screen.getByLabelText("Stream response")); // turn OFF streaming
+  fireEvent.click(screen.getByLabelText("流式输出")); // turn OFF streaming
   fireEvent.change(lastUserTextarea(), { target: { value: "Hello from the bottom button" } });
-  const inline = screen.getByRole("button", { name: "Send this message (same as the Run button above)" });
+  const inline = screen.getByRole("button", { name: "发送此消息（与上方的运行请求按钮相同）" });
   fireEvent.click(inline);
-  await screen.findByText("Completed");
+  await screen.findByText("已完成");
   assert.ok(screen.getByDisplayValue("via inline run"));
 });
 
@@ -984,11 +984,11 @@ test("the inline control switches to Stop while a run is in flight, and aborts t
     ],
   ]);
   fireEvent.change(lastUserTextarea(), { target: { value: "Long one" } });
-  const inline = screen.getByRole("button", { name: "Send this message (same as the Run button above)" });
+  const inline = screen.getByRole("button", { name: "发送此消息（与上方的运行请求按钮相同）" });
   fireEvent.click(inline);
-  const inlineStop = await screen.findByRole("button", { name: "Stop (same as the Stop button above)" });
+  const inlineStop = await screen.findByRole("button", { name: "停止（与上方的停止按钮相同）" });
   fireEvent.click(inlineStop);
-  await screen.findByText("Stopped");
+  await screen.findByText("已停止");
 });
 
 // ---------------------------------------------------------------------------
@@ -997,8 +997,8 @@ test("the inline control switches to Stop while a run is in flight, and aborts t
 
 test("editing the domain and path fields updates the computed request URL, trimming/padding as needed", async () => {
   await renderApp();
-  fireEvent.change(screen.getByLabelText("Server domain"), { target: { value: "https://example.com/" } });
-  fireEvent.change(screen.getByLabelText("Path"), { target: { value: "v1/chat/completions" } });
+  fireEvent.change(screen.getByLabelText("服务器地址"), { target: { value: "https://example.com/" } });
+  fireEvent.change(screen.getByLabelText("接口路径"), { target: { value: "v1/chat/completions" } });
   assert.equal(screen.getByText("https://example.com/v1/chat/completions").tagName, "CODE");
 });
 
@@ -1016,7 +1016,7 @@ test("a throwing localStorage.getItem during initial mount falls back to remembe
   };
   try {
     await renderApp();
-    assert.equal((screen.getByLabelText("Remember prompt history on this device") as HTMLInputElement).checked, false);
+    assert.equal((screen.getByLabelText("在此设备记住提示词历史") as HTMLInputElement).checked, false);
     assert.ok(calls > 0);
   } finally {
     Storage.prototype.getItem = original;
@@ -1047,7 +1047,7 @@ test("a failed load-more request is swallowed, leaving the list as-is for a retr
     await new Promise((resolve) => setTimeout(resolve, 0));
   });
   assert.ok(screen.getByText("Page one"));
-  assert.equal(screen.queryByText("Loading more…"), null);
+  assert.equal(screen.queryByText("正在加载更多…"), null);
 });
 
 test("loading a conversation whose stored messages field isn't an array tolerates it as empty", async () => {
@@ -1065,7 +1065,7 @@ test("loading a conversation whose stored messages field isn't an array tolerate
     [/^\/api\/conversations\/c9$/, () => jsonResponse({ conversation: { id: "c9", model: "auto" } })],
   ]);
   fireEvent.click(await screen.findByText("Weird chat"));
-  await screen.findByText("Loaded");
+  await screen.findByText("已加载");
   const textareas = screen.getAllByRole("textbox").filter((el) => el.tagName === "TEXTAREA") as HTMLTextAreaElement[];
   // No instructions, no stored messages -> just the trailing empty user draft.
   assert.equal(textareas.length, 1);
@@ -1082,7 +1082,7 @@ test("remembering history with no snapshot ever saved yet falls back cleanly thr
   await renderApp();
   assert.equal((screen.getByLabelText("Model") as HTMLSelectElement).value, "auto");
   assert.equal((screen.getByPlaceholderText(/auto \(filled in/) as HTMLInputElement).value, "");
-  assert.ok(screen.getByDisplayValue("Say hello in one short sentence."));
+  assert.ok(screen.getByDisplayValue("请用一句简短的话打个招呼。"));
 });
 
 test("a throwing localStorage.setItem during the persistence effect is swallowed", async () => {
@@ -1094,8 +1094,8 @@ test("a throwing localStorage.setItem during the persistence effect is swallowed
   try {
     // Should not throw/crash the app even though every localStorage.setItem
     // call in the persistence effect now fails.
-    fireEvent.click(screen.getByLabelText("Remember prompt history on this device"));
-    assert.ok(screen.getByLabelText("Remember prompt history on this device"));
+    fireEvent.click(screen.getByLabelText("在此设备记住提示词历史"));
+    assert.ok(screen.getByLabelText("在此设备记住提示词历史"));
   } finally {
     Storage.prototype.setItem = original;
   }
@@ -1103,7 +1103,7 @@ test("a throwing localStorage.setItem during the persistence effect is swallowed
 
 test("a conversations response whose items field isn't an array is tolerated as empty", async () => {
   await renderApp([[/^\/api\/conversations$/, () => jsonResponse({ items: "not-an-array", hasMore: false })]]);
-  assert.ok(screen.getByText("No conversations yet"));
+  assert.ok(screen.getByText("暂无会话"));
 });
 
 test("scrolling when there's nothing more to load is a no-op", async () => {
@@ -1144,7 +1144,7 @@ test("loading a conversation whose response omits the conversation object falls 
     [/^\/api\/conversations\/c-no-conv$/, () => jsonResponse({ messages: [] })],
   ]);
   fireEvent.click(await screen.findByText("No conv object"));
-  await screen.findByText("Loaded");
+  await screen.findByText("已加载");
   assert.equal((screen.getByPlaceholderText(/auto \(filled in/) as HTMLInputElement).value, "c-no-conv");
 });
 
@@ -1163,16 +1163,16 @@ test("a non-Error value thrown while loading a conversation still surfaces somet
     [/^\/api\/conversations\/c-weird-throw$/, () => { throw "a plain string reason"; }],
   ]);
   fireEvent.click(await screen.findByText("Weird throw"));
-  await screen.findByText("Error");
-  fireEvent.click(screen.getByRole("button", { name: /Raw response/ }));
+  await screen.findByText("出错");
+  fireEvent.click(screen.getByRole("button", { name: /原始响应/ }));
   assert.ok(screen.getByText("a plain string reason"));
 });
 
 test("a non-Error value thrown during run() still surfaces something readable", async () => {
   await renderApp([[/^\/v1\/chat\/completions$/, () => { throw "run blew up as a plain string"; }]]);
   fireEvent.click(runButton());
-  await screen.findByText("Error");
-  fireEvent.click(screen.getByRole("button", { name: /Raw response/ }));
+  await screen.findByText("出错");
+  fireEvent.click(screen.getByRole("button", { name: /原始响应/ }));
   assert.ok(screen.getByText("run blew up as a plain string"));
 });
 
@@ -1188,7 +1188,7 @@ test("a stray re-entrant run() call while one is already in flight is a no-op (b
       },
     ],
   ]);
-  fireEvent.click(screen.getByLabelText("Stream response"));
+  fireEvent.click(screen.getByLabelText("流式输出"));
   // Fire the Ctrl+Enter shortcut twice back-to-back, synchronously, before
   // React ever gets a chance to re-render the Run button into a Stop
   // button - runningRef.current is set synchronously at the very top of
@@ -1200,39 +1200,39 @@ test("a stray re-entrant run() call while one is already in flight is a no-op (b
   await act(async () => {
     gate.resolve(jsonResponse({ choices: [{ message: { content: "only once" } }] }));
   });
-  await screen.findByText("Completed");
+  await screen.findByText("已完成");
   assert.equal(fetchCount, 1);
 });
 
 test("model selection and switching back from raw output update the visible UI", async () => {
   await renderApp([[/^\/v1\/models$/, () => jsonResponse({ data: [{ id: "g-fixture", owned_by: "chatgpt-gizmo" }] })]]);
-  const option = screen.getByRole("option", { name: "GPT: g-fixture" });
+  const option = screen.getByRole("option", { name: "GPT：g-fixture" });
   fireEvent.change(option.parentElement!, { target: { value: "g-fixture" } });
-  assert.ok(screen.getByLabelText(/Picked model/));
+  assert.ok(screen.getByLabelText(/此 GPT／项目使用的模型/));
   fireEvent.click(screen.getByRole("button", { name: "Raw response" }));
-  fireEvent.click(screen.getByRole("button", { name: "Output" }));
-  assert.equal(screen.getByRole("button", { name: "Output" }).className, "active");
+  fireEvent.click(screen.getByRole("button", { name: "输出" }));
+  assert.equal(screen.getByRole("button", { name: "输出" }).className, "active");
 });
 
 test("a malformed completion fails without appending phantom history rows", async () => {
   await renderApp([[/^\/v1\/chat\/completions$/, () => jsonResponse({ choices: [] })]]);
   fireEvent.click(screen.getByLabelText(/Stream/));
   fireEvent.click(runButton());
-  await screen.findByText("Error");
+  await screen.findByText("出错");
   assert.equal(document.querySelectorAll(".message-editor").length, 2);
 });
 
 test("a conversation with an empty id is ignored", async () => {
   await renderApp([[/^\/api\/conversations$/, () => jsonResponse({ items: [{ id: "", title: "Invalid conversation", model: "auto", updatedAt: "2024-01-01" }], hasMore: false })]]);
   fireEvent.click(await screen.findByText("Invalid conversation"));
-  assert.ok(screen.getByText("Ready"));
+  assert.ok(screen.getByText("就绪"));
 });
 
 test("a queued remove click cannot change history after a run has started", async () => {
   const gate = deferred<Response>();
   await renderApp([[/^\/v1\/chat\/completions$/, () => gate.promise]]);
-  fireEvent.click(screen.getByLabelText("Stream response"));
-  const remove = screen.getAllByRole("button", { name: "Remove message" })[0];
+  fireEvent.click(screen.getByLabelText("流式输出"));
+  const remove = screen.getAllByRole("button", { name: "删除消息" })[0];
   const run = runButton();
   act(() => {
     run.click();
@@ -1240,7 +1240,7 @@ test("a queued remove click cannot change history after a run has started", asyn
   });
   assert.equal(document.querySelectorAll(".message-editor").length, 2);
   await act(async () => { gate.resolve(jsonResponse({ choices: [] })); });
-  await screen.findByText("Error");
+  await screen.findByText("出错");
   assert.equal(document.querySelectorAll(".message-editor").length, 2);
 });
 
@@ -1249,7 +1249,7 @@ test("a queued remove click cannot change history after a run has started", asyn
 // ---------------------------------------------------------------------------
 
 function connectionToolsPanel() {
-  return screen.getByText("Connection diagnostics and client setup").closest("details") as HTMLElement;
+  return screen.getByText("连接诊断与客户端配置").closest("details") as HTMLElement;
 }
 
 test("Test connection reports diagnostics and model discovery results, and offers a diagnostics export link", async () => {
@@ -1258,11 +1258,11 @@ test("Test connection reports diagnostics and model discovery results, and offer
     [/^\/v1\/models$/, () => jsonResponse({ data: [{ id: "m1" }, { id: "m2" }] })],
   ]);
   const panel = connectionToolsPanel();
-  assert.equal(within(panel).queryByText(/Export local diagnostics/), null);
-  fireEvent.click(within(panel).getByRole("button", { name: "Test connection" }));
+  assert.equal(within(panel).queryByText(/导出本地诊断信息/), null);
+  fireEvent.click(within(panel).getByRole("button", { name: "测试连接" }));
   await within(panel).findByText(/Model discovery passed \(2 models\)\. Browser authentication used/);
   assert.match(within(panel).getByText(/"revision": "abc1234"/).textContent ?? "", /abc1234/);
-  assert.ok(within(panel).getByRole("link", { name: /Export local diagnostics/ }));
+  assert.ok(within(panel).getByRole("link", { name: /导出本地诊断信息/ }));
 });
 
 test("Test connection reports a supplied bearer credential separately from browser auth", async () => {
@@ -1277,9 +1277,9 @@ test("Test connection reports a supplied bearer credential separately from brows
       },
     ],
   ]);
-  fireEvent.change(screen.getByLabelText("Bearer credential"), { target: { value: "sk-conn" } });
+  fireEvent.change(screen.getByLabelText("API 密钥（Bearer）"), { target: { value: "sk-conn" } });
   const panel = connectionToolsPanel();
-  fireEvent.click(within(panel).getByRole("button", { name: "Test connection" }));
+  fireEvent.click(within(panel).getByRole("button", { name: "测试连接" }));
   await within(panel).findByText(/Bearer credential supplied\./);
   assert.equal(modelsAuth, "Bearer sk-conn");
 });
@@ -1295,8 +1295,8 @@ test("Test connection surfaces a failed diagnostics call without touching model 
   ]);
   const panel = connectionToolsPanel();
   const callsBeforeClick = modelsCalls;
-  fireEvent.click(within(panel).getByRole("button", { name: "Test connection" }));
-  await within(panel).findByText("Diagnostics returned HTTP 500");
+  fireEvent.click(within(panel).getByRole("button", { name: "测试连接" }));
+  await within(panel).findByText("诊断接口返回 HTTP 500");
   assert.equal(modelsCalls, callsBeforeClick);
 });
 
@@ -1306,7 +1306,7 @@ test("Test connection surfaces a failed model-discovery HTTP status", async () =
     [/^\/v1\/models$/, () => new Response("nope", { status: 503 })],
   ]);
   const panel = connectionToolsPanel();
-  fireEvent.click(within(panel).getByRole("button", { name: "Test connection" }));
+  fireEvent.click(within(panel).getByRole("button", { name: "测试连接" }));
   await within(panel).findByText(/Model discovery returned HTTP 503\./);
 });
 
@@ -1316,15 +1316,15 @@ test("Test connection rejects a model-discovery response whose data field isn't 
     [/^\/v1\/models$/, () => jsonResponse({ data: "not-an-array" })],
   ]);
   const panel = connectionToolsPanel();
-  fireEvent.click(within(panel).getByRole("button", { name: "Test connection" }));
-  await within(panel).findByText("Model discovery returned an unsupported response.");
+  fireEvent.click(within(panel).getByRole("button", { name: "测试连接" }));
+  await within(panel).findByText("模型列表接口返回了不受支持的数据格式。");
 });
 
 test("Test connection falls back to a generic message when a non-Error value is thrown", async () => {
   await renderApp([[/^\/api\/diagnostics$/, () => { throw "network offline"; }]]);
   const panel = connectionToolsPanel();
-  fireEvent.click(within(panel).getByRole("button", { name: "Test connection" }));
-  await within(panel).findByText("Connection test failed");
+  fireEvent.click(within(panel).getByRole("button", { name: "测试连接" }));
+  await within(panel).findByText("连接测试失败");
 });
 
 test("the generation-status note reflects whether a Playground run has completed yet", async () => {
@@ -1335,11 +1335,11 @@ test("the generation-status note reflects whether a Playground run has completed
     ],
   ]);
   const panel = connectionToolsPanel();
-  assert.ok(within(panel).getByText(/not verified; use Run to send a test message/));
-  fireEvent.click(screen.getByLabelText("Stream response"));
+  assert.ok(within(panel).getByText(/尚未验证；请点击“运行请求”发送一条测试消息/));
+  fireEvent.click(screen.getByLabelText("流式输出"));
   fireEvent.click(runButton());
-  await screen.findByText("Completed");
-  assert.ok(within(panel).getByText(/completed in this Playground session/));
+  await screen.findByText("已完成");
+  assert.ok(within(panel).getByText(/本次测试台会话已成功完成/));
 });
 
 test("Copy setup snippet reports success or falls back to a manual-copy hint", async () => {
@@ -1350,11 +1350,11 @@ test("Copy setup snippet reports success or falls back to a manual-copy hint", a
   const originalClipboard = nav.clipboard;
   try {
     nav.clipboard = { writeText: async () => {} };
-    fireEvent.click(within(panel).getByRole("button", { name: "Copy setup snippet" }));
-    await within(panel).findByText("Setup snippet copied");
+    fireEvent.click(within(panel).getByRole("button", { name: "复制配置代码" }));
+    await within(panel).findByText("客户端配置代码已复制");
     nav.clipboard = { writeText: async () => { throw new Error("denied"); } };
-    fireEvent.click(within(panel).getByRole("button", { name: "Copy setup snippet" }));
-    await within(panel).findByText("Select and copy the setup snippet above");
+    fireEvent.click(within(panel).getByRole("button", { name: "复制配置代码" }));
+    await within(panel).findByText("请选中并复制上方的配置代码");
   } finally {
     nav.clipboard = originalClipboard;
   }
@@ -1365,15 +1365,15 @@ test("Copy setup snippet reports success or falls back to a manual-copy hint", a
 // ---------------------------------------------------------------------------
 
 function conversationToolsPanel() {
-  return screen.getByText("Local search, branches, and export").closest("details") as HTMLElement;
+  return screen.getByText("本地搜索、会话分支与导出").closest("details") as HTMLElement;
 }
 
 test("with no active conversation, only local search is offered (no branches or export controls)", async () => {
   await renderApp();
   const panel = conversationToolsPanel();
-  assert.equal(within(panel).queryByRole("button", { name: "Show conversation branches" }), null);
-  assert.equal(within(panel).queryByRole("link", { name: "Export JSON" }), null);
-  assert.ok((within(panel).getByRole("button", { name: "Search history" }) as HTMLButtonElement).disabled);
+  assert.equal(within(panel).queryByRole("button", { name: "查看会话分支" }), null);
+  assert.equal(within(panel).queryByRole("link", { name: "导出 JSON" }), null);
+  assert.ok((within(panel).getByRole("button", { name: "搜索历史" }) as HTMLButtonElement).disabled);
 });
 
 test("searching local history renders matches and a result count, and selecting one loads it", async () => {
@@ -1387,22 +1387,22 @@ test("searching local history renders matches and a result count, and selecting 
     ],
   ]);
   const panel = conversationToolsPanel();
-  fireEvent.change(within(panel).getByLabelText("Search local history"), { target: { value: "needle" } });
-  const searchButton = within(panel).getByRole("button", { name: "Search history" });
+  fireEvent.change(within(panel).getByLabelText("搜索本地历史记录"), { target: { value: "needle" } });
+  const searchButton = within(panel).getByRole("button", { name: "搜索历史" });
   assert.equal((searchButton as HTMLButtonElement).disabled, false);
   fireEvent.click(searchButton);
-  await within(panel).findByText("1 local matches (maximum 100)");
+  await within(panel).findByText("找到 1 条本地匹配记录（最多 100 条）");
   const resultButton = within(panel).getByRole("button", { name: "Found conversation" });
   fireEvent.click(resultButton);
-  await screen.findByText("Loaded");
+  await screen.findByText("已加载");
   assert.equal((screen.getByPlaceholderText(/auto \(filled in/) as HTMLInputElement).value, "found-1");
 });
 
 test("a failed local search reports the error instead of throwing", async () => {
   await renderApp([[/^\/api\/conversations\/search/, () => new Response("nope", { status: 500 })]]);
   const panel = conversationToolsPanel();
-  fireEvent.change(within(panel).getByLabelText("Search local history"), { target: { value: "needle" } });
-  fireEvent.click(within(panel).getByRole("button", { name: "Search history" }));
+  fireEvent.change(within(panel).getByLabelText("搜索本地历史记录"), { target: { value: "needle" } });
+  fireEvent.click(within(panel).getByRole("button", { name: "搜索历史" }));
   await within(panel).findByText(/History request returned HTTP 500\. Reload and try again\./);
 });
 
@@ -1434,21 +1434,21 @@ test("conversation branches list parents and nodes, and continuing from an assis
     ],
   ]);
   const panel = conversationToolsPanel();
-  fireEvent.click(within(panel).getByRole("button", { name: "Show conversation branches" }));
-  const continueButton = await within(panel).findByRole("button", { name: "Continue from this assistant" });
+  fireEvent.click(within(panel).getByRole("button", { name: "查看会话分支" }));
+  const continueButton = await within(panel).findByRole("button", { name: "从此助手消息继续" });
   assert.ok(within(panel).getByRole("button", { name: "Saved branch" }));
   // A node with no upstream node id yet (e.g. still streaming) falls back
   // to a plain label instead of rendering a blank <code> element - and
   // does not offer to "continue" from it (that button only appears once
   // an assistant node has a real upstream node id).
-  assert.ok(within(panel).getByText("No upstream node"));
+  assert.ok(within(panel).getByText("无上游节点"));
   fireEvent.click(continueButton);
-  await screen.findByText("Loaded");
+  await screen.findByText("已加载");
   assert.deepEqual(branchBody, { messageId: "m-asst" });
   assert.equal((screen.getByPlaceholderText(/auto \(filled in/) as HTMLInputElement).value, "conv-branched");
   // Selecting a branch resets the branch listing itself (it belonged to the
   // conversation we just navigated away from).
-  assert.equal(within(panel).queryByRole("button", { name: "Continue from this assistant" }), null);
+  assert.equal(within(panel).queryByRole("button", { name: "从此助手消息继续" }), null);
 });
 
 test("selecting a listed branch (not the current one) loads it", async () => {
@@ -1467,9 +1467,9 @@ test("selecting a listed branch (not the current one) loads it", async () => {
     ],
   ]);
   const panel = conversationToolsPanel();
-  fireEvent.click(within(panel).getByRole("button", { name: "Show conversation branches" }));
+  fireEvent.click(within(panel).getByRole("button", { name: "查看会话分支" }));
   fireEvent.click(await within(panel).findByRole("button", { name: "Saved branch" }));
-  await screen.findByText("Loaded");
+  await screen.findByText("已加载");
   assert.equal((screen.getByPlaceholderText(/auto \(filled in/) as HTMLInputElement).value, "conv-saved");
 });
 
@@ -1490,8 +1490,8 @@ test("a failed request to create a branch reports the error instead of throwing"
     [/^\/api\/conversations\/conv-remembered\/branch$/, () => new Response("nope", { status: 500 })],
   ]);
   const panel = conversationToolsPanel();
-  fireEvent.click(within(panel).getByRole("button", { name: "Show conversation branches" }));
-  fireEvent.click(await within(panel).findByRole("button", { name: "Continue from this assistant" }));
+  fireEvent.click(within(panel).getByRole("button", { name: "查看会话分支" }));
+  fireEvent.click(await within(panel).findByRole("button", { name: "从此助手消息继续" }));
   await within(panel).findByText(/History request returned HTTP 500\. Reload and try again\./);
 });
 
@@ -1500,7 +1500,7 @@ test("a failed branch listing reports the error instead of throwing", async () =
   localStorage.setItem("mirror-playground-snapshot", JSON.stringify({ conversationId: "conv-remembered", messages: [] }));
   await renderApp([[/^\/api\/conversations\/conv-remembered\/branches$/, () => new Response("nope", { status: 404 })]]);
   const panel = conversationToolsPanel();
-  fireEvent.click(within(panel).getByRole("button", { name: "Show conversation branches" }));
+  fireEvent.click(within(panel).getByRole("button", { name: "查看会话分支" }));
   await within(panel).findByText(/History request returned HTTP 404\. Reload and try again\./);
 });
 
@@ -1509,12 +1509,12 @@ test("export links include the selected attachment/metadata flags and format", a
   localStorage.setItem("mirror-playground-snapshot", JSON.stringify({ conversationId: "conv-remembered", messages: [] }));
   await renderApp();
   const panel = conversationToolsPanel();
-  const jsonLink = () => within(panel).getByRole("link", { name: "Export JSON" });
-  const markdownLink = () => within(panel).getByRole("link", { name: "Export Markdown" });
+  const jsonLink = () => within(panel).getByRole("link", { name: "导出 JSON" });
+  const markdownLink = () => within(panel).getByRole("link", { name: "导出 Markdown" });
   assert.equal(jsonLink().getAttribute("href"), "/api/conversations/conv-remembered/export?attachments=false&metadata=false&format=json");
   assert.equal(markdownLink().getAttribute("href"), "/api/conversations/conv-remembered/export?attachments=false&metadata=false&format=markdown");
-  fireEvent.click(within(panel).getByLabelText("Include attachment references (no file bytes)"));
-  fireEvent.click(within(panel).getByLabelText("Include IDs, model, and message metadata"));
+  fireEvent.click(within(panel).getByLabelText("包含附件引用（不包含文件内容）"));
+  fireEvent.click(within(panel).getByLabelText("包含 ID、模型和消息元数据"));
   assert.equal(jsonLink().getAttribute("href"), "/api/conversations/conv-remembered/export?attachments=true&metadata=true&format=json");
   assert.equal(markdownLink().getAttribute("href"), "/api/conversations/conv-remembered/export?attachments=true&metadata=true&format=markdown");
 });
@@ -1528,22 +1528,22 @@ for (const transport of ["stream", "metadata", "header"]) test(`Responses mode $
     if (transport === "stream") return new Response(`data: ${JSON.stringify({ type: "response.completed", response })}\n\n`, { headers: { "content-type": "text/event-stream" } });
     return jsonResponse(response, { headers: { "x-mirror-conversation-id": "responses-id" } });
   }]]);
-  const chat = screen.getByRole("button", { name: /Chat$/ });
+  const chat = screen.getByRole("button", { name: /对话$/ });
   fireEvent.click(chat); // selecting the current mode preserves its state
-  fireEvent.click(screen.getByRole("button", { name: /Responses$/ }));
-  assert.ok(screen.getByRole("heading", { name: "Responses" }));
-  fireEvent.click(screen.getByRole("button", { name: /Responses$/ }));
+  fireEvent.click(screen.getByRole("button", { name: /Responses API（响应接口）$/ }));
+  assert.ok(screen.getByRole("heading", { name: "Responses API（响应接口）" }));
+  fireEvent.click(screen.getByRole("button", { name: /Responses API（响应接口）$/ }));
   if (transport !== "stream") fireEvent.click(screen.getByRole("checkbox", { name: /Stream/ }));
   fireEvent.click(runButton());
-  await screen.findByText("Completed");
+  await screen.findByText("已完成");
   assert.ok(Array.isArray(posted.input));
   assert.equal(posted.messages, undefined);
   assert.ok(screen.getAllByDisplayValue("Responses answer").length);
-  assert.equal((screen.getByLabelText(/Conversation ID/i) as HTMLInputElement).value, "responses-id");
+  assert.equal((screen.getByLabelText(/会话 ID/) as HTMLInputElement).value, "responses-id");
   fireEvent.click(chat);
-  assert.ok(screen.getByRole("heading", { name: "Chat" }));
+  assert.ok(screen.getByRole("heading", { name: "对话" }));
   assert.ok(screen.getAllByDisplayValue("Responses answer").length);
-  assert.equal((screen.getByLabelText(/Conversation ID/i) as HTMLInputElement).value, "responses-id");
+  assert.equal((screen.getByLabelText(/会话 ID/) as HTMLInputElement).value, "responses-id");
 });
 
 // ---------------------------------------------------------------------------
@@ -1570,9 +1570,9 @@ test("attaching an image preserves its filename for server extension detection",
   const file = new window.File(["fake-bytes"], "cat.png", { type: "image/png" });
   fireEvent.change(lastAttachInput(), { target: { files: [file] } });
   await screen.findByText("cat.png");
-  fireEvent.click(screen.getByLabelText("Stream response"));
+  fireEvent.click(screen.getByLabelText("流式输出"));
   fireEvent.click(runButton());
-  await screen.findByText("Completed");
+  await screen.findByText("已完成");
   const messages = (capturedBody as unknown as { messages: Array<{ content: unknown }> }).messages;
   const sentContent = messages.at(-1)?.content as Array<Record<string, unknown>>;
   assert.ok(Array.isArray(sentContent));
@@ -1597,9 +1597,9 @@ test("attaching a non-image file sends it as a file part with its filename", asy
   const file = new window.File(["hello world"], "notes.txt", { type: "text/plain" });
   fireEvent.change(lastAttachInput(), { target: { files: [file] } });
   await screen.findByText("notes.txt");
-  fireEvent.click(screen.getByLabelText("Stream response"));
+  fireEvent.click(screen.getByLabelText("流式输出"));
   fireEvent.click(runButton());
-  await screen.findByText("Completed");
+  await screen.findByText("已完成");
   const messages = (capturedBody as unknown as { messages: Array<{ content: unknown }> }).messages;
   const sentContent = messages.at(-1)?.content as Array<Record<string, unknown>>;
   const filePart = sentContent[1] as { type: string; file: { file_data: string; filename: string } };
@@ -1613,7 +1613,7 @@ test("removing an attachment drops its chip and its content part", async () => {
   const file = new window.File(["x"], "temp.txt", { type: "text/plain" });
   fireEvent.change(lastAttachInput(), { target: { files: [file] } });
   await screen.findByText("temp.txt");
-  fireEvent.click(screen.getByLabelText("Remove attachment temp.txt"));
+  fireEvent.click(screen.getByLabelText("移除附件 temp.txt"));
   await waitFor(() => assert.equal(screen.queryByText("temp.txt"), null));
 });
 
@@ -1629,9 +1629,9 @@ test("a message with no attachments is still sent as a plain string (back-compat
     ],
   ]);
   fireEvent.change(lastUserTextarea(), { target: { value: "plain text only" } });
-  fireEvent.click(screen.getByLabelText("Stream response"));
+  fireEvent.click(screen.getByLabelText("流式输出"));
   fireEvent.click(runButton());
-  await screen.findByText("Completed");
+  await screen.findByText("已完成");
   const messages = (capturedBody as unknown as { messages: Array<{ content: unknown }> }).messages;
   assert.equal(messages.at(-1)?.content, "plain text only");
 });
@@ -1642,29 +1642,29 @@ test("a file-only user message can run and attachment placement matches the endp
     sent = JSON.parse(String(init?.body));
     return jsonResponse({ choices: [{ message: { content: "Received" } }] });
   }]]);
-  assert.equal(screen.getAllByLabelText("📎 Attach file").length, 1);
+  assert.equal(screen.getAllByLabelText("📎 添加附件").length, 1);
   fireEvent.change(lastUserTextarea(), { target: { value: "" } });
   fireEvent.change(lastAttachInput(), { target: { files: [new window.File(["# contents"], "notes.md")] } });
   await screen.findByText("notes.md");
-  assert.equal((screen.getByRole("button", { name: "＋ Add message" }) as HTMLButtonElement).disabled, true);
-  fireEvent.click(screen.getByLabelText("Stream response"));
+  assert.equal((screen.getByRole("button", { name: "＋ 添加消息" }) as HTMLButtonElement).disabled, true);
+  fireEvent.click(screen.getByLabelText("流式输出"));
   fireEvent.click(runButton());
-  await screen.findByText("Completed");
+  await screen.findByText("已完成");
   assert.equal(sent.messages.at(-1).content.length, 1);
   assert.equal(sent.messages.at(-1).content[0].file.filename, "notes.md");
-  assert.equal(screen.getAllByLabelText("📎 Attach file").length, 1);
+  assert.equal(screen.getAllByLabelText("📎 添加附件").length, 1);
 });
 
 test("Responses mode explains unsupported attachments and preserves them for Chat", async () => {
   await renderApp();
   fireEvent.change(lastAttachInput(), { target: { files: [new window.File(["# contents"], "notes.md")] } });
   await screen.findByText("notes.md");
-  fireEvent.click(screen.getByRole("button", { name: "◇ Responses" }));
-  assert.equal(screen.queryByLabelText("📎 Attach file"), null);
+  fireEvent.click(screen.getByRole("button", { name: "◇ Responses API（响应接口）" }));
+  assert.equal(screen.queryByLabelText("📎 添加附件"), null);
   fireEvent.click(runButton());
-  await screen.findByText("Blocked");
-  assert.ok(screen.getByText(/File attachments require Chat mode/));
-  fireEvent.click(screen.getByRole("button", { name: "☷ Chat" }));
+  await screen.findByText("已阻止");
+  assert.ok(screen.getByText(/文件附件仅支持对话模式/));
+  fireEvent.click(screen.getByRole("button", { name: "☷ 对话" }));
   assert.ok(screen.getByText("notes.md"));
   assert.ok(lastAttachInput());
 });
@@ -1677,17 +1677,17 @@ for (const readerError of [null, new Error("File is no longer readable"), "File 
     this.onerror!(new window.ProgressEvent("error") as ProgressEvent<FileReader>);
   });
   fireEvent.change(lastAttachInput(), { target: { files: [new window.File(["data"], "failed.md")] } });
-  await screen.findByText("Error");
-  assert.ok(screen.getByText(readerError instanceof Error ? readerError.message : readerError ?? "Could not read file"));
+  await screen.findByText("出错");
+  assert.ok(screen.getByText(readerError instanceof Error ? readerError.message : readerError ?? "无法读取文件"));
   assert.equal(screen.queryByText("failed.md"), null);
-  assert.equal(lastUserTextarea().value, "Say hello in one short sentence.");
+  assert.equal(lastUserTextarea().value, "请用一句简短的话打个招呼。");
   assert.equal((runButton() as HTMLButtonElement).disabled, false);
 });
 
 test("empty file selections are ignored and unnamed files get a usable label", async () => {
   await renderApp();
   fireEvent.change(lastAttachInput(), { target: { files: [] } });
-  assert.ok(screen.getByText("Ready"));
+  assert.ok(screen.getByText("就绪"));
   fireEvent.change(lastAttachInput(), { target: { files: [new window.File(["bytes"], "")] } });
   await screen.findByText("attachment");
 });
@@ -1697,12 +1697,12 @@ test("a queued attachment removal cannot change the submitted message", async ()
   await renderApp([[/^\/v1\/chat\/completions$/, () => gate.promise]]);
   fireEvent.change(lastAttachInput(), { target: { files: [new window.File(["bytes"], "notes.md")] } });
   await screen.findByText("notes.md");
-  fireEvent.click(screen.getByLabelText("Stream response"));
-  const remove = screen.getByLabelText("Remove attachment notes.md");
+  fireEvent.click(screen.getByLabelText("流式输出"));
+  const remove = screen.getByLabelText("移除附件 notes.md");
   const run = runButton();
   act(() => { run.click(); remove.click(); });
   await act(async () => gate.resolve(jsonResponse({ choices: [{ message: { content: "Received" } }] })));
-  await screen.findByText("Completed");
+  await screen.findByText("已完成");
   assert.ok(screen.getByText("notes.md"));
 });
 });
