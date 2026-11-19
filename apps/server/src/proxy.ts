@@ -321,7 +321,7 @@ export async function proxyChatGpt(req: FastifyRequest, reply: FastifyReply): Pr
 
   if (needsAuthHeaders) {
     if (!credentials) {
-      reply.code(401).send({ error: "A valid session is required for this upstream request" });
+      reply.code(401).send({ error: "访问此上游接口需要有效的 ChatGPT 会话。" });
       return;
     }
     headers.set("authorization", `Bearer ${credentials.accessToken}`);

@@ -46,8 +46,8 @@ test("a failed bind (e.g. the port is already in use) is classified and exits 1 
     process.argv = [process.execPath, fileURLToPath(new URL("../dist/index.js", import.meta.url))];
     await import(`../dist/index.js?startup=failListen`);
     assert.equal(await exited, 1);
-    assert.match(logged, /^mirror failed to start \[port-in-use\]: listen EADDRINUSE/);
-    assert.match(logged, /Next step: Another process is already using this port/);
+    assert.match(logged, /^Mirror 启动失败 \[port-in-use\]：listen EADDRINUSE/);
+    assert.match(logged, /下一步建议：另一个进程正在使用此端口/);
   } finally {
     process.argv = originalArgv;
   }

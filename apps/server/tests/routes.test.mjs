@@ -97,6 +97,7 @@ test("an untrusted Host header is rejected with 421 before anything else runs", 
     headers: { host: "evil.example.com" },
   });
   assert.equal(res.statusCode, 421);
+  assert.equal(JSON.parse(res.body).error, "请求主机名不受信任。");
 });
 
 test("a mutating cross-origin request is rejected with 403 and a specific message", async () => {
@@ -107,7 +108,7 @@ test("a mutating cross-origin request is rejected with 403 and a specific messag
     payload: {},
   });
   assert.equal(res.statusCode, 403);
-  assert.equal(JSON.parse(res.body).error, "Cross-origin control request rejected");
+  assert.equal(JSON.parse(res.body).error, "已拒绝跨域控制请求。");
 });
 
 test("/api/health and /mirror/assets/ bypass the local-authorization check entirely", async () => {
@@ -131,7 +132,7 @@ test("mayBootstrapBrowser requests get a fresh control cookie set", async () => 
 test("an unauthorized request to a protected route is rejected with 401", async () => {
   const res = await app.inject({ method: "GET", url: "/api/models", headers: { host: "localhost" } });
   assert.equal(res.statusCode, 401);
-  assert.match(JSON.parse(res.body).error.message, /Open Mirror in your browser/);
+  assert.match(JSON.parse(res.body).error.message, /请在浏览器中打开 Mirror/);
 });
 
 // --- setErrorHandler ---------------------------------------------------------
@@ -156,7 +157,7 @@ test("an unexpected non-statusCode error is hidden behind a generic 500 message"
       useSession("acct-500");
       const res = await app.inject({ method: "GET", url: "/api/models", headers: AUTH });
       assert.equal(res.statusCode, 500);
-      assert.deepEqual(JSON.parse(res.body), { error: "Internal server error" });
+      assert.deepEqual(JSON.parse(res.body), { error: "服务器内部发生错误。" });
     },
   ));
 
@@ -569,7 +570,7 @@ test("POST /api/files requires a file and otherwise uploads it through the backe
         payload: `--${emptyBoundary}--\r\n`,
       });
       assert.equal(noFile.statusCode, 400);
-      assert.match(JSON.parse(noFile.body).error, /No file uploaded/);
+      assert.match(JSON.parse(noFile.body).error, /未上传文件/);
 
       const { boundary, body } = multipartBody("file", "pic.png", "text/plain", "pretend-image-bytes");
       const res = await app.inject({
@@ -752,7 +753,7 @@ test("POST /api/chat reports a friendly message when the turn is aborted, and th
       });
       assert.equal(res.statusCode, 200); // the stream itself always opens 200; failure rides inside an SSE "error" frame
       assert.match(res.body, /event: error/);
-      assert.ok(!res.body.includes("Generation stopped"));
+      assert.ok(!res.body.includes("生成已停止。"));
     },
   ));
 
@@ -796,7 +797,7 @@ test("the not-found handler 404s unmatched /v1/ paths and proxies everything els
       const v1Body = JSON.parse(v1.body);
       assert.equal(v1Body.error.code, "not_found");
       assert.equal(v1Body.error.type, "invalid_request_error");
-      assert.equal(v1Body.error.message, "The requested resource was not found.");
+      assert.equal(v1Body.error.message, "未找到请求的资源。");
       assert.equal(v1Body.error.request_id, v1.headers["x-request-id"]);
 
       const other = await app.inject({ method: "GET", url: "/some/unrecognized/path", headers: AUTH });
@@ -827,7 +828,7 @@ test("GPT listing deduplicates entries shared by bootstrap and sidebar", async (
   });
 });
 
-for (const [error, expected] of [[new DOMException("aborted", "AbortError"), "Generation stopped"], ["plain failure", "plain failure"]]) {
+for (const [error, expected] of [[new DOMException("aborted", "AbortError"), "生成已停止。"], ["plain failure", "plain failure"]]) {
   test(`chat stream exposes a useful error for ${expected}`, async () => {
     useSession(`error-${expected}`);
     await withFetch(async () => { throw error; }, async () => {
@@ -844,7 +845,7 @@ test("error handler gives a safe fallback for a non-Error exception", async () =
     probe.get("/api/test-error", async () => { throw { statusCode: 422 }; });
     const res = await probe.inject({ method: "GET", url: "/api/test-error", headers: AUTH });
     assert.equal(res.statusCode, 422);
-    assert.deepEqual(res.json(), { error: "Request failed" });
+    assert.deepEqual(res.json(), { error: "请求失败。" });
     // Diagnostic request objects may not yet have a URL; logging must still work.
     assert.doesNotThrow(() => probe.log.info({ req: { method: "GET" } }, "incomplete request diagnostic"));
   } finally { await probe.close(); }

@@ -74,7 +74,7 @@ export async function registerAssetContentRoute(app: FastifyInstance): Promise<v
     reply.header("cross-origin-resource-policy", "cross-origin");
     const query = req.query as Record<string, unknown>;
     const ticket = typeof query.ticket === "string" ? openAssetTicket(query.ticket) : null;
-    if (!ticket) return reply.code(404).send({ error: "File link expired or unavailable. Request a new file link in chat." });
+    if (!ticket) return reply.code(404).send({ error: "文件链接已过期或不可用，请在对话中重新获取文件链接。" });
     const revision = getSessionRevision();
     const controller = new AbortController();
     const unsubscribe = onSessionChange(() => controller.abort());
@@ -90,7 +90,7 @@ export async function registerAssetContentRoute(app: FastifyInstance): Promise<v
       assertSessionRevision(revision);
       if (!response.ok || !response.body) {
         await response.body?.cancel();
-        return reply.code(502).send({ error: "File is currently unavailable upstream. Request a new file link in chat." });
+        return reply.code(502).send({ error: "文件当前无法从上游服务获取，请在对话中重新获取文件链接。" });
       }
       const mimeType = response.headers.get("content-type")?.split(";")[0].trim().toLowerCase() || "application/octet-stream";
       const preview = query.download !== "1" && previewMimeType(mimeType);
@@ -104,7 +104,7 @@ export async function registerAssetContentRoute(app: FastifyInstance): Promise<v
       return reply.send(Readable.fromWeb(response.body as import("node:stream/web").ReadableStream));
     } catch {
       clearTimeout(timer);
-      return reply.code(502).send({ error: "File is currently unavailable. Request a new file link in chat." });
+      return reply.code(502).send({ error: "文件当前不可用，请在对话中重新获取文件链接。" });
     }
   });
 }

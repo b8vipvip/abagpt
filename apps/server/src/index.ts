@@ -85,7 +85,7 @@ import {
   ownsUpstreamConversation,
 } from "./store.js";
 
-const swaggerUiZhCnScript = "(() => {\n  const translations = new Map([\n    [\"Swagger UI\", \"接口文档\"], [\"Authorize\", \"授权\"], [\"Servers\", \"服务器\"],\n    [\"Server\", \"服务器\"], [\"Models\", \"模型\"], [\"Schemas\", \"数据结构\"],\n    [\"Parameters\", \"请求参数\"], [\"Responses\", \"响应结果\"], [\"Response\", \"响应\"],\n    [\"Request body\", \"请求体\"], [\"Request Body\", \"请求体\"], [\"Try it out\", \"试用\"],\n    [\"Cancel\", \"取消\"], [\"Execute\", \"发送请求\"], [\"Clear\", \"清空\"], [\"Reset\", \"重置\"],\n    [\"Download\", \"下载\"], [\"Copy\", \"复制\"], [\"Copied!\", \"已复制！\"],\n    [\"Example Value\", \"示例值\"], [\"Model\", \"模型\"], [\"Name\", \"名称\"],\n    [\"Description\", \"说明\"], [\"Type\", \"类型\"], [\"Required\", \"必填\"],\n    [\"Optional\", \"选填\"], [\"Deprecated\", \"已弃用\"],\n    [\"Response content type\", \"响应内容类型\"], [\"Request content type\", \"请求内容类型\"],\n    [\"Response samples\", \"响应示例\"], [\"Response schema\", \"响应结构\"],\n    [\"Response headers\", \"响应标头\"], [\"Request samples\", \"请求示例\"],\n    [\"Request URL\", \"请求地址\"], [\"Response body\", \"响应内容\"],\n    [\"Response code\", \"响应状态码\"], [\"Response time\", \"响应耗时\"],\n    [\"Headers\", \"请求标头\"], [\"Available authorizations\", \"可用的身份验证方式\"],\n    [\"Authorization\", \"身份验证\"], [\"Scopes\", \"权限范围\"],\n    [\"No operations defined in spec!\", \"当前 OpenAPI 文档未定义任何接口。\"],\n    [\"Loading...\", \"正在加载…\"], [\"Failed to load API definition.\", \"API 文档加载失败。\"],\n    [\"Fetch error\", \"获取失败\"], [\"Filter by tag\", \"按标签筛选\"], [\"Filter\", \"筛选\"],\n    [\"Show/Hide\", \"展开／收起\"], [\"List Operations\", \"接口列表\"],\n    [\"Expand Operations\", \"展开接口\"], [\"Collapse Operations\", \"收起接口\"],\n    [\"Available values\", \"可选值\"], [\"Undocumented\", \"未在文档中说明\"],\n    [\"Logout\", \"退出\"], [\"Close\", \"关闭\"], [\"Open\", \"打开\"], [\"Send\", \"发送\"],\n    [\"Select a definition\", \"选择 API 定义\"],\n    [\"Curl\", \"cURL 命令\"], [\"Server response\", \"服务器响应\"],\n    [\"Code\", \"状态码\"], [\"Details\", \"详情\"], [\"Schema\", \"数据结构\"],\n    [\"Example\", \"示例\"], [\"Value\", \"值\"], [\"Apply\", \"应用\"],\n    [\"Hide\", \"收起\"], [\"Show\", \"展开\"], [\"Expand all\", \"全部展开\"], [\"Collapse all\", \"全部收起\"],\n    [\"Client ID\", \"客户端 ID\"], [\"Client secret\", \"客户端密钥\"],\n    [\"Username\", \"用户名\"], [\"Password\", \"密码\"], [\"Available scopes\", \"可用权限范围\"],\n    [\"Authorization URL\", \"授权地址\"], [\"Token URL\", \"令牌地址\"]\n  ]);\n  const translatedAttributes = [\"aria-label\", \"placeholder\", \"title\"];\n  const skipSelectors = \"pre, code, .microlight, .highlight-code, .model-box\";\n\n  function visit(node) {\n    if (node.nodeType === Node.TEXT_NODE) {\n      const original = node.nodeValue;\n      if (typeof original !== \"string\") return;\n      const translated = translations.get(original.trim());\n      if (translated && translated !== original.trim()) {\n        node.nodeValue = original.replace(original.trim(), translated);\n      }\n      return;\n    }\n    if (node.nodeType !== Node.ELEMENT_NODE || node.matches(skipSelectors)) return;\n    for (const name of translatedAttributes) {\n      const value = node.getAttribute(name);\n      if (!value) continue;\n      const translated = translations.get(value.trim());\n      if (translated && translated !== value) node.setAttribute(name, translated);\n    }\n    for (const child of node.childNodes) visit(child);\n  }\n\n  function start() {\n    if (!document.body) return;\n    document.documentElement.lang = \"zh-CN\";\n    document.title = \"Mirror API 接口文档\";\n    visit(document.body);\n    const observer = new MutationObserver((records) => {\n      for (const record of records) {\n        if (record.type === \"characterData\" || record.type === \"attributes\") visit(record.target);\n        for (const added of record.addedNodes) visit(added);\n      }\n    });\n    observer.observe(document.body, {\n      subtree: true, childList: true, characterData: true,\n      attributes: true, attributeFilter: translatedAttributes\n    });\n  }\n\n  if (document.readyState === \"loading\") {\n    document.addEventListener(\"DOMContentLoaded\", start, { once: true });\n  } else {\n    start();\n  }\n})();";
+const swaggerUiZhCnScript = "(() => {\n  const translations = new Map([\n    [\"Swagger UI\", \"接口文档\"], [\"Authorize\", \"授权\"], [\"Servers\", \"服务器\"],\n    [\"Server\", \"服务器\"], [\"Models\", \"模型\"], [\"Schemas\", \"数据结构\"],\n    [\"Parameters\", \"请求参数\"], [\"Responses\", \"响应结果\"], [\"Response\", \"响应\"],\n    [\"Request body\", \"请求体\"], [\"Request Body\", \"请求体\"], [\"Try it out\", \"试用\"],\n    [\"Cancel\", \"取消\"], [\"Execute\", \"发送请求\"], [\"Clear\", \"清空\"], [\"Reset\", \"重置\"],\n    [\"Download\", \"下载\"], [\"Copy\", \"复制\"], [\"Copied!\", \"已复制！\"],\n    [\"Example Value\", \"示例值\"], [\"Model\", \"模型\"], [\"Name\", \"名称\"],\n    [\"Description\", \"说明\"], [\"Type\", \"类型\"], [\"Required\", \"必填\"],\n    [\"Optional\", \"选填\"], [\"Deprecated\", \"已弃用\"],\n    [\"Response content type\", \"响应内容类型\"], [\"Request content type\", \"请求内容类型\"],\n    [\"Response samples\", \"响应示例\"], [\"Response schema\", \"响应结构\"],\n    [\"Response headers\", \"响应标头\"], [\"Request samples\", \"请求示例\"],\n    [\"Request URL\", \"请求地址\"], [\"Response body\", \"响应内容\"],\n    [\"Response code\", \"响应状态码\"], [\"Response time\", \"响应耗时\"],\n    [\"Headers\", \"请求标头\"], [\"Available authorizations\", \"可用的身份验证方式\"],\n    [\"Authorization\", \"身份验证\"], [\"Scopes\", \"权限范围\"],\n    [\"No operations defined in spec!\", \"当前 OpenAPI 文档未定义任何接口。\"],\n    [\"Loading...\", \"正在加载…\"], [\"Failed to load API definition.\", \"API 文档加载失败。\"],\n    [\"Fetch error\", \"获取失败\"], [\"Filter by tag\", \"按标签筛选\"], [\"Filter\", \"筛选\"],\n    [\"Show/Hide\", \"展开／收起\"], [\"List Operations\", \"接口列表\"],\n    [\"Expand Operations\", \"展开接口\"], [\"Collapse Operations\", \"收起接口\"],\n    [\"Available values\", \"可选值\"], [\"Undocumented\", \"未在文档中说明\"],\n    [\"Logout\", \"退出\"], [\"Close\", \"关闭\"], [\"Open\", \"打开\"], [\"Send\", \"发送\"],\n    [\"Select a definition\", \"选择 API 定义\"],\n    [\"Curl\", \"cURL 命令\"], [\"Server response\", \"服务器响应\"],\n    [\"Code\", \"状态码\"], [\"Details\", \"详情\"], [\"Schema\", \"数据结构\"],\n    [\"Example\", \"示例\"], [\"Value\", \"值\"], [\"Apply\", \"应用\"],\n    [\"Hide\", \"收起\"], [\"Show\", \"展开\"], [\"Expand all\", \"全部展开\"], [\"Collapse all\", \"全部收起\"],\n    [\"Client ID\", \"客户端 ID\"], [\"Client secret\", \"客户端密钥\"],\n    [\"Username\", \"用户名\"], [\"Password\", \"密码\"], [\"Available scopes\", \"可用权限范围\"],\n    [\"Authorization URL\", \"授权地址\"], [\"Token URL\", \"令牌地址\"],\n    [\"API definition\", \"API 定义\"], [\"Download API definition\", \"下载 API 定义\"],\n    [\"Copy to clipboard\", \"复制到剪贴板\"], [\"Copied to clipboard\", \"已复制到剪贴板\"],\n    [\"Try it out!\", \"试用\"], [\"Send API Request\", \"发送 API 请求\"],\n    [\"Parameter content type\", \"参数内容类型\"], [\"Parameter\", \"参数\"],\n    [\"Default\", \"默认值\"], [\"Format\", \"格式\"], [\"In\", \"位置\"],\n    [\"Body\", \"请求体\"], [\"Query\", \"查询参数\"], [\"Path\", \"路径\"], [\"Header\", \"请求标头\"],\n    [\"API Key\", \"API 密钥\"], [\"Enter API key\", \"输入 API 密钥\"],\n    [\"No API definition provided.\", \"未提供 API 定义。\"],\n    [\"No API definition provided\", \"未提供 API 定义\"],\n    [\"No operations found\", \"未找到接口\"], [\"Operations\", \"接口操作\"],\n    [\"Request duration\", \"请求耗时\"], [\"Response duration\", \"响应耗时\"],\n    [\"Server URL\", \"服务器地址\"], [\"Select a server\", \"选择服务器\"],\n    [\"Edit\", \"编辑\"], [\"Submit\", \"提交\"], [\"Add\", \"添加\"]\n  ]);\n  const translatedAttributes = [\"aria-label\", \"placeholder\", \"title\"];\n  const skipSelectors = \"pre, code, .microlight, .highlight-code, .model-box\";\n\n  function visit(node) {\n    if (node.nodeType === Node.TEXT_NODE) {\n      const original = node.nodeValue;\n      if (typeof original !== \"string\") return;\n      const translated = translations.get(original.trim());\n      if (translated && translated !== original.trim()) {\n        node.nodeValue = original.replace(original.trim(), translated);\n      }\n      return;\n    }\n    if (node.nodeType !== Node.ELEMENT_NODE || node.matches(skipSelectors)) return;\n    for (const name of translatedAttributes) {\n      const value = node.getAttribute(name);\n      if (!value) continue;\n      const translated = translations.get(value.trim());\n      if (translated && translated !== value) node.setAttribute(name, translated);\n    }\n    for (const child of node.childNodes) visit(child);\n  }\n\n  function start() {\n    if (!document.body) return;\n    document.documentElement.lang = \"zh-CN\";\n    document.title = \"Mirror API 接口文档\";\n    visit(document.body);\n    const observer = new MutationObserver((records) => {\n      for (const record of records) {\n        if (record.type === \"characterData\" || record.type === \"attributes\") visit(record.target);\n        for (const added of record.addedNodes) visit(added);\n      }\n    });\n    observer.observe(document.body, {\n      subtree: true, childList: true, characterData: true,\n      attributes: true, attributeFilter: translatedAttributes\n    });\n  }\n\n  if (document.readyState === \"loading\") {\n    document.addEventListener(\"DOMContentLoaded\", start, { once: true });\n  } else {\n    start();\n  }\n})();";
 const swaggerUiZhCnCss = ".swagger-ui {\n  font-family: Inter, \"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", sans-serif;\n}\n.swagger-ui .info .title,\n.swagger-ui .opblock-tag,\n.swagger-ui .opblock-summary-description,\n.swagger-ui .markdown,\n.swagger-ui .model-title {\n  overflow-wrap: anywhere;\n}\n.swagger-ui .opblock-summary { min-height: 48px; }\n.swagger-ui button,\n.swagger-ui input,\n.swagger-ui select,\n.swagger-ui textarea { font-family: inherit; }\n@media (max-width: 640px) {\n  .swagger-ui .wrapper { padding: 0 8px; }\n  .swagger-ui .topbar .wrapper { padding: 8px; }\n  .swagger-ui .topbar .download-url-wrapper { width: 100%; max-width: 100%; }\n  .swagger-ui .topbar .download-url-wrapper input { min-width: 0; }\n  .swagger-ui .opblock-summary { align-items: flex-start; flex-wrap: wrap; }\n  .swagger-ui .opblock-summary-control { min-width: 0; }\n  .swagger-ui .opblock-summary-path { max-width: 100%; overflow-wrap: anywhere; }\n  .swagger-ui .opblock-body { padding: 0 8px; }\n  .swagger-ui table { display: block; max-width: 100%; overflow-x: auto; }\n  .swagger-ui .model-box { overflow-wrap: anywhere; }\n}";
 
 function isPublicApiPath(url: string): boolean {
@@ -144,7 +144,7 @@ const accountKey = () => getSession()?.accountId ?? "default";
 app.addHook("onRequest", async (req, reply) => {
   reply.header("x-request-id", req.id);
   if (!isAllowedRequestHost(req.headers.host)) {
-    return reply.code(421).send({ error: "Untrusted Host header" });
+    return reply.code(421).send({ error: "请求主机名不受信任。" });
   }
   // Image tags and new-tab downloads cannot attach a Mirror bearer header.
   // This exact read-only route validates its own sealed, file-scoped ticket.
@@ -152,7 +152,7 @@ app.addHook("onRequest", async (req, reply) => {
   if (isPublicApiPath(req.url) && !isAllowedOrigin(req.headers.origin, req.headers.host)) {
     if (!tokenMatches(bearerToken(req.headers.authorization), configuredApiKeys())) {
       return reply.code(401).send({ error: {
-        message: "Cross-origin API requests require a configured Mirror API key",
+        message: "跨域 API 请求需要配置有效的 Mirror API 密钥。",
         type: "authentication_error",
       } });
     }
@@ -162,10 +162,10 @@ app.addHook("onRequest", async (req, reply) => {
   if (mutating && !isAllowedOrigin(req.headers.origin, req.headers.host)) {
     return reply
       .code(403)
-      .send({ error: "Cross-origin control request rejected" });
+      .send({ error: "已拒绝跨域控制请求。" });
   }
   if (req.headers.origin && !isAllowedOrigin(req.headers.origin, req.headers.host))
-    return reply.code(403).send({error: "Origin rejected"});
+    return reply.code(403).send({error: "请求来源未获允许。"});
   if (mayBootstrapBrowser(req.method, req.url, req.headers)) {
     req.log.info({ url: req.url }, "setting control cookie for bootstrap");
     reply.header("Set-Cookie", controlCookie());
@@ -173,7 +173,7 @@ app.addHook("onRequest", async (req, reply) => {
   }
   if (req.url === "/api/health" || req.url.startsWith("/mirror/assets/")) return;
   if (!authorizedLocalRequest(req.headers)) {
-    return reply.code(401).send({ error: { message: "Open Mirror in your browser or supply a configured Mirror API key", type: "authentication_error" } });
+    return reply.code(401).send({ error: { message: "请在浏览器中打开 Mirror，或提供已配置的 Mirror API 密钥。", type: "authentication_error" } });
   }
 });
 
@@ -204,10 +204,10 @@ app.setErrorHandler((error, _req, reply) => {
     error instanceof ZodError
       ? error.issues.map((issue) => issue.message).join("; ")
       : status >= 500
-        ? "Internal server error"
+        ? "服务器内部发生错误。"
         : error instanceof Error
           ? error.message
-          : "Request failed";
+          : "请求失败。";
   if (status >= 500) app.log.error({ err: error }, "request failed");
   reply.code(status).send({ error: message });
 });
@@ -331,7 +331,7 @@ app.get("/api/conversations/:id", async (req, reply) => {
   const { id } = ConversationIdParam.parse(req.params);
   let conversation = getConversation(id);
   if (conversation?.accountId !== accountKey())
-    return reply.code(404).send({ error: "Conversation not found" });
+    return reply.code(404).send({ error: "未找到会话。" });
   if (conversation.conversationId && listMessages(id).length === 0) {
     const client = new ChatGptBackendClient(await getValidCredentials());
     conversation = importRemoteConversation(
@@ -349,7 +349,7 @@ app.patch("/api/conversations/:id", async (req, reply) => {
   // browsed, loaded, and managed through these routes.
   const { id } = ConversationIdParam.parse(req.params);
   if (getConversation(id)?.accountId !== accountKey())
-    return reply.code(404).send({ error: "Conversation not found" });
+    return reply.code(404).send({ error: "未找到会话。" });
   return setConversationModel(id, ModelUpdateBody.parse(req.body).model);
 });
 app.delete("/api/conversations/:id", async (req) => {
@@ -372,7 +372,7 @@ app.post("/api/conversations/:id/stop", async (req, reply) => {
   // browsed, loaded, and managed through these routes.
   const { id } = ConversationIdParam.parse(req.params);
   if (getConversation(id)?.accountId !== accountKey())
-    return reply.code(404).send({ error: "Conversation not found" });
+    return reply.code(404).send({ error: "未找到会话。" });
   return { ok: stopConversation(id) };
 });
 app.post("/api/conversations/:id/branch", async (req, reply) => {
@@ -383,7 +383,7 @@ app.post("/api/conversations/:id/branch", async (req, reply) => {
   // browsed, loaded, and managed through these routes.
   const { id } = ConversationIdParam.parse(req.params);
   if (getConversation(id)?.accountId !== accountKey())
-    return reply.code(404).send({ error: "Conversation not found" });
+    return reply.code(404).send({ error: "未找到会话。" });
   const body = BranchBody.parse(req.body);
   const target = listMessages(id).find(
     (message) => message.id === body.messageId && message.upstreamNodeId,
@@ -391,7 +391,7 @@ app.post("/api/conversations/:id/branch", async (req, reply) => {
   if (!target?.upstreamNodeId)
     return reply
       .code(400)
-      .send({ error: "That message cannot be used as a branch point" });
+      .send({ error: "该消息不能用作会话分支节点。" });
   return branchConversation(
     id,
     target.upstreamNodeId,
@@ -402,7 +402,7 @@ app.post("/api/conversations/:id/branch", async (req, reply) => {
 
 app.post("/api/files", async (req, reply) => {
   const part = await req.file();
-  if (!part) return reply.code(400).send({ error: "No file uploaded" });
+  if (!part) return reply.code(400).send({ error: "未上传文件。" });
   const data = await part.toBuffer();
   const client = new ChatGptBackendClient(await getValidCredentials());
   await client.fetchMe().catch(() => undefined);
@@ -422,20 +422,20 @@ app.get("/api/assets", async (req, reply) => {
     !query.pointer.startsWith("file-service://") &&
     !query.pointer.startsWith("sediment://")
   ) {
-    return reply.code(400).send({ error: "Unsupported asset pointer" });
+    return reply.code(400).send({ error: "不支持的资源指针。" });
   }
   if (
     query.pointer.startsWith("file-service://") &&
     !ownsFile(query.pointer.slice("file-service://".length), accountKey())
   ) {
-    return reply.code(404).send({ error: "File not found" });
+    return reply.code(404).send({ error: "未找到文件。" });
   }
   if (
     query.pointer.startsWith("sediment://") &&
     (!query.upstreamConversationId ||
       !ownsUpstreamConversation(query.upstreamConversationId, accountKey()))
   ) {
-    return reply.code(404).send({ error: "Conversation asset not found" });
+    return reply.code(404).send({ error: "未找到会话资源。" });
   }
   const client = new ChatGptBackendClient(await getValidCredentials());
   const url = await client.resolveAssetDownload(
@@ -471,7 +471,7 @@ app.post("/api/chat", async (req, reply) => {
   ) {
     return reply
       .code(404)
-      .send({ error: "One or more attachments do not belong to this account" });
+      .send({ error: "一个或多个附件不属于当前账号。" });
   }
   const controller = new AbortController();
   req.raw.once("aborted", () => controller.abort());
@@ -521,7 +521,7 @@ app.post("/api/chat", async (req, reply) => {
     send("error", {
       message:
         error instanceof Error && error.name === "AbortError"
-          ? "Generation stopped"
+          ? "生成已停止。"
           : String((error as Error)?.message ?? error),
     });
   } finally {
@@ -588,7 +588,7 @@ app.setNotFoundHandler(async (req, reply) => {
   // Every Mirror-owned /api route is registered above. Any remaining route may
   // belong to the official ChatGPT frontend and must be proxied upstream.
   if (req.url.startsWith("/v1/"))
-    return reply.code(404).send({ error: "Not found" });
+    return reply.code(404).send({ error: "未找到请求的资源。" });
   return proxyChatGpt(req, reply);
 });
 

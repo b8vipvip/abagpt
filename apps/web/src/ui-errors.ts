@@ -4,7 +4,12 @@ const STATUS_MESSAGES: Record<string, string> = {
   "403": "当前账号或请求来源没有权限执行此操作。",
   "404": "请求的资源不存在或已过期。",
   "409": "会话状态已变化，请刷新后重试。",
+  "413": "上传内容过大，请缩小文件或减少附件后重试。",
+  "415": "不支持此内容类型，请检查上传文件格式。",
+  "421": "请求主机名未获信任，请检查服务器地址。",
   "422": "输入内容无法处理，请检查文件或参数。",
+  "428": "ChatGPT 要求完成交互式验证，请先在 ChatGPT 中完成验证后重试。",
+  "431": "请求标头过大，请检查客户端配置后重试。",
   "429": "请求过于频繁，请稍后再试。",
   "500": "服务器内部发生错误，请稍后重试。",
   "502": "上游服务暂时不可用，请检查网络或 WARP 连接。",
@@ -12,7 +17,7 @@ const STATUS_MESSAGES: Record<string, string> = {
   "504": "请求处理超时，请刷新会话后重试。",
 };
 
-const NETWORK_ERROR = /failed to fetch|networkerror|network request failed|load failed|fetch failed|offline/i;
+const NETWORK_ERROR = /failed to fetch|networkerror|network request failed|load failed|fetch failed|offline|econnrefused|econnreset|err_network/i;
 const HAS_CHINESE = /[\u3400-\u9fff]/;
 
 function localizeMessage(message: string, fallback: string): string {
