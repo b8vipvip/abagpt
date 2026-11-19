@@ -6,7 +6,7 @@ test.beforeEach(async({page})=>{
 });
 test("stream error is shown as Error",async({page})=>{
  await page.route("**/v1/chat/completions",route=>route.fulfill({contentType:"text/event-stream",body:'data: {"error":{"message":"Synthetic failure"}}\n\ndata: [DONE]\n\n'}));
- await page.goto("/mirror/playground");await page.getByRole("button",{name:/^Run\b/}).click();
+ await page.goto("/mirror/playground");await page.getByRole("button",{name:/^运行请求/}).click();
  await expect(page.locator(".run-status")).toHaveText("出错");
  await expect(page.locator(".output")).toContainText("Synthetic failure");
 });
@@ -23,7 +23,7 @@ test("pagination loads more when remote history remains",async({page})=>{
 });
 test("Stop cancels a pending response",async({page})=>{
  await page.route("**/v1/chat/completions",async route=>{await new Promise(resolve=>setTimeout(resolve,1000));await route.abort().catch(()=>{});});
- await page.goto("/mirror/playground");await page.getByRole("button",{name:/^Run\b/}).click();await page.getByRole("button",{name:"停止",exact:true}).click();await expect(page.locator(".run-status")).toHaveText("已停止");
+ await page.goto("/mirror/playground");await page.getByRole("button",{name:/^运行请求/}).click();await page.getByRole("button",{name:"停止",exact:true}).click();await expect(page.locator(".run-status")).toHaveText("已停止");
 });
 test("Responses mode runs, retains history and switches back to Chat", async ({page}) => {
  let request: any;
@@ -36,7 +36,7 @@ test("Responses mode runs, retains history and switches back to Chat", async ({p
  await page.getByRole("button",{name:"◇ Responses API（响应接口）"}).click();
  await expect(page.getByRole("heading",{name:"Responses API（响应接口）",exact:true})).toBeVisible();
  await expect(page.getByLabel("接口路径",{exact:true})).toHaveValue("/v1/responses");
- await page.getByRole("button",{name:/^Run\b/}).click();
+ await page.getByRole("button",{name:/^运行请求/}).click();
  await expect(page.locator(".run-status")).toHaveText("已完成");
  expect(request.input.at(-1).role).toBe("user"); expect(request.messages).toBeUndefined();
  await expect(page.getByPlaceholder("自动生成（首次响应后填入）")).toHaveValue("responses-conversation");
@@ -64,13 +64,13 @@ test("Markdown and text files selected together keep their exact contents and th
   { name: "other.txt", mimeType: "text/plain", buffer: Buffer.from("Second file contents\n") },
  ]);
  await expect(page.locator(".run-status")).toHaveText("正在读取文件…");
- await expect(page.getByRole("button", { name: /^Run\b/ })).toBeDisabled();
+ await expect(page.getByRole("button", { name: /^运行请求/ })).toBeDisabled();
  await page.keyboard.press("Control+Enter");
  expect(request).toBeUndefined();
  await page.evaluate(() => (window as any).releaseUploads());
  await expect(page.locator(".attachment-chip")).toHaveCount(2);
  await page.locator("textarea").last().fill("Read both attachments, including Unicode.");
- await page.getByRole("button", { name: /^Run\b/ }).click();
+ await page.getByRole("button", { name: /^运行请求/ }).click();
  await expect(page.locator(".run-status")).toHaveText("已完成");
  const parts = request.messages.at(-1).content;
  expect(parts[0]).toEqual({ type: "text", text: "Read both attachments, including Unicode." });
