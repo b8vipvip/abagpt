@@ -78,16 +78,11 @@ const CompletionResponseMetadata = z
   .object({
     mirror_tool_events: z.string().optional().openapi({
       description:
-        "JSON-stringified array of {name, status} objects, one per ChatGPT built-in tool " +
-        "invocation observed during the turn (web browsing, the code-interpreter sandbox, " +
-        "etc). Parse with JSON.parse.",
+        "JSON 字符串化的数组，每次 ChatGPT 内置工具调用对应一个 {name, status} 对象（例如网页浏览、代码解释器沙盒等）。请使用 JSON.parse 解析。",
     }),
     mirror_images: z.string().optional().openapi({
       description:
-        "JSON-stringified array of {url} objects for any in-chat DALL-E image(s) ChatGPT " +
-        "generated during the turn (distinct from the official /v1/images/generations " +
-        "endpoint, which Mirror doesn't implement - see COMPATIBILITY.md). Each url " +
-        "is a self-contained image data URI when preview bytes are available. Unavailable previews are omitted.",
+        "JSON 字符串化的 {url} 对象数组，包含 ChatGPT 在本轮对话中生成的 DALL·E 图片（与 Mirror 未实现的官方 /v1/images/generations 接口不同，详见 COMPATIBILITY.md）。如果有可用预览字节，url 为自包含的图片 data URI；无法生成预览的项目会被省略。",
     }),
   })
   .openapi({
@@ -108,15 +103,13 @@ const CompletionResponse = z
         message: ChatMessageResponse,
         finish_reason: z.literal("stop").openapi({
           description:
-            "Mirror reports stop on successful completion and never truncates responses based on token limits or stop strings.",
+            "Mirror 在成功完成时返回 stop，不会根据 token 限制或 stop 字符串截断响应。",
         }),
       }),
     ),
     usage: z.null().openapi({
       description:
-        "Always null. backend-api reports no token counts anywhere - ChatGPT bills by plan " +
-        "usage windows, not per-token metering - so there is nothing real to put here. See " +
-        "COMPATIBILITY.md.",
+        "始终为 null。backend-api 不会提供 token 数量；ChatGPT 按套餐用量窗口计费，而不是按 token 计量，因此没有真实数据可填入此字段。详见 COMPATIBILITY.md。",
     }),
     metadata: CompletionResponseMetadata.optional(),
   })
@@ -355,7 +348,7 @@ const nativeApiPaths: ZodOpenApiPathsObject = {
   "/api/health": {
     get: {
       summary: "健康检查",
-      tags: ["Mirror"],
+      tags: ["Mirror 控制接口"],
       responses: {
         "200": {
           description: "成功",
@@ -376,7 +369,7 @@ const nativeApiPaths: ZodOpenApiPathsObject = {
   "/api/session": {
     get: {
       summary: "检查是否已配置 ChatGPT 会话",
-      tags: ["Mirror"],
+      tags: ["Mirror 控制接口"],
       responses: {
         "200": {
           description: "成功",
@@ -394,7 +387,7 @@ const nativeApiPaths: ZodOpenApiPathsObject = {
     },
     post: {
       summary: "将 Mirror 连接到 ChatGPT 账号",
-      tags: ["Mirror"],
+      tags: ["Mirror 控制接口"],
       requestBody: { content: { "application/json": { schema: SetSessionBody } } },
       responses: {
         "200": {
@@ -417,14 +410,14 @@ const nativeApiPaths: ZodOpenApiPathsObject = {
     },
     delete: {
       summary: "断开当前配置的 ChatGPT 会话",
-      tags: ["Mirror"],
+      tags: ["Mirror 控制接口"],
       responses: { "200": { description: "成功", content: { "application/json": { schema: OkResponse } } } },
     },
   },
   "/api/models": {
     get: {
       summary: "列出模型（Mirror 原生数据结构，字段比 /v1/models 更丰富，但不包含上游原始数据）",
-      tags: ["Mirror"],
+      tags: ["Mirror 控制接口"],
       responses: {
         "200": {
           description: "成功",
@@ -436,7 +429,7 @@ const nativeApiPaths: ZodOpenApiPathsObject = {
   "/api/gpts": {
     get: {
       summary: "列出当前账号可访问的自定义 GPT 和项目",
-      tags: ["Mirror"],
+      tags: ["Mirror 控制接口"],
       responses: {
         "200": {
           description: "成功",
@@ -448,7 +441,7 @@ const nativeApiPaths: ZodOpenApiPathsObject = {
   "/api/conversations": {
     get: {
       summary: "分页列出本地已知会话",
-      tags: ["Mirror"],
+      tags: ["Mirror 控制接口"],
       requestParams: { query: ConversationsQuery },
       responses: {
         "200": {
@@ -467,7 +460,7 @@ const nativeApiPaths: ZodOpenApiPathsObject = {
     },
     post: {
       summary: "创建一个空白会话",
-      tags: ["Mirror"],
+      tags: ["Mirror 控制接口"],
       requestBody: { content: { "application/json": { schema: NewConversationBody } } },
       responses: {
         "200": { description: "成功", content: { "application/json": { schema: StoredConversation } } },
@@ -477,7 +470,7 @@ const nativeApiPaths: ZodOpenApiPathsObject = {
   "/api/conversations/{id}": {
     get: {
       summary: "获取会话及其消息",
-      tags: ["Mirror"],
+      tags: ["Mirror 控制接口"],
       requestParams: { path: ConversationIdParam },
       responses: {
         "200": {
@@ -499,7 +492,7 @@ const nativeApiPaths: ZodOpenApiPathsObject = {
     },
     patch: {
       summary: "更改会话使用的模型",
-      tags: ["Mirror"],
+      tags: ["Mirror 控制接口"],
       requestParams: { path: ConversationIdParam },
       requestBody: { content: { "application/json": { schema: ModelUpdateBody } } },
       responses: {
@@ -509,7 +502,7 @@ const nativeApiPaths: ZodOpenApiPathsObject = {
     },
     delete: {
       summary: "删除会话",
-      tags: ["Mirror"],
+      tags: ["Mirror 控制接口"],
       requestParams: { path: ConversationIdParam },
       responses: { "200": { description: "成功", content: { "application/json": { schema: OkResponse } } } },
     },
@@ -517,7 +510,7 @@ const nativeApiPaths: ZodOpenApiPathsObject = {
   "/api/conversations/{id}/stop": {
     post: {
       summary: "停止正在进行的生成",
-      tags: ["Mirror"],
+      tags: ["Mirror 控制接口"],
       requestParams: { path: ConversationIdParam },
       responses: {
         "200": {
@@ -535,7 +528,7 @@ const nativeApiPaths: ZodOpenApiPathsObject = {
   "/api/conversations/{id}/branch": {
     post: {
       summary: "从现有消息创建新分支",
-      tags: ["Mirror"],
+      tags: ["Mirror 控制接口"],
       requestParams: { path: ConversationIdParam },
       requestBody: { content: { "application/json": { schema: BranchBody } } },
       responses: {
@@ -555,7 +548,7 @@ const nativeApiPaths: ZodOpenApiPathsObject = {
     post: {
       summary: "为代理的官方界面生成解码挑战",
       description: "创建临时的会话级答案密钥，有效期为 24 小时，或直到服务重启／会话变更。提示词包含 base64(gzip(artifact)) 和可选格式指南，但绝不包含答案密钥。每分钟最多生成 20 次，同时最多保留 64 个有效挑战。",
-      tags: ["Mirror"],
+      tags: ["Mirror 控制接口"],
       requestBody: { content: { "application/json": { schema: ChallengeBody } } },
       responses: {
         "200": { description: "挑战提示词和可下载产物的元数据", content: { "application/json": { schema: z.object({
@@ -570,21 +563,21 @@ const nativeApiPaths: ZodOpenApiPathsObject = {
     post: {
       summary: "将 1 至 4 个挑战包下载为 tar.gz 压缩文件",
       description: "每个挑战包包含编码产物、对应提示词、可选格式指南和操作说明，不包含答案密钥。",
-      tags: ["Mirror"], requestBody: { content: { "application/json": { schema: ChallengeKitBody } } },
+      tags: ["Mirror 控制接口"], requestBody: { content: { "application/json": { schema: ChallengeKitBody } } },
       responses: { "200": { description: "Gzip 压缩的 tar 归档文件", content: { "application/gzip": { schema: z.string().openapi({ format: "binary" }) } } }, "400": { description: "挑战 ID 无效" }, "404": { description: "其中一个挑战已过期或不可用" } },
     },
   },
   "/api/decoder-challenges/{id}/artifact": {
     get: {
       summary: "下载原始编码挑战产物",
-      tags: ["Mirror"], requestParams: { path: ChallengeParams },
+      tags: ["Mirror 控制接口"], requestParams: { path: ChallengeParams },
       responses: { "200": { description: "LoaF 文本、PNG 或 GIF 附件", content: { "application/octet-stream": { schema: z.string().openapi({ format: "binary" }) } } }, "404": { description: "挑战已过期或不可用" } },
     },
   },
   "/api/decoder-challenges/{id}/verify": {
     post: {
       summary: "将恢复出的数据字节与挑战答案密钥进行比较",
-      tags: ["Mirror"], requestParams: { path: ChallengeParams },
+      tags: ["Mirror 控制接口"], requestParams: { path: ChallengeParams },
       requestBody: { content: { "application/json": { schema: ChallengeAnswer } } },
       responses: {
         "200": { description: "返回完全匹配或按位置比较的结果；不会返回答案字节。", content: { "application/json": { schema: z.object({ verdict: z.enum(["exact", "partial", "mismatch"]), matchingBytes: z.number().int(), expectedBytes: z.number().int(), actualBytes: z.number().int() }) } } },
@@ -595,7 +588,7 @@ const nativeApiPaths: ZodOpenApiPathsObject = {
   "/api/files": {
     post: {
       summary: "上传文件附件（multipart/form-data）",
-      tags: ["Mirror"],
+      tags: ["Mirror 控制接口"],
       requestBody: {
         content: {
           "multipart/form-data": {
@@ -622,7 +615,7 @@ const nativeApiPaths: ZodOpenApiPathsObject = {
       summary: "使用受保护的文件专属链接读取生成文件",
       description: "无需浏览器 Cookie 或 API 密钥。受保护的票据在原始已保存会话保持连接期间，授予对单个输出资源为期 7 天的读取权限。接口会重新解析上游元数据并流式传输文件字节。download=1 时通过 Content-Disposition: attachment 返回真实文件名；否则支持的图片会以内嵌方式显示。无效票据返回 404。调用方不能提交任意 URL 或资源指针。",
       security: [],
-      tags: ["Mirror"],
+      tags: ["Mirror 控制接口"],
       requestParams: { query: z.object({ ticket: z.string(), download: z.literal("1").optional() }) },
       responses: {
         "200": { description: "文件字节，保留原始内容类型，并在 Content-Disposition 中提供文件名。", content: { "application/octet-stream": { schema: z.string().openapi({ format: "binary" }) } } },
@@ -634,7 +627,7 @@ const nativeApiPaths: ZodOpenApiPathsObject = {
   "/api/assets": {
     get: {
       summary: "将 file-service:// 或 sediment:// 资源指针解析为可下载 URL",
-      tags: ["Mirror"],
+      tags: ["Mirror 控制接口"],
       requestParams: { query: AssetsQuery },
       responses: {
         "302": { description: "重定向到已解析的限时资源 URL。" },
@@ -643,7 +636,7 @@ const nativeApiPaths: ZodOpenApiPathsObject = {
           content: { "application/json": { schema: ErrorResponse } },
         },
         "404": {
-          description: "未找到 / not owned by this account",
+          description: "未找到，或该资源不属于当前账号。",
           content: { "application/json": { schema: ErrorResponse } },
         },
       },
@@ -655,7 +648,7 @@ const nativeApiPaths: ZodOpenApiPathsObject = {
         "Mirror 原生流式聊天接口（text/event-stream），供代理的 ChatGPT 界面和测试台使用",
       description:
         "返回带名称的 SSE 事件流：每个文本块对应 `delta`（{delta: string}）；`event` 对应 NormalizedConversationEvent（仅包含 tool／citation／image／file／marker／status，assistant_text／message／raw 会被过滤，详见 index.ts 中的 publicEvent()）；本轮完成后发送 `done`（最终结果）；生成失败或被停止时发送 `error`（{message}）。",
-      tags: ["Mirror"],
+      tags: ["Mirror 控制接口"],
       requestBody: { content: { "application/json": { schema: ChatBody } } },
       responses: {
         "200": {
@@ -668,7 +661,7 @@ const nativeApiPaths: ZodOpenApiPathsObject = {
   "/mirror/openapi": {
     get: {
       summary: "此 OpenAPI 文档",
-      tags: ["Mirror"],
+      tags: ["Mirror 控制接口"],
       requestParams: {
         query: z.object({
           format: z.enum(["json", "yaml"]).default("json").openapi({
@@ -755,7 +748,7 @@ export function buildOpenApiDocument(): oas31.OpenAPIObject {
           description:
             "Real ChatGPT model slugs plus Custom GPT / Project pseudo-models the account " +
             "can chat with.",
-          tags: ["OpenAI-compatible"],
+          tags: ["OpenAI 兼容接口"],
           responses: {
             "200": { description: "成功", content: { "application/json": { schema: ModelsResponse } } },
             "401": {
@@ -769,7 +762,7 @@ export function buildOpenApiDocument(): oas31.OpenAPIObject {
         post: {
           summary: "创建文本响应",
           description: "仅支持文本的 Responses API 子集，使用 Mirror 会话语义。可通过 metadata.conversation_id 或完整 input 历史继续会话。不支持 previous_response_id、检索、工具或后台模式。接受 max_output_tokens 参数但会忽略；store=false 表示不可恢复的单次请求。",
-          tags: ["OpenAI-compatible"],
+          tags: ["OpenAI 兼容接口"],
           requestBody: { content: { "application/json": { schema: ResponsesBody } } },
           responses: {
             "200": { description: "返回包含助手 output_text 内容的响应对象，或以 response.completed 结束的命名 Responses SSE 事件（失败时为 response.failed）。usage 为 null。",
@@ -783,18 +776,15 @@ export function buildOpenApiDocument(): oas31.OpenAPIObject {
         post: {
           summary: "创建聊天补全",
           description:
-            "OpenAI Chat Completions-shaped endpoint backed by chatgpt.com/backend-api. See " +
-            "COMPATIBILITY.md for the full list of what is and isn't supported relative to " +
-            "the official API.",
-          tags: ["OpenAI-compatible"],
+            "基于 chatgpt.com/backend-api 实现的 OpenAI Chat Completions 兼容接口。与官方 API 的完整兼容性差异请参阅 COMPATIBILITY.md。",
+          tags: ["OpenAI 兼容接口"],
           requestBody: {
             content: { "application/json": { schema: CompletionBody } },
           },
           responses: {
             "200": {
               description:
-                "成功. When stream=true this is a text/event-stream of OpenAI-shaped " +
-                "chat.completion.chunk SSE events instead of a single JSON body.",
+                "成功。stream=true 时返回由 OpenAI 兼容 chat.completion.chunk SSE 事件组成的 text/event-stream，而不是单个 JSON 响应体。",
               content: {
                 "application/json": { schema: CompletionResponse },
                 "text/event-stream": { schema: z.string() },
