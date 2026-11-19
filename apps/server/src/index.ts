@@ -85,6 +85,135 @@ import {
   ownsUpstreamConversation,
 } from "./store.js";
 
+const swaggerUiZhCnScript = String.raw`(() => {
+  const translations = new Map([
+    ["Swagger UI", "接口文档"],
+    ["Authorize", "授权"],
+    ["Servers", "服务器"],
+    ["Server", "服务器"],
+    ["Models", "模型"],
+    ["Schemas", "数据结构"],
+    ["Parameters", "请求参数"],
+    ["Responses", "响应结果"],
+    ["Response", "响应"],
+    ["Request body", "请求体"],
+    ["Request Body", "请求体"],
+    ["Try it out", "试用"],
+    ["Cancel", "取消"],
+    ["Execute", "发送请求"],
+    ["Clear", "清空"],
+    ["Reset", "重置"],
+    ["Download", "下载"],
+    ["Copy", "复制"],
+    ["Copied!", "已复制！"],
+    ["Example Value", "示例值"],
+    ["Model", "模型"],
+    ["Name", "名称"],
+    ["Description", "说明"],
+    ["Type", "类型"],
+    ["Required", "必填"],
+    ["Optional", "选填"],
+    ["Deprecated", "已弃用"],
+    ["Response content type", "响应内容类型"],
+    ["Request content type", "请求内容类型"],
+    ["Response samples", "响应示例"],
+    ["Response schema", "响应结构"],
+    ["Response headers", "响应标头"],
+    ["Request samples", "请求示例"],
+    ["Request URL", "请求地址"],
+    ["Response body", "响应内容"],
+    ["Response code", "响应状态码"],
+    ["Response time", "响应耗时"],
+    ["Headers", "请求标头"],
+    ["Available authorizations", "可用的身份验证方式"],
+    ["Authorization", "身份验证"],
+    ["Scopes", "权限范围"],
+    ["No operations defined in spec!", "当前 OpenAPI 文档未定义任何接口。"],
+    ["Loading...", "正在加载…"],
+    ["Failed to load API definition.", "API 文档加载失败。"],
+    ["Fetch error", "获取失败"],
+    ["Filter by tag", "按标签筛选"],
+    ["Filter", "筛选"],
+    ["Show/Hide", "展开／收起"],
+    ["List Operations", "接口列表"],
+    ["Expand Operations", "展开接口"],
+    ["Collapse Operations", "收起接口"],
+    ["Available values", "可选值"],
+    ["default", "默认值"],
+    ["Undocumented", "未在文档中说明"],
+    ["Logout", "退出"],
+    ["Close", "关闭"],
+    ["Open", "打开"],
+    ["Send", "发送"],
+    ["Select a definition", "选择 API 定义"]
+  ]);
+  const translatedAttributes = ["aria-label", "placeholder", "title"];
+
+  function visit(node) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const original = node.nodeValue;
+      if (typeof original !== "string") return;
+      const translated = translations.get(original.trim());
+      if (translated && translated !== original.trim()) {
+        node.nodeValue = original.replace(original.trim(), translated);
+      }
+      return;
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) return;
+    for (const name of translatedAttributes) {
+      const value = node.getAttribute(name);
+      if (!value) continue;
+      const translated = translations.get(value.trim());
+      if (translated && translated !== value) node.setAttribute(name, translated);
+    }
+    for (const child of node.childNodes) visit(child);
+  }
+
+  function start() {
+    if (!document.body) return;
+    visit(document.body);
+    const observer = new MutationObserver((records) => {
+      for (const record of records) {
+        if (record.type === "characterData" || record.type === "attributes") visit(record.target);
+        for (const added of record.addedNodes) visit(added);
+      }
+    });
+    observer.observe(document.body, {
+      subtree: true,
+      childList: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: translatedAttributes
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", start, { once: true });
+  } else {
+    start();
+  }
+})();`;
+const swaggerUiZhCnCss = String.raw`
+.swagger-ui {
+  font-family: Inter, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+}
+.swagger-ui .info .title,
+.swagger-ui .opblock-tag,
+.swagger-ui .opblock-summary-description,
+.swagger-ui .markdown,
+.swagger-ui .model-title {
+  overflow-wrap: anywhere;
+}
+.swagger-ui .opblock-summary {
+  min-height: 48px;
+}
+.swagger-ui button,
+.swagger-ui input,
+.swagger-ui select,
+.swagger-ui textarea {
+  font-family: inherit;
+}
+`;
 
 function isPublicApiPath(url: string): boolean {
   const pathname = url.split("?", 1)[0];
@@ -548,7 +677,15 @@ await app.register(fastifySwagger, {
   // not a runtime one.
   specification: { document: buildOpenApiDocument() as any },
 });
-await app.register(fastifySwaggerUi, { routePrefix: "/mirror/api-docs" });
+await app.register(fastifySwaggerUi, {
+  routePrefix: "/mirror/api-docs",
+  uiConfig: { docExpansion: "list", deepLinking: true },
+  theme: {
+    title: "Mirror API 接口文档",
+    js: [{ filename: "zh-cn.js", content: swaggerUiZhCnScript }],
+    css: [{ filename: "zh-cn.css", content: swaggerUiZhCnCss }],
+  },
+});
 const OpenApiQuery = z.object({ format: z.enum(["json", "yaml"]).default("json") });
 app.get("/mirror/openapi", async (req, reply) => {
   const { format } = OpenApiQuery.parse(req.query);
