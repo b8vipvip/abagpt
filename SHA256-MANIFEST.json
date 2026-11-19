@@ -81,7 +81,7 @@
   "apps/server/tests/store.test.mjs": "3a40de6c05da21732eda279ca811c96ca0a38988458083e547b343f83e898bee",
   "apps/server/tests/todo-contract.test.mjs": "81302afd7db19fafe5e98c7663257350928bc8d70cad05b736210bbc70654dca",
   "apps/server/tests/tool-bridge-route.test.mjs": "3ae400f0d1382bb6ab9d9ed5a7c36d507a70952999809a49bb0c6f149f945b77",
-  "apps/server/tests/tool-bridge.test.mjs": "c4742e156a2a681c4ecd0177e7002bfc81a2d206c6cdf0807e45a7b39d0535d7",
+  "apps/server/tests/tool-bridge.test.mjs": "74646316fdfbe0a303411f05afabdb8aabeda7d9cf1778d77e0ef89abd68f16d",
   "apps/server/tests/turnstile-api.test.mjs": "f58b0c57c07abd6ddcc82280f043823a59950cedabc91431da9740202c804dd0",
   "apps/server/tests/turnstile.test.mjs": "a1e181e0528523d7d8173eaa92cf8ce6ba56b5b53034a045e13c87e4e0103bab",
   "apps/server/tests/url-rewrite.test.mjs": "a5b0b3acde1ab010ead5563953a48d09e51894514ceae0ed3837341d5e58f30d",
