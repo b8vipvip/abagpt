@@ -110,7 +110,13 @@ test.describe("web / ConversionTools", () => {
     click(/幸运签/);
     await screen.findByText(/你的幸运签藏在一张 PngSpeak PNG 图片中/);
     click(/神秘编码/);
-    await screen.findByText("就绪");
+    await screen.findByText("服务器内部发生错误，请稍后重试。");
+  });
+
+  test("fortune endpoint HTTP failures are localized", async () => {
+    mount({ fetcher: (async () => json({ error: "upstream unavailable" }, 503)) as typeof fetch });
+    click(/幸运签/);
+    await screen.findByText("服务暂时不可用，请稍后重试。");
   });
 
   test("supports all mystery artifact labels and prompts, blank fallback, and non-Error prompt failure", async () => {
