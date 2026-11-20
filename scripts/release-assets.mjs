@@ -6,7 +6,6 @@ import {
   existsSync,
   mkdirSync,
   readFileSync,
-  rmSync,
   writeFileSync,
 } from "node:fs";
 import path from "node:path";
@@ -85,7 +84,6 @@ const sources = new Map([
 
 const outputDir = path.resolve(root, process.env.RELEASE_ASSETS_DIR ?? "release-assets");
 assert.ok(outputDir.startsWith(root + path.sep), "Release assets directory must stay inside the checkout");
-rmSync(outputDir, { recursive: true, force: true });
 mkdirSync(outputDir, { recursive: true });
 
 const artifactHashes = {};
