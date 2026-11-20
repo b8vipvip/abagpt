@@ -50,6 +50,24 @@ test.after(async () => {
 
 const AUTH = { host: "localhost", authorization: "Bearer test-control-key" };
 
+test("diagnostics reports the injected release version and development fallback", async () => {
+  const previousVersion = process.env.MIRROR_VERSION;
+  try {
+    delete process.env.MIRROR_VERSION;
+    const development = await app.inject({ url: "/api/diagnostics", headers: AUTH });
+    assert.equal(development.statusCode, 200);
+    assert.equal(development.json().build.version, "0.1.0");
+
+    process.env.MIRROR_VERSION = "0.2.0";
+    const release = await app.inject({ url: "/api/diagnostics", headers: AUTH });
+    assert.equal(release.statusCode, 200);
+    assert.equal(release.json().build.version, "0.2.0");
+  } finally {
+    if (previousVersion === undefined) delete process.env.MIRROR_VERSION;
+    else process.env.MIRROR_VERSION = previousVersion;
+  }
+});
+
 function jwtWithExp(secondsFromNow) {
   const payloadB64 = Buffer.from(
     JSON.stringify({ exp: Math.floor(Date.now() / 1000) + secondsFromNow }),
