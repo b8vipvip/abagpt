@@ -21,24 +21,24 @@ test.describe('server / tool bridge', () => {
     assert.deepEqual(parseToolBridgeAnswer('{"content":"done"}', tools, 'auto'), { content: 'done' });
   });
   test('rejects unknown functions and invalid arguments', () => {
-    assert.throws(() => parseToolBridgeAnswer('{"tool_calls":[{"name":"shell","arguments":{}}]}', tools, 'auto'), /unknown function/);
-    assert.throws(() => parseToolBridgeAnswer('{"tool_calls":[{"name":"read_file","arguments":"bad"}]}', tools, 'auto'), /invalid function arguments/);
+    assert.throws(() => parseToolBridgeAnswer('{"tool_calls":[{"name":"shell","arguments":{}}]}', tools, 'auto'), /未定义的函数/);
+    assert.throws(() => parseToolBridgeAnswer('{"tool_calls":[{"name":"read_file","arguments":"bad"}]}', tools, 'auto'), /函数参数不是有效的 JSON/);
   });
 
   test('validates the tool list, function shape, unique names, and optional metadata', () => {
     const definition = (fn) => ({ type: 'function', function: fn });
-    assert.throws(() => validateToolDefinitions(null), /tools must be an array/);
-    assert.throws(() => validateToolDefinitions(Array(129).fill(definition({ name: 'read_file' }))), /at most 128/);
-    assert.throws(() => validateToolDefinitions([null]), /Only function tools/);
-    assert.throws(() => validateToolDefinitions([{ type: 'custom', function: { name: 'read_file' } }]), /Only function tools/);
-    assert.throws(() => validateToolDefinitions([definition(null)]), /Tool names/);
-    assert.throws(() => validateToolDefinitions([definition({ name: 42 })]), /Tool names/);
-    assert.throws(() => validateToolDefinitions([definition({ name: 'bad name' })]), /Tool names/);
-    assert.throws(() => validateToolDefinitions([definition({ name: 'read_file' }), definition({ name: 'read_file' })]), /Tool names/);
-    assert.throws(() => validateToolDefinitions([definition({ name: 'read_file', description: 42 })]), /Invalid description/);
-    assert.throws(() => validateToolDefinitions([definition({ name: 'read_file', parameters: null })]), /Invalid parameters/);
-    assert.throws(() => validateToolDefinitions([definition({ name: 'read_file', parameters: 'object' })]), /Invalid parameters/);
-    assert.throws(() => validateToolDefinitions([definition({ name: 'read_file', parameters: [] })]), /Invalid parameters/);
+    assert.throws(() => validateToolDefinitions(null), /tools 必须是最多包含 128 个函数的数组/);
+    assert.throws(() => validateToolDefinitions(Array(129).fill(definition({ name: 'read_file' }))), /最多包含 128 个函数/);
+    assert.throws(() => validateToolDefinitions([null]), /仅支持 function 类型的工具/);
+    assert.throws(() => validateToolDefinitions([{ type: 'custom', function: { name: 'read_file' } }]), /仅支持 function 类型的工具/);
+    assert.throws(() => validateToolDefinitions([definition(null)]), /工具名称必须唯一/);
+    assert.throws(() => validateToolDefinitions([definition({ name: 42 })]), /工具名称必须唯一/);
+    assert.throws(() => validateToolDefinitions([definition({ name: 'bad name' })]), /工具名称必须唯一/);
+    assert.throws(() => validateToolDefinitions([definition({ name: 'read_file' }), definition({ name: 'read_file' })]), /工具名称必须唯一/);
+    assert.throws(() => validateToolDefinitions([definition({ name: 'read_file', description: 42 })]), /description 必须是字符串/);
+    assert.throws(() => validateToolDefinitions([definition({ name: 'read_file', parameters: null })]), /parameters 必须是 JSON 对象/);
+    assert.throws(() => validateToolDefinitions([definition({ name: 'read_file', parameters: 'object' })]), /parameters 必须是 JSON 对象/);
+    assert.throws(() => validateToolDefinitions([definition({ name: 'read_file', parameters: [] })]), /parameters 必须是 JSON 对象/);
     assert.deepEqual(validateToolDefinitions([definition({ name: 'read_file' })]), [
       { type: 'function', function: { name: 'read_file', description: undefined, parameters: undefined } },
     ]);
@@ -51,19 +51,19 @@ test.describe('server / tool bridge', () => {
   });
 
   test('rejects malformed JSON and non-object top-level answers', () => {
-    assert.throws(() => parseToolBridgeAnswer('not json', tools, 'auto'), /valid tool-bridge JSON object/);
-    assert.throws(() => parseToolBridgeAnswer('null', tools, 'auto'), /invalid tool-bridge response/);
-    assert.throws(() => parseToolBridgeAnswer('42', tools, 'auto'), /invalid tool-bridge response/);
-    assert.throws(() => parseToolBridgeAnswer('[]', tools, 'auto'), /invalid tool-bridge response/);
+    assert.throws(() => parseToolBridgeAnswer('not json', tools, 'auto'), /未返回有效的 tool-bridge JSON 对象/);
+    assert.throws(() => parseToolBridgeAnswer('null', tools, 'auto'), /tool-bridge 响应无效/);
+    assert.throws(() => parseToolBridgeAnswer('42', tools, 'auto'), /tool-bridge 响应无效/);
+    assert.throws(() => parseToolBridgeAnswer('[]', tools, 'auto'), /tool-bridge 响应无效/);
   });
 
   test('rejects disallowed, excessive, malformed, or unselected function calls', () => {
     const oneCall = JSON.stringify({ tool_calls: [{ name: 'read_file', arguments: {} }] });
-    assert.throws(() => parseToolBridgeAnswer(oneCall, tools, 'none'), /disallowed tool calls/);
+    assert.throws(() => parseToolBridgeAnswer(oneCall, tools, 'none'), /不允许的工具调用/);
     const manyCalls = JSON.stringify({ tool_calls: Array(17).fill({ name: 'read_file', arguments: {} }) });
-    assert.throws(() => parseToolBridgeAnswer(manyCalls, tools, 'auto'), /disallowed tool calls/);
-    assert.throws(() => parseToolBridgeAnswer('{"tool_calls":[null]}', tools, 'auto'), /unknown function/);
-    assert.throws(() => parseToolBridgeAnswer('{"tool_calls":[{"name":42,"arguments":{}}]}', tools, 'auto'), /unknown function/);
+    assert.throws(() => parseToolBridgeAnswer(manyCalls, tools, 'auto'), /不允许的工具调用/);
+    assert.throws(() => parseToolBridgeAnswer('{"tool_calls":[null]}', tools, 'auto'), /未定义的函数/);
+    assert.throws(() => parseToolBridgeAnswer('{"tool_calls":[{"name":42,"arguments":{}}]}', tools, 'auto'), /未定义的函数/);
     const twoTools = validateToolDefinitions([
       { type: 'function', function: { name: 'read_file' } },
       { type: 'function', function: { name: 'write_file' } },
@@ -72,7 +72,7 @@ test.describe('server / tool bridge', () => {
       '{"tool_calls":[{"name":"write_file","arguments":{}}]}',
       twoTools,
       { type: 'function', function: { name: 'read_file' } },
-    ), /unknown function/);
+    ), /未定义的函数/);
     assert.deepEqual(parseToolBridgeAnswer(oneCall, tools, { type: 'other' }).toolCalls.length, 1);
     assert.deepEqual(parseToolBridgeAnswer(oneCall, tools, null).toolCalls.length, 1);
     assert.deepEqual(parseToolBridgeAnswer(oneCall, tools, { type: 'function', function: { name: 'read_file' } }).toolCalls.length, 1);
@@ -85,16 +85,16 @@ test.describe('server / tool bridge', () => {
       'auto',
     );
     assert.equal(parsed.toolCalls[0].function.arguments, '{"path":"a.txt"}');
-    assert.throws(() => parseToolBridgeAnswer('{"tool_calls":[{"name":"read_file","arguments":"bad"}]}', tools, 'auto'), /invalid function arguments/);
-    assert.throws(() => parseToolBridgeAnswer('{"tool_calls":[{"name":"read_file","arguments":null}]}', tools, 'auto'), /arguments must be a JSON object/);
-    assert.throws(() => parseToolBridgeAnswer('{"tool_calls":[{"name":"read_file","arguments":[]}]}', tools, 'auto'), /arguments must be a JSON object/);
-    assert.throws(() => parseToolBridgeAnswer('{"tool_calls":[{"name":"read_file","arguments":1}]}', tools, 'auto'), /arguments must be a JSON object/);
+    assert.throws(() => parseToolBridgeAnswer('{"tool_calls":[{"name":"read_file","arguments":"bad"}]}', tools, 'auto'), /函数参数不是有效的 JSON/);
+    assert.throws(() => parseToolBridgeAnswer('{"tool_calls":[{"name":"read_file","arguments":null}]}', tools, 'auto'), /函数参数必须是 JSON 对象/);
+    assert.throws(() => parseToolBridgeAnswer('{"tool_calls":[{"name":"read_file","arguments":[]}]}', tools, 'auto'), /函数参数必须是 JSON 对象/);
+    assert.throws(() => parseToolBridgeAnswer('{"tool_calls":[{"name":"read_file","arguments":1}]}', tools, 'auto'), /函数参数必须是 JSON 对象/);
   });
 
   test('requires a function when selected and requires string content for final answers', () => {
-    assert.throws(() => parseToolBridgeAnswer('{"content":"done"}', tools, 'required'), /did not request the required function/);
-    assert.throws(() => parseToolBridgeAnswer('{"content":"done"}', tools, { type: 'function', function: { name: 'read_file' } }), /did not request the required function/);
-    assert.throws(() => parseToolBridgeAnswer('{"content":42}', tools, 'auto'), /neither a final answer nor function calls/);
+    assert.throws(() => parseToolBridgeAnswer('{"content":"done"}', tools, 'required'), /未调用所要求的函数/);
+    assert.throws(() => parseToolBridgeAnswer('{"content":"done"}', tools, { type: 'function', function: { name: 'read_file' } }), /未调用所要求的函数/);
+    assert.throws(() => parseToolBridgeAnswer('{"content":42}', tools, 'auto'), /未返回最终回答或函数调用/);
     assert.deepEqual(parseToolBridgeAnswer('{"tool_calls":[],"content":"done"}', tools, 'auto'), { content: 'done' });
     assert.deepEqual(parseToolBridgeAnswer('{"content":"done"}', tools, null), { content: 'done' });
   });

@@ -221,7 +221,7 @@ test("an invalid function tool is rejected before calling ChatGPT", async () => 
     },
   });
   assert.equal(res.statusCode, 400);
-  assert.match(res.json().error.message, /Tool names/);
+  assert.match(res.json().error.message, /工具名称必须唯一/);
 });
 
 test("tool result messages without function definitions are rejected outside the tool bridge", async () => {
@@ -238,7 +238,7 @@ test("tool result messages without function definitions are rejected outside the
     },
   });
   assert.equal(res.statusCode, 400);
-  assert.match(res.json().error.message, /Tool messages are not supported/);
+  assert.match(res.json().error.message, /Chat Completions 子集不支持 tool 消息/);
 });
 
 test("a final message that isn't from the user is rejected", async () => {
@@ -252,7 +252,7 @@ test("a final message that isn't from the user is rejected", async () => {
     },
   });
   assert.equal(res.statusCode, 400);
-  assert.match(res.json().error.message, /final message must have role=user/);
+  assert.match(res.json().error.message, /最后一条消息必须为 user 角色/);
 });
 
 test("an empty final user message with no image attachment is rejected", async () => {
@@ -266,7 +266,7 @@ test("an empty final user message with no image attachment is rejected", async (
     },
   });
   assert.equal(res.statusCode, 400);
-  assert.match(res.json().error.message, /must not be empty/);
+  assert.match(res.json().error.message, /不能为空/);
 });
 
 // ---------------------------------------------------------------------------
@@ -1351,7 +1351,7 @@ test("a final user message with content: null (no text, no image) is rejected th
     payload: { model: "auto", messages: [{ role: "user", content: null }] },
   });
   assert.equal(res.statusCode, 400, res.body);
-  assert.match(res.json().error.message, /must not be empty/);
+  assert.match(res.json().error.message, /不能为空/);
 });
 
 test("a message carrying an OpenAI 'name' field is accepted and forwarded through normalization", async () => {
@@ -1482,7 +1482,7 @@ test("a non-Error value thrown while resolving an image attachment is still repo
         },
       });
       assert.equal(res.statusCode, 400, res.body);
-      assert.equal(res.json().error.message, "Could not process an attachment");
+      assert.equal(res.json().error.message, "无法处理附件。");
     },
   );
 });

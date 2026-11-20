@@ -377,7 +377,7 @@ export { CompletionBody, OpenAiMessage, ContentPart };
 export type { TextPart };
 
 export function toolBridgeErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : "Tool bridge failed";
+  return error instanceof Error ? error.message : "工具桥接处理失败。";
 }
 
 export async function registerOpenAiRoutes(
@@ -457,7 +457,7 @@ export async function registerOpenAiRoutes(
       try {
         const tools = validateToolDefinitions(body.tools ?? []);
         const route = routeModel(body.model, body.metadata);
-        if (route.model?.endsWith("-wm")) throw Object.assign(new Error("Work Mode is not supported by Mirror"), { statusCode: 400 });
+        if (route.model?.endsWith("-wm")) throw Object.assign(new Error("Mirror 暂不支持 Work Mode，请选择交互式模型。"), { statusCode: 400 });
         const rawMessages = body.messages.map(message => ({
           role: message.role, content: message.content,
           ...(message.name ? { name: message.name } : {}),
@@ -510,7 +510,7 @@ export async function registerOpenAiRoutes(
         return reply.code(status).send(envelope);
       }
     }
-    if ((body.metadata?.mirror_model ?? body.model).endsWith("-wm")) return reply.code(400).send({ error: {message: "Work Mode is not supported by Mirror; select an interactive model", type: "unsupported_parameter"} });
+    if ((body.metadata?.mirror_model ?? body.model).endsWith("-wm")) return reply.code(400).send({ error: {message: "Mirror 暂不支持 Work Mode；请选择交互式模型。", type: "unsupported_parameter"} });
     let streamedText = "";
     let emittedText = "";
     let rich = false;
@@ -522,7 +522,7 @@ export async function registerOpenAiRoutes(
       return reply.code(400).send({
         error: {
           message:
-            "Tool messages are not supported by Mirror's Chat Completions subset",
+            "Mirror 的 Chat Completions 子集不支持 tool 消息。",
           type: "unsupported_parameter",
         },
       });
@@ -531,7 +531,7 @@ export async function registerOpenAiRoutes(
     if (!last || last.role !== "user")
       return reply.code(400).send({
         error: {
-          message: "The final message must have role=user",
+          message: "最后一条消息必须为 user 角色。",
           type: "invalid_request_error",
         },
       });
@@ -553,7 +553,7 @@ export async function registerOpenAiRoutes(
       // neither text nor an image attached.
       return reply.code(400).send({
         error: {
-          message: "The final user message must not be empty",
+          message: "最后一条 user 消息不能为空。",
           type: "invalid_request_error",
         },
       });
@@ -573,7 +573,7 @@ export async function registerOpenAiRoutes(
       } catch (error) {
         return reply.code(400).send({
           error: {
-            message: error instanceof Error ? error.message : "Could not process an attachment",
+            message: error instanceof Error ? error.message : "无法处理附件。",
             type: "invalid_request_error",
           },
         });
