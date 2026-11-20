@@ -12,6 +12,7 @@ node_modules/
 
 playwright-report/
 test-results/
+release-assets/
 
 # Generated coverage reports and V8 execution data
 coverage/
