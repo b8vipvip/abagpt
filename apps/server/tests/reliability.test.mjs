@@ -62,6 +62,6 @@ test("instruction snapshots round-trip and session revisions invalidate stale wo
  assert.deepEqual(store.getInstructions(c.id),[{role:"system",content:"Saved instructions"}]);
  const revision=store.getSessionRevision();
  store.clearSession();
- assert.throws(()=>store.assertSessionRevision(revision),/Session changed/);
+ assert.throws(()=>store.assertSessionRevision(revision),/会话已更改/);
 });
 });
