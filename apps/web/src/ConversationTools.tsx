@@ -14,10 +14,10 @@ interface Node {
   status: string;
 }
 
-const NODE_ROLE_LABELS: Record<string, string> = { user: "用户", assistant: "助手" };
+const NODE_ROLE_LABELS: Record<string, string> = { system: "系统", developer: "开发者", user: "用户", assistant: "助手", tool: "工具" };
 const NODE_STATUS_LABELS: Record<string, string> = {
   done: "已完成", finished_successfully: "已完成", streaming: "生成中",
-  in_progress: "进行中", pending: "等待中", error: "失败", failed: "失败",
+  in_progress: "进行中", pending: "等待中", queued: "排队中", interrupted: "已中断", stopped: "已停止", error: "失败", failed: "失败",
 };
 
 interface Branches {

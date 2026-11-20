@@ -1459,6 +1459,8 @@ test("conversation branches list parents and nodes, and continuing from an assis
             { id: "m-pending", upstreamNodeId: null, role: "assistant", status: "streaming" },
             { id: "m-asst", upstreamNodeId: "node-7", role: "assistant", status: "done" },
             { id: "m-other", upstreamNodeId: "node-8", role: "tool", status: "queued" },
+            { id: "m-interrupted", upstreamNodeId: "node-9", role: "assistant", status: "interrupted" },
+            { id: "m-stopped", upstreamNodeId: null, role: "assistant", status: "stopped" },
           ],
         }),
     ],
@@ -1481,7 +1483,9 @@ test("conversation branches list parents and nodes, and continuing from an assis
   assert.ok(within(panel).getByText("无上游节点"));
   assert.ok(within(panel).getByText("用户 · 已完成"));
   assert.ok(within(panel).getByText("助手 · 生成中"));
-  assert.ok(within(panel).getByText("其他角色 · 其他状态"));
+  assert.ok(within(panel).getByText("工具 · 排队中"));
+  assert.ok(within(panel).getByText("助手 · 已中断"));
+  assert.ok(within(panel).getByText("助手 · 已停止"));
   fireEvent.click(continueButton);
   await screen.findByText("已加载");
   assert.deepEqual(branchBody, { messageId: "m-asst" });

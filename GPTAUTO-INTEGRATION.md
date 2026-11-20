@@ -31,13 +31,13 @@ CI 失败时可进入三层 Repair：确定性修复、可选 Copilot CLI、前�
 
 1. 在 GitHub 仓库 **Settings → Secrets and variables → Actions → New repository secret** 中创建 `GPTAUTO_GITHUB_TOKEN`。
 2. 使用仅授权此仓库的 fine-grained token。至少授予：
-   - **Contents：Read and write**
-   - **Pull requests：Read and write**
-   - **Workflows：Read and write**
-   - **Actions：Read and write**
-   - **Checks：Read**
-   - **Issues：Read and write**（用于失败诊断 Issue 和任务评论）
-3. 打开 **Actions → GPTAuto Consumer Sync → Run workflow**：
+   - **内容（Contents）：读取和写入**
+   - **拉取请求（Pull requests）：读取和写入**
+   - **工作流（Workflows）：读取和写入**
+   - **操作（Actions）：读取和写入**
+   - **检查（Checks）：读取**
+   - **议题（Issues）：读取和写入**（用于失败诊断 Issue 和任务评论）
+3. 打开 **Actions → GPTAuto Consumer Sync → Run workflow（运行工作流）**：
    - `operation` 选择 `sync`
    - `version` 选择 `v0.15.15`
 4. 工作流从 GPTAuto 的正式发布标签下载对应版本，生成 `chore/gptauto-sync-v0.15.15` 分支和同步 PR。必须等待 ABAGPT 自身 CI 通过，再按仓库审核流程合并该 PR。
