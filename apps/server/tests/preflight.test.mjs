@@ -28,7 +28,7 @@ test.describe("server / preflight", () => {
   });
 
   test("classifies a malformed MIRROR_STORE_KEY", () => {
-    const error = new Error("MIRROR_STORE_KEY must decode to exactly 32 bytes");
+    const error = new Error("MIRROR_STORE_KEY 解码后必须恰好为 32 字节。");
     const result = classifyStartupFailure(error);
     assert.equal(result.category, "configuration");
     assert.match(result.nextAction, /32 字节/);
