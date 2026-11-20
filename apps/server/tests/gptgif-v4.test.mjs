@@ -71,10 +71,10 @@ test.describe("server / gptgif-v4", () => {
 test("custom font and palette files round-trip and reject incorrect lengths", () => {
   const font = randomFont(123);
   assert.deepEqual(fontFromBytes(fontToBytes(font)), font);
-  assert.throws(() => fontFromBytes(Buffer.alloc(127)), /exactly 128 bytes/);
+  assert.throws(() => fontFromBytes(Buffer.alloc(127)), /必须恰好包含 128 个字节/);
   const palette = defaultPalette();
   assert.deepEqual(paletteFromBytes(paletteToBytes(palette)), palette);
-  assert.throws(() => paletteFromBytes(Buffer.alloc(767)), /exactly 768 bytes/);
+  assert.throws(() => paletteFromBytes(Buffer.alloc(767)), /必须恰好包含 768 个字节/);
 });
 
 test("round-trips a multi-frame payload end to end with the default font and palette", () => {
@@ -135,19 +135,19 @@ test("validateFont rejects a glyph that disappears entirely under an allowed tra
   // that guarantee for one glyph must be rejected.
   const font = DEFAULT_FONT.map((rows) => [...rows]);
   font[0] = [0, 0, 0, 0, 0, 0, 0, 0]; // completely blank glyph
-  assert.throws(() => validateFont(font), /disappears under an allowed transform/);
+  assert.throws(() => validateFont(font), /在允许的变换下消失/);
 });
 
 test("validateFont rejects two glyphs that collide under an allowed transform", () => {
   const font = DEFAULT_FONT.map((rows) => [...rows]);
   font[1] = [...font[0]]; // identical to glyph 0
-  assert.throws(() => validateFont(font), /collide under an allowed transform/);
+  assert.throws(() => validateFont(font), /在允许的变换下发生冲突/);
 });
 
 test("validateFont rejects a glyph whose lit pixel escapes its cell under jitter", () => {
   const font = DEFAULT_FONT.map((rows) => [...rows]);
   font[2] = [0x80, 0, 0, 0, 0, 0, 0, 0]; // top-left pixel: escapes at jx=-1 or rotation
-  assert.throws(() => validateFont(font), /escapes its cell under jitter/);
+  assert.throws(() => validateFont(font), /在抖动变换下超出单元格边界/);
 });
 
 test("validatePalette accepts the default palette", () => {
@@ -157,7 +157,7 @@ test("validatePalette accepts the default palette", () => {
 test("validatePalette rejects a foreground color that collides with a background/noise/decoy role", () => {
   const palette = defaultPalette();
   palette[100] = { ...palette[0] }; // foreground role 100 now equals background role 0
-  assert.throws(() => validatePalette(palette), /collides with background\/noise\/decoy role/);
+  assert.throws(() => validatePalette(palette), /与背景\/噪声\/干扰角色 .* 冲突/);
 });
 
 test("randomPalette actually exercises its reroll loop when the raw draw collides", () => {
@@ -179,12 +179,12 @@ test("randomPalette actually exercises its reroll loop when the raw draw collide
 
 test("rejects a GIF whose canvas size isn't the expected 640x480", () => {
   const gif = writeGif({ width: 10, height: 10, globalColorTable: [{ r: 0, g: 0, b: 0 }], frames: [{ pixels: new Uint8Array(100) }] });
-  assert.throws(() => decodeGptgifV4(gif), /expected a 640x480 GIF/);
+  assert.throws(() => decodeGptgifV4(gif), /预期输入为 640x480 的 GIF/);
 });
 
 test("rejects a correctly-sized GIF with no frames at all", () => {
   const gif = writeGif({ width: WIDTH, height: HEIGHT, globalColorTable: [{ r: 0, g: 0, b: 0 }], frames: [] });
-  assert.throws(() => decodeGptgifV4(gif), /missing v4 calibration frame/);
+  assert.throws(() => decodeGptgifV4(gif), /缺少 v4 校准帧/);
 });
 
 test("rejects a calibration frame whose color swatches aren't solid", () => {
@@ -192,7 +192,7 @@ test("rejects a calibration frame whose color swatches aren't solid", () => {
   const image = readGif(gif);
   image.frames[0].pixels[0] = 250; // corrupt one pixel of swatch role 0
   const mutated = writeGif(image);
-  assert.throws(() => decodeGptgifV4(mutated), /calibration color swatches must be solid/);
+  assert.throws(() => decodeGptgifV4(mutated), /校准颜色样本块必须为纯色/);
 });
 
 test("rejects a calibration frame whose visual header isn't gptgif v4", () => {
@@ -208,7 +208,7 @@ test("rejects a calibration frame whose visual header isn't gptgif v4", () => {
   drawCanonicalOn(image.frames[0].pixels, HEADER_START, 0, DEFAULT_FONT);
   drawCanonicalOn(image.frames[0].pixels, HEADER_START + 1, 0, DEFAULT_FONT);
   const mutated = writeGif(image);
-  assert.throws(() => decodeGptgifV4(mutated), /visual header is not gptgif v4/);
+  assert.throws(() => decodeGptgifV4(mutated), /可视化标头不是 gptgif v4 格式/);
 });
 
 test("rejects a visual header containing a glyph the legend never taught it", () => {
@@ -217,14 +217,14 @@ test("rejects a visual header containing a glyph the legend never taught it", ()
   // Blank one header glyph cell entirely -- not one of the 16 canonical masks.
   setCellSolid(image.frames[0].pixels, HEADER_START, 0);
   const mutated = writeGif(image);
-  assert.throws(() => decodeGptgifV4(mutated), /visual header contains an unknown glyph/);
+  assert.throws(() => decodeGptgifV4(mutated), /可视化标头中包含未知字形/);
 });
 
 test("rejects a frame count that disagrees with the visual header's declared length", () => {
   const gif = encodeGptgifV4([Buffer.alloc(2400, 1)]); // exactly one payload frame
   const image = readGif(gif);
   const mutated = writeGif({ ...image, frames: [image.frames[0]] }); // drop the payload frame
-  assert.throws(() => decodeGptgifV4(mutated), /frame count disagrees with visual header length/);
+  assert.throws(() => decodeGptgifV4(mutated), /GIF 帧数与可视化标头中的长度不一致/);
 });
 
 test("rejects a payload frame whose occupied-cell count disagrees with the header length", () => {
@@ -234,7 +234,7 @@ test("rejects a payload frame whose occupied-cell count disagrees with the heade
   // header declares 2 bytes (4 nibbles) worth of content.
   image.frames[1].pixels.fill(0);
   const mutated = writeGif(image);
-  assert.throws(() => decodeGptgifV4(mutated), /cell count disagrees with header length/);
+  assert.throws(() => decodeGptgifV4(mutated), /单元格数量与标头长度不一致/);
 });
 
 test("rejects a legend whose canonical glyph shape would escape its cell under v4's jitter", () => {
@@ -248,7 +248,7 @@ test("rejects a legend whose canonical glyph shape would escape its cell under v
   const { baseX, baseY } = cellBox(image.frames[0].pixels, LEGEND_START);
   image.frames[0].pixels[baseY * WIDTH + baseX] = 40;
   const mutated = writeGif(image);
-  assert.throws(() => decodeGptgifV4(mutated), /learned alphabet clips under v4 jitter/);
+  assert.throws(() => decodeGptgifV4(mutated), /学习到的字母表在 v4 抖动变换下发生裁切/);
 });
 
 test("rejects a legend containing two identical canonical glyph shapes", () => {
@@ -260,7 +260,7 @@ test("rejects a legend containing two identical canonical glyph shapes", () => {
     for (let x = 0; x < GLYPH_W; x++)
       image.frames[0].pixels[(y1 + y) * WIDTH + x1 + x] = image.frames[0].pixels[(y0 + y) * WIDTH + x0 + x];
   const mutated = writeGif(image);
-  assert.throws(() => decodeGptgifV4(mutated), /empty or ambiguous transformed glyphs/);
+  assert.throws(() => decodeGptgifV4(mutated), /学习到的字母表包含空字形或在变换后存在歧义/);
 });
 
 test("rejects a payload frame with content in a cell past the declared data length", () => {
@@ -287,7 +287,7 @@ test("rejects a payload frame with content in a cell past the declared data leng
     break outer;
   }
   const mutated = writeGif(image);
-  assert.throws(() => decodeGptgifV4(mutated), /cell count disagrees with header length/);
+  assert.throws(() => decodeGptgifV4(mutated), /单元格数量与标头长度不一致/);
 });
 
 test("rejects a payload frame containing a glyph that matches no learned template", () => {
@@ -308,7 +308,7 @@ test("rejects a payload frame containing a glyph that matches no learned templat
     }
   }
   const mutated = writeGif(image);
-  assert.throws(() => decodeGptgifV4(mutated), /unknown or ambiguous glyph/);
+  assert.throws(() => decodeGptgifV4(mutated), /包含未知或有歧义的字形/);
 });
 
 test("rejects a payload whose bytes were tampered with after encoding (digest mismatch)", () => {
@@ -337,7 +337,7 @@ test("rejects a payload whose bytes were tampered with after encoding (digest mi
     break outer;
   }
   const mutated = writeGif(imageA);
-  assert.throws(() => decodeGptgifV4(mutated), /SHA-256 digest mismatch/);
+  assert.throws(() => decodeGptgifV4(mutated), /SHA-256 摘要不匹配/);
 });
 
 test("decodes across an odd/even frame-index boundary (payload spanning 3+ frames)", () => {
