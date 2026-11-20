@@ -1,6 +1,6 @@
 # API 兼容性：Mirror 与官方 OpenAI API 的差异
 
-Mirror 的 `/v1/chat/completions` 和 `/v1/models` 使用 OpenAI 的 API 线格式，但底层实际运行在 `chatgpt.com/backend-api` 上——这是 ChatGPT Web 应用背后的私有协议，并非官方文档所描述的 OpenAI API。这两套 API 的设计目的不同：一套是服务特定第一方客户端的产品后端，另一套是面向通用开发者的 API。因此，有些差异并不是需要修复的 Bug，而是两种产品接口在设计上本来就不一致。本文列出目前发现的双向差异，并说明哪些属于结构性限制，哪些只是尚未实现。
+Mirror 的 `/v1/chat/completions` 和 `/v1/models` 采用 OpenAI API 的请求/响应格式，但底层实际运行在 `chatgpt.com/backend-api` 上——这是 ChatGPT Web 应用背后的私有协议，并非官方文档所描述的 OpenAI API。这两套 API 的设计目的不同：一套是服务特定第一方客户端的产品后端，另一套是面向通用开发者的 API。因此，有些差异并不是需要修复的 Bug，而是两种产品接口在设计上本来就不一致。本文列出目前发现的双向差异，并说明哪些属于结构性限制，哪些只是尚未实现。
 
 本文多处引用的 backend-api 底层机制见 [PROTOCOL.md](./PROTOCOL.md)。本文描述的 `/v1` 请求和响应结构也有机器可读版本：访问 `GET /mirror/openapi`（添加 `?format=yaml` 可获取 YAML），即可取得 OpenAPI 3.1 文档。该文档直接根据服务端用于校验请求的同一组 Zod Schema 生成，详见 `apps/server/src/openapi-document.ts`。你也可以访问 `/mirror/api-docs`，通过 Swagger UI 浏览并在线试用接口。
 
@@ -53,7 +53,7 @@ Mirror 目前为 Chat Completions 函数工具提供了一个**实验性的文�
 
 **自定义 GPT 和 Projects（gizmos）。** `GET /v1/models` 会将它们列为伪模型（GPT 的 ID 类似 `g-<hex>`，Project 的 ID 类似 `g-p-<hex>`）。只需将对应 ID 作为 `model` 参数传入即可对话。服务端的 `apps/server/src/openai.ts` 中的 `routeModel` 会处理路由，包括通过 `metadata.mirror_model` 使用 Project 自己选定的模型。这是一个真实可用、但 OpenAI API 中没有对应概念的 Mirror 功能。自定义 GPT/Projects 是 ChatGPT 产品概念：它们将指令、文件和工具配置组合成一个带 ID 的对象，而通用 API 根本没有对这种对象建模，因此不存在可以直接套用的“OpenAI 兼容”结构。Mirror 必须自行定义 `model: "g-..."` 这一约定。
 
-**临时/隐身对话。** `metadata.private`（见 README）对应 backend-api 中真实可用的“不要保存到历史记录，也不要用于训练”模式，目前已完整接入 `/v1/chat/completions`。普通 OpenAI API 完全没有这一概念，因为它本身并不绑定持久化聊天历史。
+**临时/隐身对话。** `metadata.private` 对应 backend-api 中真实可用的“不要保存到历史记录，也不要用于训练”模式，目前已完整接入 `/v1/chat/completions`。普通 OpenAI API 完全没有这一概念，因为它本身并不绑定持久化聊天历史。
 
 ### 🟡 Mirror 界面可见，并已部分暴露到 `/v1/chat/completions`
 
@@ -73,7 +73,7 @@ ChatGPT 的签名 Estuary URL 仍然需要身份验证。Mirror 会通过已保�
 
 **Memory（记忆）。** ChatGPT 跨对话持久记忆功能在无状态的 Chat Completions API 中没有对应能力，目前 Mirror 也没有以任何形式提供该功能。
 
-**ChatGPT UI 中的连接器（Drive、Gmail、日历等）。** 这些连接器允许 ChatGPT 在对话过程中读取或操作用户已连接的账号。它们可以在 Mirror 于 `/` 提供的真实 ChatGPT 代理界面中看到，但 Mirror 目前不会拦截或通过 OpenAI 兼容 API 重新暴露连接器驱动的行为。
+**ChatGPT UI 中的连接器（Drive、Gmail、日历等）。** 这些连接器允许 ChatGPT 在对话过程中读取或操作用户已连接的账号。它们可以在 Mirror 于根路径 `/` 提供的真实 ChatGPT 代理界面中看到，但 Mirror 目前不会拦截或通过 OpenAI 兼容 API 重新暴露连接器驱动的行为。
 
 **Canvas、Tasks/定时提醒和语音模式。** 这些都是拥有独立上游端点和交互模型的真实 ChatGPT 产品功能，与 `messages` 数组没有对应关系。目前它们都没有接入 `/v1/chat/completions`；其中部分功能（例如语音）在结构上可能根本无法桥接为文本补全格式。
 
