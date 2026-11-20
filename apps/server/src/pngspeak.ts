@@ -260,7 +260,7 @@ interface PngChunk {
 
 function readChunks(png: Buffer): PngChunk[] {
   if (!png.subarray(0, 8).equals(PNG_SIGNATURE)) {
-    throw new Error("pngspeak: not a PNG file (bad signature)");
+    throw new Error("PngSpeak：不是有效的 PNG 文件（文件签名不正确）。");
   }
   const chunks: PngChunk[] = [];
   let offset = 8;
