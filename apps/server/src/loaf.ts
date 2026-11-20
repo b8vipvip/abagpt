@@ -227,10 +227,10 @@ function parseLoaf(loaf: string): { hash: string; hex: string } {
   // that trim must still be exactly one line.
   const trimmed = loaf.trim();
   if (trimmed.includes("\n")) {
-    throw new Error("loaf: not a valid .loaf (must be a single line, found embedded newline(s))");
+    throw new Error("LoaF：无效的 .loaf 文件（必须为单行，不能包含换行符）。");
   }
   const match = HEADER_PATTERN.exec(trimmed);
-  if (!match) throw new Error("loaf: not a valid .loaf (expected 'SHA256(-)=<hash> <hex>')");
+  if (!match) throw new Error("LoaF：无效的 .loaf 文件（预期格式为 'SHA256(-)=<hash> <hex>'）。");
   // The reference `verify` lowercases the header hash before comparing (a
   // hand-edited .loaf could carry an uppercase hash); the hex payload is
   // left as-is since Buffer's own hex decoder already accepts either case.
@@ -259,7 +259,7 @@ export function extractLoaf(loaf: string, options: { verify?: boolean } = {}): L
   if (options.verify) {
     const actual = createHash("sha256").update(hex, "ascii").digest("hex");
     if (actual !== hash) {
-      throw new Error(`loaf: checksum mismatch (expected ${hash}, got ${actual})`);
+      throw new Error(`LoaF：校验和不匹配（预期 ${hash}，实际为 ${actual}）。`);
     }
   }
   const gzipped = Buffer.from(hex, "hex");
