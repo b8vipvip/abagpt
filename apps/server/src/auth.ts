@@ -18,7 +18,7 @@ let refreshInFlight: Promise<SessionCredentials> | null = null;
 export async function getValidCredentials(): Promise<SessionCredentials> {
   const session = getSession();
   if (!session) {
-    const err = new Error("No session configured. POST /api/session first.");
+    const err = new Error("尚未配置 ChatGPT 会话。请先调用 POST /api/session。");
     (err as any).statusCode = 401;
     throw err;
   }
@@ -59,8 +59,7 @@ export async function getValidCredentials(): Promise<SessionCredentials> {
           sessionToken: minted.rotatedSessionToken ?? current.sessionToken,
         };
       } catch (err) {
-        if (err instanceof SessionTokenInvalidError)
-          (err as any).statusCode = 401;
+        if (err instanceof SessionTokenInvalidError) throw localizedSessionTokenError(err);
         throw err;
       }
     })().finally(() => {
@@ -68,6 +67,14 @@ export async function getValidCredentials(): Promise<SessionCredentials> {
     });
   }
   return refreshInFlight;
+}
+
+function localizedSessionTokenError(error: SessionTokenInvalidError): Error {
+  const status = error.message.match(/returned (\d+)/)?.[1];
+  const message = status
+    ? `ChatGPT 会话令牌验证失败（HTTP ${status}）。请确认令牌有效后重试。`
+    : "ChatGPT 会话令牌无效或已过期，无法获取访问令牌。请重新登录并复制新的 Session Token。";
+  return Object.assign(new Error(message), { statusCode: 401 });
 }
 
 /** Verify a candidate without replacing the last known-good stored credential. */
@@ -80,7 +87,13 @@ export async function verifyCandidateSessionToken(
   expiresAt: number;
   turnstileToken?: string;
 }> {
-  const minted = await mintAccessToken(sessionToken);
+  let minted;
+  try {
+    minted = await mintAccessToken(sessionToken);
+  } catch (error) {
+    if (error instanceof SessionTokenInvalidError) throw localizedSessionTokenError(error);
+    throw error;
+  }
   const prior = getSession();
   // The device id represents this Mirror installation, not one spelling of
   // a rotating session cookie. Keep it stable across successful rotations.
