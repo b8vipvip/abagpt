@@ -45,7 +45,7 @@ export async function registerInsightRoutes(app: FastifyInstance) {
       egress: { required: egress.required, verified: egress.verified, mode: egress.mode, checkedAt: egress.checkedAt },
       session: { saved: Boolean(getSession()), generationVerified: false },
       recentFailures: recentFailures(),
-      nextAction: !egress.verified ? "Check the WARP container health." : !getSession() ? "Save a session in Mirror controls." : "Test model discovery, then explicitly run a generation in Playground.",
+      nextAction: !egress.verified ? "请检查 WARP 容器的运行状态。" : !getSession() ? "请在 Mirror 控制台中保存 ChatGPT 会话。" : "请先测试模型发现，再在 API 测试台中显式发起一次生成请求。",
     };
   });
   // Account-wide sticky default for the Playground's System box: saved
@@ -72,7 +72,7 @@ export async function registerInsightRoutes(app: FastifyInstance) {
   app.get("/api/conversations/search", async req => ({ items: searchConversations(account(), SearchQuery.parse(req.query).q) }));
   app.get("/api/conversations/:id/branches", async (req, reply) => {
     const conversation = getConversation(IdParams.parse(req.params).id);
-    if (conversation?.accountId !== account()) return reply.code(404).send({ error: "Conversation not found" });
+    if (conversation?.accountId !== account()) return reply.code(404).send({ error: "未找到对话。" });
     return { selected: conversation.id, parent: conversation.currentNodeId,
       items: conversation.conversationId ? relatedConversations(account(), conversation.conversationId) : [conversation],
       nodes: listMessages(conversation.id).map(({ id, upstreamNodeId, role, status }) => ({ id, upstreamNodeId, role, status })),
@@ -80,7 +80,7 @@ export async function registerInsightRoutes(app: FastifyInstance) {
   });
   app.get("/api/conversations/:id/export", async (req, reply) => {
     const conversation = getConversation(IdParams.parse(req.params).id);
-    if (conversation?.accountId !== account()) return reply.code(404).send({ error: "Conversation not found" });
+    if (conversation?.accountId !== account()) return reply.code(404).send({ error: "未找到对话。" });
     const query = ExportQuery.parse(req.query);
     const messages = listMessages(conversation.id).map(message => ({ role: message.role, content: message.content,
       ...(query.metadata === "true" ? { status: message.status, createdAt: message.createdAt, upstreamNodeId: message.upstreamNodeId } : {}),
