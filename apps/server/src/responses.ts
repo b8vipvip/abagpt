@@ -40,6 +40,7 @@ export function createResponseWriter(body: ResponsesRequest, emit: (event: Recor
   const itemId = `msg_${crypto.randomUUID().replaceAll("-", "")}`;
   const created = Math.floor(Date.now() / 1000);
   let sequence = 0;
+  let eventTail: Promise<void> = Promise.resolve();
   let summaries: { id: string; type: string; summary: { type: string; text: string }[] }[] = [];
   const part = (text: string) => ({ type: "output_text", text, annotations: [], logprobs: [] });
   const item = (text: string, status: string) => ({ id: itemId, type: "message", role: "assistant", status, content: [part(text)] });
@@ -53,8 +54,13 @@ export function createResponseWriter(body: ResponsesRequest, emit: (event: Recor
     tools: [], tool_choice: "none", parallel_tool_calls: false,
     max_output_tokens: null, previous_response_id: null,
   });
-  const event = async (type: string, fields: Record<string, unknown>, signal?: AbortSignal) => {
-    await emit({ type, sequence_number: sequence++, ...fields }, signal);
+  const event = (type: string, fields: Record<string, unknown>, signal?: AbortSignal) => {
+    const next = eventTail.catch(() => undefined).then(async () => {
+      await emit({ type, sequence_number: sequence, ...fields }, signal);
+      sequence += 1;
+    });
+    eventTail = next;
+    return next;
   };
   return {
     response,
