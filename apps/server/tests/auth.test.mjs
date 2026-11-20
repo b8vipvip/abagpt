@@ -179,11 +179,17 @@ test("verifyCandidateSessionToken localizes a response without an access token",
   }
 });
 
-test("verifyCandidateSessionToken preserves non-authentication network errors", async () => {
+test("verifyCandidateSessionToken preserves non-authentication response errors", async () => {
   const originalFetch = globalThis.fetch;
   try {
-    globalThis.fetch = async () => { throw new Error("network unavailable"); };
-    await assert.rejects(auth.verifyCandidateSessionToken("network-candidate"), /network unavailable/);
+    globalThis.fetch = async () => new Response("{", {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+    await assert.rejects(auth.verifyCandidateSessionToken("invalid-json-candidate"), (error) => {
+      assert.ok(error instanceof SyntaxError);
+      return true;
+    });
   } finally {
     globalThis.fetch = originalFetch;
   }
