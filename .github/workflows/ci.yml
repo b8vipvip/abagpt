@@ -47,6 +47,16 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
       - run: npm run manifest -- --check
+      - name: Validate release asset assembly without publishing
+        env:
+          IMAGE_NAME: ghcr.io/b8vipvip/abagpt
+          IMAGE_DIGEST: sha256:0000000000000000000000000000000000000000000000000000000000000000
+          GITHUB_REF_NAME: v${{ vars.MIRROR_RELEASE_VERSION || '0.1.0' }}
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          export RELEASE_VERSION="$VERSION"
+          export GITHUB_REF_NAME="v$VERSION"
+          npm run release:assets
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
