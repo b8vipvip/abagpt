@@ -1,245 +1,90 @@
-# 30 ways to inject neat stuff into the real chatgpt.com UI (via Mirror)
+# 通过 Mirror 向真实 chatgpt.com 界面注入功能的 30 个想法
 
-Free-associated 2026-09-14, same rules as the original `BRAINSTORMING.md`:
-not pre-filtered to "safe" ideas, but every entry is checked against what
-Mirror can *actually* do to the real chatgpt.com page it's proxying, not
-what would be neat in the abstract.
+自由联想记录于 2026-09-14，规则与原始的 `BRAINSTORMING.md` 相同：不预先按“安全”与否筛选，但每个条目都必须根据 Mirror 对它正在代理的真实 chatgpt.com 页面*实际能够做到什么*来核对，而不是只考虑抽象层面上哪些功能看起来很酷。
 
-**The mechanism, for grounding:** `proxy.ts` splices `EARLY_PATCH`
-(`browser-patch.ts`) into every proxied `text/html` response's `<head>` —
-not just the root shell, every route (a conversation, `/c/<id>`, settings,
-etc. all get it, since the check is just "is this response HTML"). Mirror
-controls' own `injectionCss`/`injectionJs` are exported from
-`mirror-controls.ts` and are just more CSS/JS strings riding along in that
-same patch. So: anything doable as vanilla CSS/JS running inside the real
-ChatGPT page, with no cooperation from OpenAI's own bundle, is fair game.
-Two hard walls this list respects:
+**先说明实现机制，以便所有想法都有事实依据：** `proxy.ts` 会把 `EARLY_PATCH`（来自 `browser-patch.ts`）插入每一个被代理的 `text/html` 响应的 `<head>` 中，而不仅仅是根页面外壳。所有路由都会注入，包括某个对话、`/c/<id>`、设置页等，因为判断条件只是“这个响应是不是 HTML”。Mirror 控制面板自己的 `injectionCss`／`injectionJs` 从 `mirror-controls.ts` 导出，也只是随同一个 Patch 一起注入的更多 CSS／JS 字符串。因此，任何能够在真实 ChatGPT 页面内部以原生 CSS／JS 运行、且不需要 OpenAI 自己的前端 Bundle 配合的功能，都可以考虑。
 
-- **No reading React internals or private state.** Everything here works
-  off the rendered DOM (`data-testid` hooks, text content, class-adjacent
-  selectors) or Mirror's own server-side data (its SQLite store, the
-  OpenAI-compatible shim), the same way `mirror-controls.ts` already finds
-  `accounts-profile-button`. Nothing assumes access to ChatGPT's internal
-  component props/state.
-- **No fighting the composer or main content column for clicks/focus.**
-  `mirror-controls.ts`'s own doc comment already flags this as the reason
-  it mounts in-flow in the sidebar instead of floating — every idea below
-  that adds visible UI either lives in that same sidebar slot, in a
-  sidebar-adjacent row, or is inert-by-default (a keyboard shortcut, a
-  toggle) until deliberately invoked.
+本清单遵守两条硬性边界：
 
-Grouped by theme. A "Reach:" line on anything non-obvious says what it can
-see/do given the DOM-only, server-observes-traffic constraints above.
+- **不读取 React 内部实现或私有状态。** 所有功能只能依赖已渲染的 DOM（例如 `data-testid` Hook、文本内容、与 class 相邻的选择器），或 Mirror 自己服务端的数据（SQLite 存储、OpenAI 兼容适配层）。现有的 `mirror-controls.ts` 也是以相同方式查找 `accounts-profile-button`。任何想法都不假设可以访问 ChatGPT 内部组件的 props／state。
+- **不与消息编辑框或主内容区域争抢点击和焦点。** `mirror-controls.ts` 自身的文档注释已经指出了这一点：这正是它采用侧边栏内流式挂载、而不是悬浮覆盖的原因。下面凡是增加可见 UI 的想法，都必须放在同一个侧边栏插槽、侧边栏相邻的一行中，或者默认不产生交互（例如键盘快捷键、开关），直到用户主动调用。
 
-## Sidebar & chrome
+按主题分组。对于不那么直观的想法，会附上一行“可触达范围（Reach）”，说明在仅允许访问 DOM、服务端只能观察代理流量的约束下，它实际能够看到什么、做什么。
 
-**1. Conversation folders/tags, client-side.** ChatGPT's own sidebar has no
-folders. Add a tiny tag picker to each sidebar conversation row (a
-right-click menu or a small icon that appears on hover) that writes
-tags into Mirror's SQLite store keyed by conversation id, then a filter
-bar above the list that hides/shows rows by tag. Reach: sidebar rows are
-real DOM nodes with the conversation id in their href — no protocol
-access needed, purely DOM + Mirror's own storage.
+## 侧边栏与界面框架
 
-**2. Pinned conversations, actually enforced.** ChatGPT has a "pin" but
-caps you around a handful. Mirror-side pin list (its own store), rendered
-as a synthetic pinned section injected at the top of the sidebar list,
-no upstream cap.
+**1. 对话文件夹／标签（客户端实现）。** ChatGPT 自带的侧边栏没有文件夹。可以在每个对话行中增加一个小型标签选择器（右键菜单，或鼠标悬停时显示的小图标），把标签按对话 ID 写入 Mirror 的 SQLite 存储；然后在列表上方增加过滤栏，根据标签隐藏／显示对应行。可触达范围：侧边栏中的对话行是真实 DOM 节点，其链接 href 中包含对话 ID；不需要访问协议层，纯粹依赖 DOM 和 Mirror 自己的存储即可实现。
 
-**3. Sidebar search that's actually fast.** ChatGPT's own conversation
-search hits their backend per keystroke. Route the search box's queries
-to Mirror's `/api/conversations/search` (the same endpoint the Playground's
-`CommandPalette`/`ConversationTools` already use) instead, since Mirror
-already has to see and can index the conversation list traffic passing
-through it. Decided against duplicating this as a *second* box — better to
-literally rewire ChatGPT's existing search input's event listener to hit
-Mirror's endpoint instead of adding a competing UI element.
+**2. 真正生效的对话置顶。** ChatGPT 自己虽然有“置顶”功能，但数量限制在少数几个。Mirror 可以在自己的存储中维护置顶列表，并在侧边栏列表顶部注入一个合成的置顶分区，不受上游数量限制。
 
-**4. The Playground's command palette, reused here.** `CommandPalette.tsx`
-is a Cmd/Ctrl+K overlay over `/api/conversations/search` — nothing in it
-is Playground-specific. Port the same component (or just the compiled
-JS/CSS) into the injected bundle so Cmd+K quick-jump works on the real
-site too, using the same configurable-hotkey settings panel idea from
-`HotkeySettings.tsx`.
+**3. 真正快速的侧边栏搜索。** ChatGPT 自己的对话搜索会在每次按键时请求其后端。可以把搜索框中的查询转发到 Mirror 的 `/api/conversations/search`（Playground 的 `CommandPalette`／`ConversationTools` 已经使用同一个接口），因为 Mirror 本来就能看到并索引经过代理的对话列表流量。已决定不重复增加第二个搜索框——更好的方式是直接重接 ChatGPT 现有搜索输入框的事件监听器，让它请求 Mirror 的接口，而不是增加一个互相竞争的 UI 元素。
 
-**5. A "which model actually answered" badge on each assistant message.**
-ChatGPT's UI already shows this in small print sometimes but inconsistently
-across surfaces (voice, temporary chats, etc.) Standardize it: a small
-persistent chip on every assistant turn, always present, reading from
-whatever DOM/metadata is already exposed per-message.
+**4. 在真实 ChatGPT 页面中复用 Playground 的命令面板。** `CommandPalette.tsx` 是覆盖在 `/api/conversations/search` 之上的 `Cmd/Ctrl+K` 浮层，并不依赖 Playground 专属能力。可以把同一个组件（或其编译后的 JS／CSS）移植到注入的 Bundle 中，让真实网站也能使用 Cmd+K 快速跳转，并沿用 `HotkeySettings.tsx` 已经建立的可配置快捷键设置思路。
 
-**6. Token/cost estimate ticker.** A running estimate in the Mirror-controls
-panel of how many tokens the current conversation has used and roughly what
-it would have cost via the API, computed from message text length with a
-tokenizer bundled client-side (`tiktoken`-style, WASM) — approximate, and
-labeled as such, but useful. Reach: pure client-side text analysis of
-already-rendered messages, no upstream data needed.
+**5. 在每条助手消息旁显示“实际回答的模型”徽标。** ChatGPT 的 UI 有时会以小字显示这一信息，但在不同界面中并不一致（例如语音、临时聊天等）。可以统一处理：在每轮助手回复旁显示一个始终存在的小型徽标，读取当前消息对应的 DOM 或元数据中已经公开的信息。
 
-## Reading & navigating long conversations
+**6. Token／费用估算计数器。** 在 Mirror 控制面板中持续估算当前对话使用了多少 Token，以及如果通过 API 调用大致会产生多少费用。可以在客户端打包一个类似 `tiktoken` 的 Tokenizer（例如 WASM），根据消息文本长度计算。估算值应明确标记为近似值，但仍然有参考价值。可触达范围：纯客户端分析已经渲染的消息文本，不需要额外的上游数据。
 
-**7. In-page conversation minimap/outline.** A collapsible strip (anchored
-in the sidebar-adjacent column, not floating over the composer) listing
-every user prompt in the current conversation as a jump-to link — solves
-the "scroll forever to find where I asked X" problem the user already
-flagged as their motivation for the second Run button. Reach: DOM-only,
-walks rendered message nodes for role="user" turns.
+## 长对话阅读与导航
 
-**8. Collapse/fold long assistant responses.** A fold toggle injected onto
-any assistant message past some length threshold, so skimming a long
-conversation doesn't mean scrolling past walls of text you've already
-read. Client-side only, doesn't touch stored content.
+**7. 页面内对话缩略地图／大纲。** 在侧边栏相邻的列中（不要悬浮覆盖消息编辑框）增加一个可折叠条带，列出当前对话中的每条用户提示，并提供跳转链接。这能解决用户此前提到的动机问题：“想找到之前问过 X 的位置，却不得不一直滚动”。可触达范围：只依赖 DOM，遍历角色为 `user` 的已渲染消息节点。
 
-**9. Read-time / turn-count stats per conversation**, shown in the sidebar
-row on hover: turn count, rough total length, first/last message
-timestamps. All derivable from the rendered list plus Mirror's own stored
-copy of the conversation (if Mirror already logs traffic, no new fetch
-needed).
+**8. 折叠／展开较长的助手回答。** 对超过一定长度的助手消息注入折叠开关。这样快速浏览长对话时，就不必反复滚过已经读过的大段内容。完全在客户端实现，不会修改存储内容。
 
-**10. "Jump to last unread" marker** for conversations with a lot of
-back-and-forth reopened after a while — a thin highlight bar client-side
-persisted (Mirror's store, keyed by conversation id + last-viewed message
-id) so returning to a long thread doesn't mean scrolling to guess where you
-left off.
+**9. 每个对话的阅读时间／轮次数统计。** 鼠标悬停在侧边栏对话行时，显示轮次数、大致总长度、第一条／最后一条消息的时间戳。这些信息都可以从已渲染列表和 Mirror 自己保存的对话副本中推导出来（如果 Mirror 已经记录代理流量，就不需要再请求数据）。
 
-## Composer & prompting ergonomics
+**10. “跳转到上次未读位置”标记。** 对于包含大量往返消息、隔了一段时间才重新打开的对话，可以添加一条细小的客户端高亮标记。它由 Mirror 的存储持久化，键为对话 ID 加最后查看的消息 ID。这样用户返回长线程时，不必靠滚动猜测上次读到哪里。
 
-**11. Duplicate Run button pattern, generalized: prompt snippets/macros.**
-A small "insert saved snippet" button in the composer row (same in-flow
-placement approach as the second Run button already shipped) backed by a
-Mirror-side saved-snippets list — reusable prompt fragments, boilerplate
-instructions, etc., without ChatGPT's own limited "custom instructions."
+## 消息编辑框与提示词效率
 
-**12. Draft autosave that survives a page reload/crash**, independent of
-ChatGPT's own (sometimes lossy) draft persistence — mirror the composer's
-`textarea`/`contenteditable` content into `localStorage` or Mirror's store
-on every keystroke (debounced), restore on load if the composer comes back
-empty. Reach: DOM input event listener only.
+**11. 将第二个 Run 按钮的模式泛化为提示词片段／宏。** 在消息编辑框一行中增加一个小型“插入已保存片段”按钮，沿用已经交付的第二个 Run 按钮的内流式布局方式。按钮背后由 Mirror 维护已保存片段列表，用于复用提示词片段、标准说明等内容，不受 ChatGPT 自带且功能有限的“自定义指令”约束。
 
-**13. A visible character/token counter under the composer**, since
-ChatGPT doesn't show one live — same client-side tokenizer as #6, updated
-on input.
+**12. 刷新／崩溃后仍能恢复的草稿自动保存。** 独立于 ChatGPT 自己有时会丢失内容的草稿持久化机制。每次按键时（经过防抖处理），将编辑框的 `textarea`／`contenteditable` 内容镜像到 `localStorage` 或 Mirror 存储中；页面加载后，如果编辑框为空，就恢复草稿。可触达范围：只需要监听 DOM 输入事件。
 
-**14. Multi-line prompt templates with fill-in blanks.** A small `{{var}}`
-templating helper: type a saved template name, get prompted (a tiny inline
-form) for the blanks, get the filled prompt inserted into the composer.
-Pure client-side text substitution, no protocol involvement.
+**13. 在编辑框下方显示字符数／Token 数。** ChatGPT 目前不会实时显示计数。可以沿用第 6 项的客户端 Tokenizer，在用户输入时更新计数。
 
-**15. Keyboard-driven "send to a specific model/mode" shortcuts**, mapped
-through the same configurable-hotkeys settings panel already built for the
-Playground — e.g. a hotkey that clicks whatever the current model-picker
-UI needs clicked, so switching models doesn't require a mouse trip through
-menus. Reach: DOM click-simulation on ChatGPT's own picker elements, same
-technique already used to drive the sidebar-open forcing in
-`mirror-controls.ts`.
+**14. 带填空项的多行提示词模板。** 增加一个小型的 `{{var}}` 模板助手：输入已保存的模板名称后，弹出一个小型内嵌表单，要求用户填写变量，然后把填充完成的提示词插入编辑框。纯客户端文本替换，不涉及协议层。
 
-## Export, backup & portability
+**15. 使用键盘快捷键将消息发送到指定模型／模式。** 通过 Playground 已经构建的同一个可配置快捷键面板进行映射。例如设置一个快捷键，自动点击当前模型选择器需要点击的元素，这样切换模型时就不必用鼠标逐层打开菜单。可触达范围：通过 DOM 模拟点击 ChatGPT 自己的模型选择器元素，技术上与 `mirror-controls.ts` 中强制展开侧边栏的方式相同。
 
-**16. One-click "export this conversation" as Markdown/JSON**, injected as
-a button near the conversation title — walks the rendered message DOM (or,
-better, asks Mirror's own store for the canonical copy if it already has
-one from proxied traffic) and downloads a file. This is squarely inside
-what a DOM-only injected script can do since it's just reading + a
-client-side `Blob` download, no upstream write needed.
+## 导出、备份与可移植性
 
-**17. Bulk export / "back up everything" from the sidebar**, driven by
-Mirror's server (it can enumerate the account's conversations via the
-proxy) rather than the client scraping each one — a real server endpoint
-Mirror already has the access pattern for, exposed as a button in the
-injected controls panel.
+**16. 一键将当前对话导出为 Markdown／JSON。** 在对话标题附近注入一个按钮，遍历已渲染的消息 DOM（更好的方式是：如果 Mirror 已经从代理流量中保存了规范副本，就直接请求 Mirror 自己的存储），然后下载文件。这完全属于 DOM 注入脚本能够做到的范围：只是读取数据，再通过客户端 `Blob` 下载，不需要向上游写入。
 
-**18. Auto-archive to Mirror's local store on every new message**, so a
-full local copy of every conversation always exists independent of
-OpenAI's retention/export flow — this is really "make Mirror's existing
-traffic-observing role do something proactively", not new UI, but the UI
-piece is a status indicator ("N conversations archived locally") in the
-controls panel.
+**17. 从侧边栏批量导出／“备份全部内容”。** 由 Mirror 服务端驱动（它可以通过代理枚举账号中的对话），而不是让客户端逐条抓取。Mirror 已经具备相应的访问模式，只需要提供一个真实的服务端接口，再在注入的控制面板中增加按钮。
 
-## Privacy, safety & control
+**18. 每有新消息就自动归档到 Mirror 本地存储。** 每次新消息出现时自动保存，使所有对话始终都有完整的本地副本，不依赖 OpenAI 自己的保留／导出流程。这实际上是让 Mirror 已有的流量观察能力主动发挥作用，而不是增加一种全新 UI。UI 只需要在控制面板中显示一个状态指标，例如“已在本地归档 N 个对话”。
 
-**19. A visible "this request is going through WARP" indicator**, always-on
-in the Mirror-controls panel (extending the existing egress/WARP status
-line already in `injectionCss`), rather than something you have to open the
-panel to check.
+## 隐私、安全与控制
 
-**20. Per-conversation "ephemeral" toggle surfaced right in the chat header**,
-not buried in the Mirror controls popup — wires to the same private/ephemeral
-flag `BRAINSTORMING.md` #2's burner-session idea already touches, just
-promoted to a one-click header toggle for the common case (this
-conversation specifically, not the whole session).
+**19. 始终可见的“当前请求正通过 WARP”指示器。** 在 Mirror 控制面板中始终显示状态（扩展 `injectionCss` 中已经存在的出站／WARP 状态行），而不是每次都要打开面板才能检查。
 
-**21. A content filter / redaction pass on outgoing messages**, warns (does
-not block, since Mirror shouldn't silently eat data) before sending if the
-composer text matches user-defined patterns (an SSN-shaped string, a saved
-"never send this" phrase list) — pure client-side regex check before the
-send click is allowed through.
+**20. 在聊天标题栏中直接显示每个对话的“临时模式”开关。** 不要把它藏在 Mirror 控制弹窗里。它连接到与 `BRAINSTORMING.md` 第 2 项一次性会话想法相关的同一 `private`／`ephemeral` 标记，只是把它提升为标题栏中的一键开关，方便用户针对当前这段对话操作，而不是改变整个会话。
 
-**22. Screenshot/copy-paste guard toggle**: a CSS-only mode that blurs the
-page content until hovered/focused, for screen-sharing during a call
-without exposing conversation history — trivial to inject as a CSS class
-toggle, no JS logic needed beyond a keybind.
+**21. 对发出的消息进行内容过滤／脱敏检查。** 如果编辑框中的文本匹配用户定义的模式（例如类似 SSN 的字符串，或用户保存的“绝不能发送”短语列表），就在发送前发出警告。这里只警告，不阻止发送，因为 Mirror 不应该悄悄吞掉用户数据。可以在允许触发发送点击之前执行纯客户端正则检查。
 
-## Fun / cosmetic
+**22. 截屏／屏幕共享保护开关。** 采用纯 CSS 模式，在鼠标悬停或元素获得焦点之前模糊页面内容。这样用户在通话中共享屏幕时，不会意外暴露对话历史。实现非常简单：注入一个 CSS 类作为开关，除了快捷键之外不需要额外 JS 逻辑。
 
-**23. Theme packs beyond light/dark.** Mirror already injects CSS
-unconditionally — nothing stops shipping a small set of alternate color
-schemes (the user's `psychedelic_terminal.sh` energy, if they want it) as
-selectable presets in the controls panel, applied via CSS custom-property
-overrides scoped to ChatGPT's own theme variables where they're exposed,
-or brute-force selector overrides where they're not.
+## 趣味与外观
 
-**24. Custom favicon/tab title that reflects state** — e.g. changes when a
-response is still streaming vs. done, so a backgrounded tab tells you when
-to come back. Reach: trivial, `document.title` + a dynamically swapped
-`<link rel="icon">`, both fully within a content script's reach.
+**23. 除浅色／深色以外的主题包。** Mirror 已经无条件注入 CSS，因此完全可以提供一组备用配色方案（如果用户愿意，也可以采用其 `psychedelic_terminal.sh` 那种风格），在控制面板中作为可选预设。实现方式是覆盖 ChatGPT 自己暴露的主题 CSS 自定义属性；对于没有暴露的部分，则使用更直接的选择器覆盖。
 
-**25. A "conversation soundtrack" toggle** — genuinely silly, flagged as
-such: a tiny ambient audio loop that plays while a response is streaming
-and stops when it's done, as an audible alternative to watching the
-spinner. Purely client-side `<audio>`, off by default.
+**24. 根据状态变化的自定义 Favicon／标签页标题。** 例如，在回答仍在流式生成时更换图标或标题，完成后恢复。这样即使标签页处于后台，也能知道何时应该切回来。可触达范围：很简单，内容脚本可以直接修改 `document.title`，并动态替换 `<link rel="icon">`。
 
-**26. Achievement/streak tracker** for personal use — total conversations,
-longest thread, days-in-a-row used — computed from Mirror's own local
-conversation log, shown as a small stats card in the controls panel. Not
-gamifying anything upstream, just a fun readout of your own local history.
+**25. “对话背景音乐”开关。** 这是一个确实有点傻的想法，特意标注出来：当回答正在流式生成时播放一段小型环境音循环，生成结束后停止。它是观察加载动画之外的一种听觉反馈。纯客户端使用 `<audio>` 实现，默认关闭。
 
-## Power-user / integration
+**26. 个人成就／连续使用天数追踪。** 统计总对话数、最长线程、连续使用天数等。数据从 Mirror 自己的本地对话日志计算，在控制面板中显示为小型统计卡片。不向上游增加任何游戏化机制，只是展示用户自己的本地历史。
 
-**27. Slash-command style local commands in the composer**, e.g. typing
-`/export`, `/model`, `/pin` as the first token of a message triggers the
-matching injected feature instead of being sent as a prompt — a thin
-client-side intercept on the send action that checks for the prefix before
-letting the real send through.
+## 高级用户与集成
 
-**28. Webhook/notification on response completion**, for long-running
-responses where you've alt-tabbed away — Mirror's server already sees the
-streamed response finish (it's proxying it), so it can fire a local
-notification (or ping something like a self-hosted ntfy endpoint the user
-configures) without any client-side polling.
+**27. 在消息编辑框中支持斜杠命令式的本地命令。** 例如，当用户把 `/export`、`/model`、`/pin` 作为消息的第一个 Token 输入时，触发相应的注入功能，而不是将它作为提示词发送。只需在发送动作上增加一层轻量客户端拦截，在真正发送之前检查前缀即可。
 
-**29. A "diff this edit" view when you edit-and-resend a prompt.** ChatGPT
-lets you edit a previous message and regenerate, but doesn't show what
-changed vs. the original inline afterward. Inject a small expandable diff
-(computed client-side, since both versions are just text already in the
-DOM/Mirror's stored history) between the edited message and its previous
-version.
+**28. 回答完成时触发 Webhook／通知。** 对于耗时较长、用户已经切换到其他标签页的回答，这会很有用。Mirror 服务端已经能观察到流式回答结束（因为它本来就在代理流量），因此可以触发本地通知，或向用户配置的自托管 ntfy 端点发送通知，无需客户端轮询。
 
-**30. Mirror-controls "recipes": one-click multi-step actions.** A small
-scriptable-macro slot in the controls panel — e.g. "new chat, paste
-standing instructions (#3 from the original list), switch to model X" as
-one button — composed from the same DOM-click/composer-fill primitives
-several ideas above already need individually. This is really the
-generalization that #11/#14/#15 all become presets of, once two or three
-of them exist.
+**29. 编辑并重新发送提示词时显示“本次编辑差异”。** ChatGPT 允许用户编辑之前的消息并重新生成回答，但不会在之后直接展示修改前后的差异。可以注入一个小型可展开的 diff 视图，在编辑后的消息与上一个版本之间展示差异。由于两个版本都是 DOM／Mirror 已存储历史中已有的文本，因此可以在客户端计算。
+
+**30. Mirror 控制面板“操作配方”：一键执行多个步骤。** 在控制面板中增加一个可脚本化的宏入口。例如，“新建聊天、粘贴原始列表第 3 项中的长期指令、切换到模型 X”可以组合成一个按钮。它由上面多个想法已经需要的 DOM 点击／编辑框填充原语组合而成。实际上，一旦第 11／14／15 项中的两三个功能存在，这就是它们最终可以归并到的通用预设机制。
 
 ---
 
-None of these need anything OpenAI would have to cooperate with — every
-one is either pure client-side DOM/CSS/JS riding in the existing
-`EARLY_PATCH`/`mirror-controls` injection point, or a Mirror server
-endpoint acting on traffic it's already proxying. The honest caveat that
-applies to literally all of them: ChatGPT's frontend bundle changes without
-warning, and anything keyed to a `data-testid` or DOM shape can silently
-break on their next deploy — exactly the maintenance burden
-`mirror-controls.ts`'s periodic re-assertion interval already exists to
-paper over for the one widget that exists today. More injected surface
-area is more of that same maintenance tax, not a new kind of risk.
+这些想法都不需要 OpenAI 配合：每一项要么是纯客户端 DOM／CSS／JS，通过现有的 `EARLY_PATCH`／`mirror-controls` 注入点运行；要么是 Mirror 服务端对自己已经代理的流量提供额外接口。必须诚实说明、且适用于所有这些想法的限制是：ChatGPT 前端 Bundle 会在没有预警的情况下变化，任何依赖 `data-testid` 或 DOM 结构的功能，都可能在他们下一次部署后悄悄失效。这正是 `mirror-controls.ts` 中的周期性重新断言机制目前要为唯一已存在的 Widget 兜底的维护负担。注入的功能越多，同类维护成本就越高；这不是一种全新的风险，而是现有风险的规模扩大。
