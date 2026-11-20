@@ -1108,7 +1108,7 @@ export async function registerOpenAiRoutes(
       }), controller.signal);
     } catch (error) {
       if (reply.raw.destroyed) return;
-      const message = error instanceof Error ? error.message : "Generation failed";
+      const message = error instanceof Error ? error.message : "生成失败。";
       const status = Number((error as { statusCode?: number }).statusCode ?? 502);
       const envelope = apiError(status, message, req.id);
       // Classify against the private-protocol drift taxonomy (MIR-31) so a
