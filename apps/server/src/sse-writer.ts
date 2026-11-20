@@ -26,7 +26,7 @@ export class SseWriter {
   ) {
     this.stallTimeoutMs = options.stallTimeoutMs ?? DEFAULT_STALL_TIMEOUT_MS;
     this.reply.raw.once("close", () => {
-      if (!this.reply.raw.writableEnded && !this.closeController.signal.aborted) {
+      if (!this.reply.raw.writableEnded) {
         this.closeController.abort(new DOMException("SSE client disconnected", "AbortError"));
       }
     });
