@@ -695,7 +695,7 @@ test("an explicit conversation_id already owned by a different account is reject
     },
   });
   assert.equal(res.statusCode, 400, res.body);
-  assert.match(res.json().error.message, /already in use/);
+  assert.match(res.json().error.message, /已被占用/);
 });
 
 test("resent history alone (no conversation_id) is recognized as a continuation when model/gizmo/private all still match", async () => {
@@ -814,7 +814,7 @@ test("continuing an explicit conversation with a different gizmo is rejected wit
       },
     });
     assert.equal(res.statusCode, 400, res.body);
-    assert.match(res.json().error.message, /GPT\/Project cannot change/);
+    assert.match(res.json().error.message, /不能更换 GPT\/Project/);
     assert.equal(sent.filter((s) => s.pathname.endsWith("/f/conversation")).length, turnsBefore, "must not reach upstream");
   });
 });
@@ -842,7 +842,7 @@ test("continuing an explicit conversation with a different model is rejected", a
       },
     });
     assert.equal(res.statusCode, 400, res.body);
-    assert.match(res.json().error.message, /model cannot change/);
+    assert.match(res.json().error.message, /不能更换模型/);
   });
 });
 
@@ -869,7 +869,7 @@ test("continuing an explicit conversation with a different private flag is rejec
       },
     });
     assert.equal(res.statusCode, 400, res.body);
-    assert.match(res.json().error.message, /Private-chat mode cannot change/);
+    assert.match(res.json().error.message, /不能更改隐私对话模式/);
   });
 });
 
@@ -1778,7 +1778,7 @@ test("sse() destroys the connection once the backlog stays stalled past the time
   assert.equal(destroyed, false);
   assert.throws(
     () => openai.sse(reply, { hello: "still stuck" }, t0 + 15_001),
-    /Response consumer is too slow/,
+    /响应客户端读取过慢/,
   );
   assert.equal(destroyed, true);
   assert.deepEqual(writes, [
