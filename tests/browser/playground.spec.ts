@@ -144,9 +144,19 @@ test("Swagger authorization and live API error states stay localized", async ({ 
  await modelsBlock.locator(".try-out__btn").click();
  await expect(modelsBlock.locator(".try-out__btn")).toHaveText("取消");
  await modelsBlock.locator(".execute").click();
- await expect(modelsBlock.locator(".response-col_status")).toHaveText("401");
+ await expect(modelsBlock.getByRole("cell", { name: "401", exact: true }).first()).toHaveText("401");
  await expect(modelsBlock).toContainText("服务器响应");
  await expect(modelsBlock).toContainText("请配置有效的 Mirror API 密钥");
+ await expect(modelsBlock).toContainText("错误：未授权");
+ await expect(modelsBlock).toContainText("下载");
+ await expect(modelsBlock).toContainText("媒体类型");
+ await expect(modelsBlock).not.toContainText("Error: Unauthorized");
+ await expect(modelsBlock).not.toContainText("Download");
+ await expect(modelsBlock).not.toContainText("Media type");
+ await expect(modelsBlock).not.toContainText("Controls");
+ await expect(modelsBlock).not.toContainText("header.");
+ await expect(modelsBlock.locator('button[aria-label="授权状态：未锁定"]')).toBeVisible();
+ await expect(modelsBlock.getByRole("button", { name: "收起 GET /v1/models 接口详情" })).toBeVisible();
 });
 
 test("command palette keeps dynamic empty and network-error states localized", async ({ page }) => {
