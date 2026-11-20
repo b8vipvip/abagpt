@@ -1,23 +1,15 @@
-# Changelog
+# 更新日志
 
-All notable user-facing changes to Mirror are recorded here. Release versions
-follow the root workspace version and are published from matching `vX.Y.Z`
-Git tags.
+这里记录 Mirror 所有值得用户关注的变更。发布版本遵循根工作区版本号，并从对应的 `vX.Y.Z` Git 标签发布。
 
-## Unreleased
+## 未发布
 
-### Added
-- Tag-validated GitHub Releases with multi-platform GHCR images published by
-  immutable digest, SBOM, and build-provenance attestations.
-- Release metadata containing the source commit, Node/npm versions,
-  dependency-lock hash, pinned Node base-image digest, OpenAPI hashes, and
-  immutable container reference.
-- Runtime diagnostics now report the image's injected `MIRROR_VERSION`
-  alongside the existing source revision.
-- Compose can run either a local source build or an explicitly selected
-  published image digest.
+### 新增
+- 增加经标签校验的 GitHub Release 流程，发布多平台 GHCR 镜像、不可变镜像摘要、SBOM 和构建来源证明。
+- 增加发布元数据，记录源代码提交、Node/npm 版本、依赖锁文件哈希、固定的 Node 基础镜像摘要、OpenAPI 哈希和不可变容器引用。
+- 运行时诊断现在会在已有源代码修订号之外，报告镜像注入的 `MIRROR_VERSION`。
+- Compose 现在既可以从本地源码构建，也可以运行明确指定摘要的已发布镜像。
 
-### Changed
-- Pin the multi-platform Node 24 base image by its official image-index digest.
-- Run the same embedded version/revision assertions in GitHub Actions and
-  CircleCI container checks.
+### 变更
+- 使用官方多平台镜像索引摘要固定 Node 24 基础镜像。
+- GitHub Actions 和 CircleCI 的容器检查现在执行相同的内嵌版本／修订号断言。

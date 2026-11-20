@@ -1,213 +1,100 @@
-# Mirror: recommended next steps
+# Mirror：后续建议
 
-This roadmap is based on a repository-wide review of the authored application
-source, tests, scripts, deployment configuration, and documentation on
-2026-09-12. Dependency metadata and generated integrity/OpenAPI artifacts were
-checked as build outputs rather than treated as product design documents.
+本路线图基于 2026-09-12 对仓库中自行维护的应用源码、测试、脚本、部署配置和文档进行的全面审查。依赖元数据以及生成的完整性／OpenAPI 产物被视为构建输出，而不是产品设计文档。
 
-Mirror already has an unusually strong foundation for a private-protocol
-integration: strict input schemas, a protocol package separated from product
-code, encrypted credential storage, explicit local-only security boundaries,
-conversation-continuation regression tests, and per-file 100% coverage gates.
-The highest-value work is therefore not adding a long list of endpoints. It is
-making the working behavior easier to verify against real clients, safer to
-release and restore, and less expensive to change when ChatGPT's private
-protocol moves.
+Mirror 已经具备相当扎实的私有协议集成基础：严格的输入 Schema、与产品代码分离的协议包、加密凭证存储、明确的本地安全边界、对话续接回归测试，以及逐文件 100% 覆盖率门禁。因此，当前最有价值的工作不是继续堆叠大量 API 端点，而是让现有行为更容易通过真实客户端验证，让发布和恢复更安全，并降低 ChatGPT 私有协议变化时的维护成本。
 
-## Recommended order
+## 建议推进顺序
 
-### 0. Restore a genuinely green clean-checkout baseline (completed 2026-09-12)
+### 0. 恢复真正干净的全绿检出基线（已于 2026-09-12 完成）
 
-The two release blockers found by the audit are resolved:
+审查发现的两个发布阻塞项均已解决：
 
-- `npm test` and `npm run coverage` now build `apps/web` before server route
-  tests, so they do not rely on an ignored `apps/web/dist` left by an earlier
-  command. An isolated copy with every `dist` directory omitted passed all 529
-  tests.
-- Behavioral fixtures cover the previously missed inline-widget, citation
-  patch, and citation-container branches in `rich-output.ts` and
-  `packages/protocol/src/sse.ts`. The unchanged per-file C8 gate reports 100%
-  statements, branches, functions, and lines for every executable TypeScript
-  source file.
+- `npm test` 和 `npm run coverage` 现在会在服务端路由测试前构建 `apps/web`，不再依赖之前命令遗留的、已被 Git 忽略的 `apps/web/dist`。移除所有 `dist` 目录后，在隔离副本中运行全部 529 项测试并通过。
+- 行为测试夹具补齐了此前遗漏的内联 Widget、引用补丁和引用容器分支，涉及 `rich-output.ts` 和 `packages/protocol/src/sse.ts`。逐文件 C8 门禁保持不变，所有可执行 TypeScript 源文件的 statements、branches、functions 和 lines 均达到 100%。
 
-The App test that exercises synchronous re-entrant keyboard input now contains
-its state changes inside React `act(...)`; the successful unit and coverage
-runs emit no React test warnings.
+覆盖同步重入键盘输入的 App 测试，现已把状态变更放入 React `act(...)` 中；单元测试和覆盖率测试通过时不再产生 React 测试警告。
 
-**Definition of done:** on a fresh checkout after `npm ci`, the exact CI sequence
-runs successfully without relying on ignored `dist` directories and without
-test-runner warnings that are under the project's control.
+**完成标准：** 在全新检出后执行 `npm ci`，完整 CI 命令序列无需依赖被忽略的 `dist` 目录即可成功运行，并且不产生项目可控制范围内的测试运行器警告。
 
-### 1. Make releases reproducible and recoverable (P0)
+### 1. 让发布可复现、可恢复（P0）
 
-Complete MIR-05, MIR-06, and MIR-18 together as one release-readiness project.
+将 MIR-05、MIR-06 和 MIR-18 作为一个发布就绪项目一起完成。
 
-**Progress (2026-11-20):** the numbered transactional migrations, schema
-diagnostics, two-key-mode offline restore drill, container revision plumbing,
-and recovery runbook are implemented. The new `.github/workflows/release.yml`
-now validates stable workspace versions, reruns the full CI gate, publishes
-multi-platform GHCR images by immutable digest, attaches SBOM/build provenance,
-and uploads OpenAPI, SHA-256 manifest, package-lock, and release metadata to
-GitHub Releases. The Node 24 multi-platform base image is digest-pinned, and
-diagnostics report the injected version/revision. The release workflow is
-prepared but has not yet been triggered: the repository has no version tags or
-published releases. Remaining release gates are the first stable tag, one-time
-GHCR package visibility configuration if public pulls are desired, real-volume
-restore, and authenticated live continuation.
+**进展（2026-11-20）：** 编号化事务迁移、Schema 诊断、双密钥模式离线恢复演练、容器修订号传递和恢复手册均已实现。新的 `.github/workflows/release.yml` 会校验稳定版工作区版本、重新执行完整 CI 门禁、按不可变摘要发布多平台 GHCR 镜像、附加 SBOM／构建来源证明，并在 GitHub Release 中上传 OpenAPI、SHA-256 清单、package-lock 和发布元数据。Node 24 多平台基础镜像已固定摘要，诊断信息会报告注入的版本／修订号。发布工作流已准备就绪，但尚未触发：仓库目前没有版本标签或已发布的 Release。剩余发布门禁包括创建首个稳定版标签、如需公开拉取则一次性配置 GHCR 包可见性、真实数据卷恢复，以及经过认证的实时对话续接。
 
-- **Completed:** tag-triggered release workflow publishes versioned, multi-platform
-  digest-addressed images, build provenance/SBOM, generated OpenAPI documents,
-  SHA-256 manifest, exact package-lock, and release metadata containing the
-  source revision, Node/npm versions, and image/base-image digests.
-- **Completed:** numbered transactional schema migrations and a stored schema
-  version are documented in `RELEASE-RECOVERY.md`; each release records the
-  tested source and lockfile revisions.
-- **Completed:** CI and the release workflow run the offline backup -> isolated
-  restore -> integrity check drill for generated `master.key` and supplied
-  `MIRROR_STORE_KEY` configurations. Live-account continuation remains a
-  separately approved manual gate; no session credential enters CI.
-- **Completed:** `RELEASE-RECOVERY.md` documents backup, isolated restore,
-  schema compatibility, image-digest pinning, and rollback. Real-volume and
-  authenticated continuation checks remain manual release acceptance.
+- **已完成：** 标签触发的发布工作流可发布带版本号、使用不可变摘要寻址的多平台镜像、构建来源证明／SBOM、生成的 OpenAPI 文档、SHA-256 清单、精确的 package-lock，以及包含源代码修订号、Node/npm 版本和镜像／基础镜像摘要的发布元数据。
+- **已完成：** 编号化事务 Schema 迁移和持久化 Schema 版本已记录在 `RELEASE-RECOVERY.md` 中；每次发布都会记录经过测试的源代码和锁文件修订号。
+- **已完成：** CI 和发布工作流都会针对自动生成的 `master.key` 与用户提供的 `MIRROR_STORE_KEY` 配置，执行离线备份 → 隔离恢复 → 完整性检查演练。真实账号续接仍是单独批准的人工门禁；CI 不接触任何会话凭证。
+- **已完成：** `RELEASE-RECOVERY.md` 已记录备份、隔离恢复、Schema 兼容性、镜像摘要固定和回滚步骤。真实数据卷与认证续接检查仍属于人工发布验收。
 
-**Why first:** storage upgrades now have a transactional version contract.
-Release tags are checked against every workspace package and package-lock;
-local builds remain explicitly marked `development`, while tagged images carry
-an immutable revision and version. The first tag and real-volume/live-account
-acceptance still need to be performed before calling a release production-ready.
+**为什么优先做：** 存储升级现在具有事务化版本契约。发布标签会与所有工作区包及 package-lock 进行核对；本地构建会明确标记为 `development`，而带标签的镜像会携带不可变修订号和版本。只有完成首个标签和真实数据卷／账号验收后，才能称发布具备生产就绪状态。
 
-**Definition of done:** CI and the release workflow now verify the tagged
-source, image digest, artifact hashes, and offline restore drills. The remaining
-manual acceptance is to deploy a tagged image against a real volume, verify
-WARP/session/model discovery, complete a disposable three-turn continuation,
-and rehearse rollback using the prior image digest and backup.
+**完成标准：** CI 和发布工作流已经验证带标签的源代码、镜像摘要、产物哈希和离线恢复演练。剩余人工验收是：将带标签的镜像部署到真实数据卷，验证 WARP／会话／模型发现，完成一次可丢弃的三轮对话续接，并使用上一版镜像摘要和备份演练回滚。
 
-### 2. Turn client compatibility into an executable contract (P0)
+### 2. 将客户端兼容性变成可执行契约（P0）
 
-Finish MIR-01 and MIR-19 before expanding the API surface.
+在扩展 API 表面之前，先完成 MIR-01 和 MIR-19。
 
-- Write a versioned client contract for headers, CORS, conversation-ID delivery,
-  SSE/Responses lifecycle events, heartbeats, cancellation, and the distinction
-  between a successful empty answer and a truncated/failed stream.
-- Move contract fixtures into a small reusable package or fixture directory that
-  both Mirror and `cm` can consume. Test minimal-history and full-history clients
-  against the same cases.
-- Add real loopback-socket tests for disconnect and backpressure. The present
-  slow-consumer logic is deterministically unit-tested, but it writes
-  synchronously and does not honor `write()`/`drain`; an integration harness can
-  deliberately pause its TCP reader without relying on timing luck.
-- Add a pinned ChatGPTBox source-renderer lane, plus a short manual checklist
-  that records extension version, provider settings, stream/non-stream mode,
-  model discovery, errors, and three-turn continuation. Keep the manual result
-  clearly separate from synthetic CI evidence.
+- 编写带版本的客户端契约，涵盖请求标头、CORS、对话 ID 传递、SSE／Responses 生命周期事件、心跳、取消，以及“成功但内容为空”和“流被截断／失败”的区别。
+- 将契约夹具移入小型可复用包或夹具目录，让 Mirror 和 `cm` 都能使用。使用相同用例测试最小历史和完整历史客户端。
+- 增加真实 loopback socket 断开和背压测试。当前慢消费者逻辑已有确定性单元测试，但写入仍是同步方式，没有遵循 `write()`／`drain`；集成测试应能主动暂停 TCP 读取端，而不依赖时序运气。
+- 增加固定版本的 ChatGPTBox 源码渲染器测试通道，以及一份简短人工检查清单，记录扩展版本、提供方设置、流式／非流式模式、模型发现、错误和三轮对话续接。人工结果必须与合成 CI 证据明确区分。
 
-**Definition of done:** Mirror and `cm` run the same success/error/continuation
-fixtures; a paused real socket cannot lose the transcript or deadlock the
-conversation lock; a disconnected socket aborts coherently; and a recorded,
-versioned ChatGPTBox check can be repeated by someone other than the author.
+**完成标准：** Mirror 和 `cm` 使用相同的成功／错误／续接夹具；暂停真实 socket 读取不会丢失 transcript，也不会让对话锁死锁；socket 断开能够一致地中止请求；并且其他开发者可以重复执行有版本记录的 ChatGPTBox 检查。
 
-### 3. Build an explicit private-protocol drift boundary (P1)
+### 3. 为私有协议漂移建立明确边界（P1）
 
-The synthetic protocol suite is broad, but upstream compatibility remains the
-project's existential risk.
+合成协议测试覆盖面已经很广，但上游兼容性仍是项目的根本风险。
 
-- Add a schema-tolerant, sanitized capture/replay format with fixture provenance
-  (capture date, endpoint, account capabilities, sanitization version, and
-  expected normalized events). Never store credentials, prompts, signed URLs,
-  account identifiers, or raw personal payloads.
-- Classify failures as authentication/challenge, transport truncation, known
-  upstream error, or unsupported protocol shape. Surface the classification in
-  diagnostics without exposing the payload.
-- Add an opt-in live canary command that performs read-only session/model checks
-  by default and requires an explicit flag for a disposable generation. It
-  should emit a sanitized report suitable for attaching to an issue.
-- Document how to refresh the browser identity constants and protocol fixtures,
-  instead of letting hard-coded user-agent/client-context values age silently.
+- 增加兼容 Schema 演进且经过脱敏的捕获／回放格式，并记录夹具来源信息（捕获日期、端点、账号能力、脱敏版本和预期标准化事件）。绝不保存凭证、提示词、签名 URL、账号标识或原始个人数据。
+- 将失败分类为认证／验证挑战、传输截断、已知上游错误或不支持的协议形态。诊断信息应显示分类，但不能暴露载荷。
+- 增加可选启用的实时 Canary 命令：默认只读检查会话和模型；只有显式传入标志时才执行一次可丢弃的生成。命令应输出可附加到 Issue 的脱敏报告。
+- 记录如何更新浏览器身份常量和协议夹具，避免硬编码的 user-agent／client-context 值悄然过时。
 
-**Definition of done:** a protocol change produces an actionable, sanitized
-failure category and a replayable fixture, not merely a generic 502 or a hurried
-production patch.
+**完成标准：** 上游协议变化会产生可操作的脱敏失败分类和可回放夹具，而不是只有笼统的 502 或仓促的生产补丁。
 
-### 4. Reduce the cost of changing core behavior (P1)
+### 4. 降低修改核心行为的成本（P1）
 
-Continue MIR-12 incrementally; do not rewrite working code.
+继续增量推进 MIR-12；不要重写已经工作的代码。
 
-- Split `openai.ts` into request schemas/adapters, conversation resolution,
-  transport writers, and route registration. Remove the current type-only
-  dependency back from `conversation-context.ts` into the route module.
-- Split `store.ts` into schema/migrations, credentials, conversations/messages,
-  transcript matching, and maintenance repositories, behind a small database
-  interface. This will also make isolated migration and corruption tests easier.
-- Split `index.ts` route groups into plugins and break `App.tsx` into mode,
-  transcript editor, conversation browser, and request-runner components.
-- Generate all possible OpenAPI operations from the runtime route schemas, and
-  add a check that every documented route exists and every registered public
-  route is documented. Keep hand-written prose descriptions, but not duplicate
-  request shapes.
+- 将 `openai.ts` 拆分为请求 Schema／适配器、对话解析、传输写入器和路由注册。移除 `conversation-context.ts` 对路由模块当前存在的仅类型依赖反向引用。
+- 将 `store.ts` 拆分为 Schema／迁移、凭证、对话／消息、transcript 匹配和维护 Repository，并放在小型数据库接口之后。这也能让隔离迁移和数据损坏测试更容易实现。
+- 将 `index.ts` 的路由组拆为插件，并把 `App.tsx` 拆分为模式、transcript 编辑器、对话浏览器和请求执行器组件。
+- 从运行时路由 Schema 生成所有可生成的 OpenAPI 操作，并增加检查，确保每条文档路由都真实存在、每条已注册的公开路由都有文档。保留人工撰写的文字说明，但不要重复维护请求结构。
 
-**Definition of done:** no orchestration/UI module is a catch-all, imports point
-in one direction, and behavior remains pinned by the current regression suite at
-each extraction step.
+**完成标准：** 不再有包揽所有职责的编排／UI 模块，依赖导入方向保持单向，并且每个拆分步骤的行为都由现有回归测试套件锁定。
 
-### 5. Improve operability without collecting sensitive data (P1)
+### 5. 在不收集敏感数据的前提下提升可运维性（P1）
 
-- Add structured local logs with request ID, route, duration, outcome category,
-  conversation operation (new/continue/rebase), upstream phase, and deadline
-  phase. Explicitly prohibit prompts, tokens, cookies, attachment URLs, and raw
-  upstream bodies.
-- Extend diagnostics with schema version, actual build revision, process uptime,
-  last successful WARP/session/model checks, and counters for failure categories.
-  Keep bounded retention and a one-click sanitized export.
-- Add startup preflight output that distinguishes configuration errors, database
-  migration failures, missing browser dependencies, WARP failure, and session
-  expiry, each with one concrete next action.
+- 增加结构化本地日志，包含 request ID、路由、耗时、结果分类、对话操作（新建／续接／rebase）、上游阶段和 deadline 阶段。明确禁止记录提示词、Token、Cookie、附件 URL 和原始上游响应体。
+- 扩展诊断信息，包含 Schema 版本、实际构建修订号、进程运行时间、最近一次成功的 WARP／会话／模型检查，以及各失败分类的计数。采用有界保留，并提供一键脱敏导出。
+- 增加启动预检输出，区分配置错误、数据库迁移失败、缺失浏览器依赖、WARP 失败和会话过期，并为每类问题提供一个明确的下一步操作。
 
-This makes private-protocol regressions supportable without introducing remote
-telemetry or weakening Mirror's local-only posture.
+这样可以在不引入远程遥测、不削弱 Mirror 本地使用定位的前提下，让私有协议回归问题更容易排查。
 
-### 6. Then invest in user-facing features (P2)
+### 6. 然后再投入面向用户的功能（P2）
 
-After the trust/release work above, the best product improvements are:
+完成上述信任和发布工作后，最值得做的产品改进包括：
 
-1. **Conversation workspace:** search highlighting, branch-tree keyboard
-   navigation, branch labels, and a clear preview of the exact node that the next
-   turn will continue from.
-2. **Portable archives:** validate exported JSON against a published archive
-   schema and add read-only import. Imported archives must remain visibly
-   non-resumable unless a valid upstream identity is independently established.
-3. **Rich output inspector:** friendly tool/citation/file cards by default with
-   an opt-in sanitized event inspector. Never show internal analysis content.
-4. **Responses conveniences:** consider `previous_response_id` only after its
-   persistence and expiry semantics are specified; do not imply official API
-   parity merely because the wire shape can be emulated.
-5. **Accessibility evidence:** run a real keyboard and screen-reader audit at
-   narrow and wide viewports, add automated axe-style checks, and test long live
-   streams rather than only mocked browser responses.
+1. **对话工作区：** 搜索高亮、分支树键盘导航、分支标签，以及清晰预览下一轮将续接的确切节点。
+2. **可移植归档：** 根据公开归档 Schema 校验导出的 JSON，并增加只读导入。除非独立确认有效的上游身份，否则导入归档必须明确标记为不可续接。
+3. **富内容检查器：** 默认使用友好的工具／引用／文件卡片，同时允许选择启用脱敏事件检查器。绝不显示内部分析内容。
+4. **Responses 便利功能：** 只有在明确规定持久化和过期语义后，才考虑支持 `previous_response_id`；不能仅因可以模拟协议结构，就暗示与官方 API 完全一致。
+5. **无障碍证据：** 在窄屏和宽屏视口执行真实键盘与屏幕阅读器审查，增加 axe 风格自动检查，并测试长时间真实流式输出，而不仅是模拟浏览器响应。
 
-## Work to avoid for now
+## 暂时应避免的工作
 
-- **Remote or multi-user deployment.** It needs a new threat model, TLS, durable
-  identity/authorization, CSRF protection, per-user storage isolation, quotas,
-  and a security review. An allowed-host escape hatch is not that design.
-- **Pretend API parity.** Do not emulate unsupported sampling, token usage,
-  caller-defined tools, or constrained decoding with guesses.
-- **Automatic retries of generation POSTs.** An ambiguous upstream completion
-  can duplicate or branch a turn; reload and reconcile instead.
-- **A broad UI rewrite.** Current tests protect many subtle continuation and
-  persistence behaviors. Small extractions retain that leverage.
-- **More raw protocol exposure.** Normalize and sanitize new events before making
-  them a public client contract.
+- **远程或多用户部署。** 这需要新的威胁模型、TLS、持久化身份／授权、CSRF 防护、按用户隔离存储、配额和安全审查。允许主机名的逃生配置并不等于完整设计。
+- **假装 API 完全兼容。** 不要猜测模拟尚不支持的采样参数、Token 用量、调用方自定义工具或受限解码。
+- **自动重试生成 POST。** 上游生成是否完成存在歧义时，重试可能重复或分叉一轮对话；应重新加载并协调状态。
+- **大范围 UI 重写。** 当前测试保护着许多细微的续接和持久化行为。小步拆分能保留这些保障。
+- **暴露更多原始协议。** 新事件应先标准化并脱敏，再纳入公开客户端契约。
 
-## Suggested first three pull requests
+## 建议的前三个 PR
 
-1. **Release metadata and numbered migrations:** wire revision/version into the
-   image and diagnostics, add transactional migration infrastructure, and write
-   upgrade/rollback tests.
-2. **Streaming contract and socket harness:** publish the contract, share its
-   fixtures with `cm`, and replace the synchronous slow-consumer guard with
-   drain-aware writing proven over a paused loopback socket.
-3. **Restore drill and release runbook:** automate isolated restores for both key
-   modes, document Compose volume handling, and make the drill a release gate.
+1. **发布元数据和编号化迁移：** 将修订号／版本注入镜像和诊断信息，增加事务化迁移基础设施，并编写升级／回滚测试。
+2. **流式契约和 socket 测试框架：** 发布契约，与 `cm` 共享夹具，并用在暂停 loopback socket 上验证过的 drain 感知写入，替换同步慢消费者保护。
+3. **恢复演练和发布手册：** 自动化两种密钥模式的隔离恢复，记录 Compose 数据卷处理方式，并将演练设为发布门禁。
 
-These three changes improve confidence in every later feature while directly
-closing the oldest open verification and release items in `TODO.md`.
+这三项工作能提升后续所有功能的可信度，同时直接关闭 `TODO.md` 中最早的验证和发布遗留项。
