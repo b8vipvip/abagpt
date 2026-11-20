@@ -96,18 +96,18 @@ export function validateFont(font: GlyphFont): void {
                 u += jx;
                 v += jy;
                 if (u < 0 || u >= GLYPH_W || v < 0 || v >= GLYPH_H) {
-                  throw new Error(`gptgif-v4: font glyph ${n.toString(16)} escapes its cell under jitter`);
+                  throw new Error(`gptgif-v4：字体字形 ${n.toString(16)} 在抖动变换下超出单元格边界。`);
                 }
                 mask |= 1n << BigInt(v * GLYPH_W + u);
               }
             }
             if (mask === 0n) {
-              throw new Error(`gptgif-v4: font glyph ${n.toString(16)} disappears under an allowed transform`);
+              throw new Error(`gptgif-v4：字体字形 ${n.toString(16)} 在允许的变换下消失。`);
             }
             for (let other = 0; other < n; other++) {
               if (masks[other] === mask) {
                 throw new Error(
-                  `gptgif-v4: font glyphs ${other.toString(16)} and ${n.toString(16)} collide under an allowed transform`,
+                  `gptgif-v4：字体字形 ${other.toString(16)} 与 ${n.toString(16)} 在允许的变换下发生冲突。`,
                 );
               }
             }
@@ -162,7 +162,7 @@ export function fontToBytes(font: GlyphFont): Buffer {
 
 /** Parses gptgif-v4.c's `--font FILE` binary format back into a {@link GlyphFont}. Throws on anything but exactly 128 bytes, matching `load_exact_file`'s own exact-length check. */
 export function fontFromBytes(bytes: Buffer): GlyphFont {
-  if (bytes.length !== 128) throw new Error(`gptgif-v4: font file must contain exactly 128 bytes, got ${bytes.length}`);
+  if (bytes.length !== 128) throw new Error(`gptgif-v4：字体文件必须恰好包含 128 个字节，实际为 ${bytes.length} 个字节。`);
   return Array.from({ length: 16 }, (_, n) => Array.from({ length: GLYPH_H }, (_, y) => bytes[n * 8 + y]));
 }
 
@@ -182,7 +182,7 @@ export function paletteToBytes(colors: readonly GifColor[]): Buffer {
 
 /** Parses gptgif-v4.c's `--palette FILE` binary format back into a color array. Throws on anything but exactly 768 bytes, matching `load_exact_file`'s own exact-length check. */
 export function paletteFromBytes(bytes: Buffer): GifColor[] {
-  if (bytes.length !== 768) throw new Error(`gptgif-v4: palette file must contain exactly 768 bytes, got ${bytes.length}`);
+  if (bytes.length !== 768) throw new Error(`gptgif-v4：调色板文件必须恰好包含 768 个字节，实际为 ${bytes.length} 个字节。`);
   return Array.from({ length: NCOLORS }, (_, i) => ({ r: bytes[i * 3], g: bytes[i * 3 + 1], b: bytes[i * 3 + 2] }));
 }
 
@@ -213,7 +213,7 @@ export function validatePalette(colors: readonly GifColor[]): void {
       if (low > 15 && low !== 31) continue;
       if (sameColor(colors[real], colors[low])) {
         throw new Error(
-          `gptgif-v4: foreground color role ${real} collides with background/noise/decoy role ${low}`,
+          `gptgif-v4：前景颜色角色 ${real} 与背景/噪声/干扰角色 ${low} 冲突。`,
         );
       }
     }
@@ -481,7 +481,7 @@ function learnTemplates(canonical: bigint[]): { templates: bigint[][]; styleBySe
               u += jx;
               v += jy;
               if (u < 0 || u >= 8 || v < 0 || v >= 8) {
-                throw new Error("gptungif-v4: learned alphabet clips under v4 jitter");
+                throw new Error("gptgif v4：学习到的字母表在 v4 抖动变换下发生裁切。");
               }
               mask |= 1n << BigInt(v * 8 + u);
             }
@@ -489,7 +489,7 @@ function learnTemplates(canonical: bigint[]): { templates: bigint[][]; styleBySe
           }
           const distinct = new Set(variants.map((m) => m.toString()));
           if (variants.some((m) => m === 0n) || distinct.size !== 16) {
-            throw new Error("gptungif-v4: learned alphabet has empty or ambiguous transformed glyphs");
+            throw new Error("gptgif v4：学习到的字母表包含空字形或在变换后存在歧义。");
           }
           templates.push(variants);
         }
@@ -528,7 +528,7 @@ function learnCalibration(image: GifImage): Calibration {
     for (let y = 0; y < GLYPH_H; y++) {
       for (let x = 0; x < GLYPH_W; x++) {
         if (raster[(baseY + y) * WIDTH + baseX + x] !== expected) {
-          throw new Error("gptungif-v4: calibration color swatches must be solid");
+          throw new Error("gptgif v4：校准颜色样本块必须为纯色。");
         }
       }
     }
@@ -543,12 +543,12 @@ function learnCalibration(image: GifImage): Calibration {
   for (let i = 0; i < HEADER_BYTES * 2; i++) {
     const mask = readCellMask(raster, HEADER_START + i, isForeground40);
     const nibble = canonical.indexOf(mask);
-    if (nibble < 0) throw new Error("gptungif-v4: visual header contains an unknown glyph");
+    if (nibble < 0) throw new Error("gptgif v4：可视化标头中包含未知字形。");
     headerNibbles[i] = nibble;
   }
   const header = Buffer.alloc(HEADER_BYTES);
   for (let i = 0; i < HEADER_BYTES; i++) header[i] = headerNibbles[2 * i] | (headerNibbles[2 * i + 1] << 4);
-  if (!header.subarray(0, 8).equals(MAGIC)) throw new Error("gptungif-v4: visual header is not gptgif v4");
+  if (!header.subarray(0, 8).equals(MAGIC)) throw new Error("gptgif v4：可视化标头不是 gptgif v4 格式。");
   const payloadLength = Number(header.readBigUInt64LE(8));
   const payloadDigest = header.subarray(16, 48);
 
@@ -605,17 +605,17 @@ function decodePayloadFrame(raster: Uint8Array, frameIndex: number, byteCount: n
   for (let i = 0; i < FRAME_CHARS; i++) observed[i] = physicalMasks[positions[i]];
 
   for (let i = 0; i < length; i++) {
-    if (observed[i] === 0n) throw new Error(`gptungif-v4: payload frame ${frameIndex}: cell count disagrees with header length`);
+    if (observed[i] === 0n) throw new Error(`gptgif v4：载荷帧 ${frameIndex} 的单元格数量与标头长度不一致。`);
   }
   for (let i = length; i < FRAME_CHARS; i++) {
-    if (observed[i] !== 0n) throw new Error(`gptungif-v4: payload frame ${frameIndex}: cell count disagrees with header length`);
+    if (observed[i] !== 0n) throw new Error(`gptgif v4：载荷帧 ${frameIndex} 的单元格数量与标头长度不一致。`);
   }
 
   const nibbles = new Uint8Array(length);
   for (let i = 0; i < length; i++) {
     const template = calibration.templates[styles[i]];
     const nibble = template.indexOf(observed[i]);
-    if (nibble < 0) throw new Error(`gptungif-v4: payload frame ${frameIndex}: unknown or ambiguous glyph`);
+    if (nibble < 0) throw new Error(`gptgif v4：载荷帧 ${frameIndex} 包含未知或有歧义的字形。`);
     nibbles[i] = nibble;
   }
 
@@ -646,14 +646,14 @@ function decodePayloadFrame(raster: Uint8Array, frameIndex: number, byteCount: n
 export function decodeGptgifV4(gif: Buffer): Buffer {
   const image = readGif(gif);
   if (image.width !== WIDTH || image.height !== HEIGHT) {
-    throw new Error(`gptungif-v4: expected a ${WIDTH}x${HEIGHT} GIF`);
+    throw new Error(`gptgif v4：预期输入为 ${WIDTH}x${HEIGHT} 的 GIF。`);
   }
-  if (image.frames.length === 0) throw new Error("gptungif-v4: missing v4 calibration frame");
+  if (image.frames.length === 0) throw new Error("gptgif v4：缺少 v4 校准帧。");
 
   const calibration = learnCalibration(image);
   const payloadFrameCount = Math.ceil(calibration.payloadLength / FRAME_BYTES);
   if (image.frames.length !== payloadFrameCount + 1) {
-    throw new Error("gptungif-v4: GIF frame count disagrees with visual header length");
+    throw new Error("gptgif v4：GIF 帧数与可视化标头中的长度不一致。");
   }
 
   const hash = createHash("sha256");
@@ -675,7 +675,7 @@ export function decodeGptgifV4(gif: Buffer): Buffer {
   // dead code, not a real defense against a malformed file.
   const digest = hash.digest();
   if (!digest.equals(calibration.payloadDigest)) {
-    throw new Error("gptungif-v4: SHA-256 digest mismatch; no recovered output has been published");
+    throw new Error("gptgif v4：SHA-256 摘要不匹配；未发布任何恢复结果。");
   }
   return Buffer.concat(chunks);
 }
