@@ -194,7 +194,7 @@ test("Responses API validation errors are localized", async () => {
   assert.equal(res.json().error.message, "至少需要一条输入消息。");
 });
 
-test("Responses API localizes nested content validation errors", async () => {
+test("Responses API localizes empty content arrays", async () => {
   useSession("account-responses-content-validate");
   const res = await app.inject({
     method: "POST",
