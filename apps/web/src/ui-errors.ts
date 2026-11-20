@@ -17,17 +17,21 @@ const STATUS_MESSAGES: Record<string, string> = {
   "504": "请求处理超时，请刷新会话后重试。",
 };
 
-const NETWORK_ERROR = /failed to fetch|networkerror|network request failed|load failed|fetch failed|offline|econnrefused|econnreset|err_network/i;
+const NETWORK_ERROR = /failed to fetch|networkerror|network request failed|load failed|fetch failed|offline|econnrefused|econnreset|err_network|err_name_not_resolved|err_cert_[a-z_]+|err_connection_[a-z_]+|err_internet_disconnected/i;
+const UNTRANSLATED_ERROR = /\b(?:upstream|unauthorized|forbidden|not found|bad request|internal server error|service unavailable|temporarily unavailable|rate limit(?: exceeded)?|invalid(?: request| input| parameter)?|failed|failure|error|denied|expired|unsupported|timed out|timeout)\b/i;
 const HAS_CHINESE = /[\u3400-\u9fff]/;
 
 function localizeMessage(message: string, fallback: string): string {
   const normalized = message.trim();
   if (!normalized) return fallback;
-  if (HAS_CHINESE.test(normalized)) return normalized;
   if (NETWORK_ERROR.test(normalized)) {
     return "网络连接失败，请检查服务器地址和网络后重试。";
   }
   const status = normalized.match(/(?:HTTP\s*)?([45]\d{2})\b/i)?.[1];
+  if (UNTRANSLATED_ERROR.test(normalized)) {
+    return status ? STATUS_MESSAGES[status] ?? "服务器请求失败，请稍后重试。" : fallback;
+  }
+  if (HAS_CHINESE.test(normalized)) return normalized;
   if (status) {
     return STATUS_MESSAGES[status] ?? "服务器请求失败，请稍后重试。";
   }
