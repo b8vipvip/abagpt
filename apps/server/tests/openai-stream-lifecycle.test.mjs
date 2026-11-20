@@ -167,7 +167,7 @@ test("stream output may append to delivered text but cannot replace or truncate 
   assert.equal(remainingStreamText("same", "same"), "");
   assert.equal(remainingStreamText("first answer", ""), "first answer");
   for (const replacement of ["different answer", "already", ""]) {
-    assert.throws(() => remainingStreamText(replacement, "already delivered"), /changed text already delivered/);
+    assert.throws(() => remainingStreamText(replacement, "already delivered"), /上游修改了已发送给客户端的文本/);
   }
 });
 });
