@@ -119,7 +119,7 @@ function tamperHash(loaf) {
 test("extractLoaf allows reference-compatible extraction unless explicit verification is requested", () => {
   const loaf = makeLoaf([{ name: "a.txt", content: Buffer.from("a") }]);
   assert.equal(extractLoaf(tamperHash(loaf))[0].content.toString(), "a");
-  assert.throws(() => extractLoaf(tamperHash(loaf), { verify: true }), /checksum mismatch/);
+  assert.throws(() => extractLoaf(tamperHash(loaf), { verify: true }), /校验和不匹配/);
 });
 
 test("extractLoaf reads an archive whose header hash was tampered with when verification is omitted", () => {
@@ -129,15 +129,15 @@ test("extractLoaf reads an archive whose header hash was tampered with when veri
 });
 
 test("rejects a string that isn't a .loaf at all", () => {
-  assert.throws(() => verifyLoaf("not a loaf"), /not a valid \.loaf/);
+  assert.throws(() => verifyLoaf("not a loaf"), /无效的 \.loaf 文件/);
 });
 
 test("rejects a .loaf with embedded newlines (e.g. from a wrapping hex encoder)", () => {
   const loaf = makeLoaf([{ name: "a.txt", content: Buffer.from("a") }]);
   const [header, hex] = loaf.split(" ");
   const wrapped = `${header} ${hex.slice(0, hex.length / 2)}\n${hex.slice(hex.length / 2)}`;
-  assert.throws(() => verifyLoaf(wrapped), /single line/);
-  assert.throws(() => extractLoaf(wrapped), /single line/);
+  assert.throws(() => verifyLoaf(wrapped), /必须为单行/);
+  assert.throws(() => extractLoaf(wrapped), /必须为单行/);
 });
 
 test("tolerates a single trailing newline the way a text editor or `cat` would leave one", () => {

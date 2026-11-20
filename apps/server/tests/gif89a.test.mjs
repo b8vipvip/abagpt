@@ -135,7 +135,7 @@ test("round-trips a large, 256-color frame that forces LZW code-width growth and
 });
 
 test("rejects a buffer that isn't a GIF at all", () => {
-  assert.throws(() => readGif(Buffer.from("not a gif at all")), /not a GIF file/);
+  assert.throws(() => readGif(Buffer.from("not a gif at all")), /不是有效的 GIF 文件/);
 });
 
 test("decodes a file with no global color table at all, returning an empty palette", () => {
@@ -178,7 +178,7 @@ test("throws on an unrecognized block marker instead of looping forever", () => 
   const trailerIndex = corrupted.length - 1;
   assert.equal(corrupted[trailerIndex], 0x3b);
   corrupted[trailerIndex] = 0x99; // replace the trailer with an unknown marker
-  assert.throws(() => readGif(corrupted), /unexpected block marker 0x99/);
+  assert.throws(() => readGif(corrupted), /意外的块标记 0x99/);
 });
 
 test("decodes the classic LZW back-reference (KwKwK) case, matching a real decoder's table growth", () => {
@@ -218,7 +218,7 @@ test("throws on a code that is neither a known dictionary entry nor the KwKwK ca
     minCodeSize: 2,
     codes: [[4, 3], [7, 3]], // 7 is unused and isn't nextCode (6) with no prior entry
   });
-  assert.throws(() => readGif(gif), /invalid LZW code 7/);
+  assert.throws(() => readGif(gif), /无效的 LZW 代码 7/);
 });
 
 test("tolerates a stream that ends immediately after a clear code, without throwing", () => {

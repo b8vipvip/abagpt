@@ -218,7 +218,7 @@ function lzwDecode(data: Buffer, minCodeSize: number, expectedPixelCount: number
     } else if (code === nextCode && previous) {
       entry = [...previous, previous[0]];
     } else {
-      throw new Error(`gif: invalid LZW code ${code}`);
+      throw new Error(`GIF：无效的 LZW 代码 ${code}。`);
     }
     for (const value of entry) {
       if (outPos < out.length) out[outPos] = value;
@@ -325,7 +325,7 @@ export function writeGif(image: GifImage): Buffer {
 /** Decodes a GIF89a into its frames (palette indices) and global color table. */
 export function readGif(buf: Buffer): GifImage {
   if (buf.subarray(0, 3).toString("ascii") !== "GIF") {
-    throw new Error("gif: not a GIF file (bad signature)");
+    throw new Error("GIF：不是有效的 GIF 文件（文件签名不正确）。");
   }
   const width = buf.readUInt16LE(6);
   const height = buf.readUInt16LE(8);
@@ -380,7 +380,7 @@ export function readGif(buf: Buffer): GifImage {
       continue;
     }
     // Unknown marker -- bail rather than loop forever on a malformed file.
-    throw new Error(`gif: unexpected block marker 0x${marker.toString(16)} at offset ${offset}`);
+    throw new Error(`GIF：在偏移量 ${offset} 处遇到意外的块标记 0x${marker.toString(16)}。`);
   }
 
   return { width, height, globalColorTable, frames };

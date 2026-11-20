@@ -53,6 +53,10 @@ test.describe("server / conversion routes", () => {
     assert.equal(response.statusCode, 200);
     assert.deepEqual(response.json().formats.map((f) => f.id), ["loaf", "pngspeak", "gptgif", "gptgif-v4"]);
     assert.deepEqual(response.json().formats.map((f) => f.extension), ["loaf", "pngspk.png", "gptgif.gif", "gptgif-v4.gif"]);
+    assert.match(response.json().formats.find((f) => f.id === "loaf").blurb, /归档/);
+    assert.equal(response.json().formats.find((f) => f.id === "gptgif").label, "gptgif（原版）");
+    assert.match(response.json().io.raw_in, /将请求体作为原始字节发送/);
+    assert.match(response.json().io.raw_out, /以原始字节形式返回响应/);
     assert.match(response.json().io.raw_in, /application\/octet-stream/);
   });
 
@@ -80,7 +84,9 @@ test.describe("server / conversion routes", () => {
     const emptyDecode = await post("/api/convert/onion/decode", { dataBase64: b64(emptyArchive), chain: ["loaf"] });
     assert.equal(emptyDecode.statusCode, 500);
     assert.equal((await post("/api/convert/loaf/decode?raw_in=1", Buffer.from("nope"), "text/plain")).statusCode, 400);
-    assert.equal((await post("/api/convert/loaf/encode?raw_in=1", { data: "not bytes" })).statusCode, 400);
+    const invalidRawBody = await post("/api/convert/loaf/encode?raw_in=1", { data: "not bytes" });
+    assert.equal(invalidRawBody.statusCode, 400);
+    assert.match(invalidRawBody.json().error, /raw_in 需要请求体为原始字节/);
   });
 
   test("PngSpeak supports JSON and raw transports, dimensions and binary recovery", async (t) => {
@@ -214,16 +220,16 @@ test.describe("server / conversion routes", () => {
     try {
       const loafDecode = await post("/api/convert/loaf/decode", { loaf: "not an archive" });
       assert.equal(loafDecode.statusCode, 400);
-      assert.match(loafDecode.json().error, /archive|LoaF|gzip/i);
+      assert.match(loafDecode.json().error, /归档|LoaF|gzip/i);
       const font = await post("/api/convert/gptgif-v4/font/validate", { fontBase64: b64("short") });
       assert.equal(font.json().valid, false);
-      assert.match(font.json().error, /font/i);
+      assert.match(font.json().error, /字体/);
       const palette = await post("/api/convert/gptgif-v4/palette/validate", { paletteBase64: b64("short") });
       assert.equal(palette.json().valid, false);
-      assert.match(palette.json().error, /palette/i);
+      assert.match(palette.json().error, /调色板/);
       const encode = await post("/api/convert/gptgif-v4/encode", { dataBase64: b64("x"), fontBase64: b64("short") });
       assert.equal(encode.statusCode, 400);
-      assert.match(encode.json().error, /font/i);
+      assert.match(encode.json().error, /字体/);
       const gauntlet = await post("/api/convert/gauntlet", { dataBase64: b64("x") });
       assert.equal(gauntlet.statusCode, 200);
     } finally {
