@@ -225,7 +225,6 @@ export async function runChat(
     };
   } catch (error) {
     const stopped = error instanceof Error && error.name === "AbortError";
-    const message = stopped ? "生成已停止。" : "生成失败。";
     if (!transient) updateMessage(
       assistant.id,
       fullText,
