@@ -90,7 +90,7 @@ export interface SendMessageOptions {
   /** Optional Cloudflare Turnstile token override for sentinel requirements. */
   turnstileToken?: string | null;
   onDelta?: (text: string, full: string) => void;
-  onEvent?: (event: NormalizedConversationEvent) => void;
+  onEvent?: (event: NormalizedConversationEvent) => void | Promise<void>;
   signal?: AbortSignal;
 }
 
@@ -770,14 +770,17 @@ export class ChatGptBackendClient {
     const decoder = new TextDecoder();
     const frames = new SseFrameDecoder();
 
-    const deliver = () => {
+    const deliver = async () => {
       const events = reducer.drainEvents();
       for (const event of events) {
         allEvents.push(event);
-        opts.onEvent?.(event);
+        // Persist the text delta before awaiting the downstream socket writer.
+        // If the client disconnects mid-frame, the partial transcript is still
+        // available for the stopped assistant turn.
         if (event.kind === "assistant_text" && event.delta) {
           opts.onDelta?.(event.delta, event.text);
         }
+        await opts.onEvent?.(event);
       }
     };
 
@@ -788,14 +791,14 @@ export class ChatGptBackendClient {
         for (const chunk of frames.push(decoder.decode(value, { stream: true }))) {
           for (const payload of iterSseDataLines(chunk)) {
             reducer.feed(payload);
-            deliver();
+            await deliver();
             if (reducer.isDone) break;
           }
         }
         if (reducer.isDone) break;
       }
     } finally {
-      if (reducer.isDone) await reader.cancel().catch(() => undefined);
+      await reader.cancel().catch(() => undefined);
       reader.releaseLock();
     }
 
@@ -805,10 +808,10 @@ export class ChatGptBackendClient {
     for (const chunk of frames.finish()) {
       for (const payload of iterSseDataLines(chunk)) {
         reducer.feed(payload);
-        deliver();
+        await deliver();
       }
     }
-    deliver();
+    await deliver();
 
     if (!reducer.isDone) throw new BackendApiError("Conversation stream interrupted before completion");
 
