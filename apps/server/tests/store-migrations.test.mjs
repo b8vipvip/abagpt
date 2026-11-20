@@ -53,7 +53,7 @@ test("MIRROR_STORE_KEY of the wrong length throws at startup", async () => {
   try {
     await assert.rejects(
       import(`../dist/store.js?store-key-bad=${Date.now()}`),
-      /must decode to exactly 32 bytes/,
+      /解码后必须恰好为 32 字节/,
     );
   } finally {
     delete process.env.MIRROR_STORE_KEY;
@@ -556,7 +556,7 @@ test("getSession throws when the stored session value has been corrupted outside
     } finally {
       raw.close();
     }
-    assert.throws(() => store.getSession(), /Unsupported encrypted value/);
+    assert.throws(() => store.getSession(), /不支持的加密数据格式/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
