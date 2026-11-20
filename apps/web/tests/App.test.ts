@@ -7,8 +7,10 @@ import { render, screen, cleanup, fireEvent, waitFor, within } from "@testing-li
 import App, { localizedRole, localizedStatus } from "../src/App.js";
 
 test.describe("web / App", () => {
-  test("preserves unknown status and role values for diagnostics", () => {
-    assert.equal(localizedStatus("Upstream pending"), "Upstream pending");
+  test("uses a Chinese fallback for unknown status text while preserving protocol roles", () => {
+    assert.equal(localizedStatus("Upstream pending"), "状态更新");
+    assert.equal(localizedStatus("上游等待中"), "上游等待中");
+    assert.equal(localizedStatus(""), "");
     assert.equal(localizedRole("tool"), "tool");
   });
 
