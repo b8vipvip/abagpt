@@ -1461,6 +1461,7 @@ test("conversation branches list parents and nodes, and continuing from an assis
             { id: "m-other", upstreamNodeId: "node-8", role: "tool", status: "queued" },
             { id: "m-interrupted", upstreamNodeId: null, role: "assistant", status: "interrupted" },
             { id: "m-stopped", upstreamNodeId: null, role: "assistant", status: "stopped" },
+            { id: "m-unknown", upstreamNodeId: null, role: "future-role", status: "future-state" },
           ],
         }),
     ],
@@ -1480,12 +1481,13 @@ test("conversation branches list parents and nodes, and continuing from an assis
   // to a plain label instead of rendering a blank <code> element - and
   // does not offer to "continue" from it (that button only appears once
   // an assistant node has a real upstream node id).
-  assert.equal(within(panel).getAllByText("无上游节点").length, 3);
+  assert.equal(within(panel).getAllByText("无上游节点").length, 4);
   assert.ok(within(panel).getByText("用户 · 已完成"));
   assert.ok(within(panel).getByText("助手 · 生成中"));
   assert.ok(within(panel).getByText("工具 · 排队中"));
   assert.ok(within(panel).getByText("助手 · 已中断"));
   assert.ok(within(panel).getByText("助手 · 已停止"));
+  assert.ok(within(panel).getByText("其他角色 · 其他状态"));
   fireEvent.click(continueButton);
   await screen.findByText("已加载");
   assert.deepEqual(branchBody, { messageId: "m-asst" });
