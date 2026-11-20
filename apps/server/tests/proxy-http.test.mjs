@@ -275,7 +275,7 @@ test("an upstream fetch failure responds 502 without ever hijacking the reply", 
       const { reply, state } = makeReply();
       await proxyChatGpt(req, reply);
       assert.equal(state.sentCode, 502);
-      assert.deepEqual(state.sentJson, { error: "upstream_request_failed", path: "/plain/whatever" });
+      assert.deepEqual(state.sentJson, { error: "上游请求失败，请检查网络连接后重试。", code: "upstream_request_failed", path: "/plain/whatever" });
     },
   ));
 

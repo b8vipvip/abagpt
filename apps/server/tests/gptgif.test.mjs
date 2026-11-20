@@ -86,7 +86,7 @@ test("a decode using fewer distinct digits than the cluster count leaves some cl
   // calibrateGptgif must still render all 16 (mostly-empty) cluster reports
   // without dividing by a zero count.
   const report = calibrateGptgif(gif);
-  assert.match(report, /Cluster Label: 15/);
+  assert.match(report, /聚类标签：15/);
 });
 
 test("clusterGlyphTiles merges extra distinct shapes into the nearest existing cluster once k is full", () => {
@@ -97,9 +97,9 @@ test("clusterGlyphTiles merges extra distinct shapes into the nearest existing c
   // every shape past the first 2 must merge into whichever of those 2 it's
   // closer to by Hamming distance.
   const report = calibrateGptgif(gif, { clusterMap: "01" });
-  assert.match(report, /Cluster Label: 0/);
-  assert.match(report, /Cluster Label: 1/);
-  assert.doesNotMatch(report, /Cluster Label: 2/);
+  assert.match(report, /聚类标签：0/);
+  assert.match(report, /聚类标签：1/);
+  assert.doesNotMatch(report, /聚类标签：2/);
 });
 
 test("clusterGlyphTiles recognizes a tile matching an already-established cluster", () => {
@@ -117,9 +117,9 @@ test("clusterGlyphTiles recognizes a tile matching an already-established cluste
 test("calibrateGptgif's report lists every cluster centroid as an 8x8 grid of # and .", () => {
   const gif = encodeGptgif([Buffer.from("calibrate me")]);
   const report = calibrateGptgif(gif);
-  assert.match(report, /K-Means Cluster Centroids/);
+  assert.match(report, /K-Means 聚类质心/);
   assert.match(report, /^[#.]{8}$/m);
-  assert.match(report, /associate each index with the correct character/);
+  assert.match(report, /将每个索引与聚类映射中的正确字符对应起来/);
 });
 
 // Bit-exact re-implementation of BitWriter's packing (see gif89a.test.mjs

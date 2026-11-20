@@ -87,6 +87,18 @@ test("ephemeral chat uses upstream temporary mode and leaves no local rows", asy
   }
 });
 
+test("a whitespace-only prompt receives the localized default conversation title", async () => {
+  useSession("account-empty-title");
+  const originalFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = stubHappyBackend("account-empty-title");
+    const result = await service.runChat({ prompt: "   ", model: "auto" });
+    assert.equal(result.conversation.title, "新对话");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("a gizmo's bootstrap payload fetch failure is swallowed and the turn still completes", async () => {
   useSession("account-gizmo");
   const originalFetch = globalThis.fetch;

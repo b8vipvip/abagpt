@@ -359,7 +359,7 @@ export async function proxyChatGpt(req: FastifyRequest, reply: FastifyReply): Pr
     });
   } catch (error) {
     req.log.error({ error, path: req.url }, "mirror upstream request failed");
-    reply.code(502).send({ error: "upstream_request_failed", path: req.url });
+    reply.code(502).send({ error: "上游请求失败，请检查网络连接后重试。", code: "upstream_request_failed", path: req.url });
     return;
   }
   const contentType = upstream.headers.get("content-type") ?? "application/octet-stream";
