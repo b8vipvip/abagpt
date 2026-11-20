@@ -169,6 +169,15 @@ test("SseWriter observes close after drain and rejects an ended response after d
   closed.raw.emit("close");
   await assert.rejects(closePending, abortError);
 
+  const destroyedAfterDrain = fakeReply();
+  destroyedAfterDrain.raw.write = () => false;
+  const destroyedWriter = new SseWriter(destroyedAfterDrain);
+  const destroyedPending = destroyedWriter.write("destroy-after-drain");
+  await new Promise((resolve) => setImmediate(resolve));
+  destroyedAfterDrain.raw.emit("drain");
+  destroyedAfterDrain.raw.destroyed = true;
+  await assert.rejects(destroyedPending, abortError);
+
   const ended = fakeReply();
   ended.raw.write = () => false;
   const endedWriter = new SseWriter(ended);
