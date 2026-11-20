@@ -54,7 +54,7 @@
   "apps/server/src/preflight.ts": "e752a4986514930d783c8d0930c69302801c7da5d86ceda5a77cf3cae7da2997",
   "apps/server/src/proxy.ts": "3b83b76c49e730bc2d0c6ff56dabac2fe12b7ff5698b62a52bd215c7f0a945d5",
   "apps/server/src/responses.ts": "b8e168b8eee8a485ff8a09d9a9e1006bf9aa31b02d617606bf45ba54714e5005",
-  "apps/server/src/rich-output.ts": "7dcebb7c18f3c77d10b3199f1deb1b9395ebff0caa8374e184642d31f3814e1b",
+  "apps/server/src/rich-output.ts": "9a749c06c09155e0b9b4e6c40808addae6574139c140177604b67062bfc426f4",
   "apps/server/src/schema.ts": "cf4013b9b3729a70d14bd26ea88b0e8663740d0864e3ebbeaff49fafe8bd2356",
   "apps/server/src/security.ts": "12403e43ff117394b5edd4139381604151b512a1f76762656ad8b4738c5598c0",
   "apps/server/src/storage-config.ts": "b8aeabd9c4791a5a1a22622da7e520bf7ac7a0e2df32807d21d7237c136871eb",

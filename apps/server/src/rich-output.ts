@@ -316,7 +316,7 @@ export async function renderRichOutput(
     }
     if (node.type === "text") {
       let value = text.slice(node.position!.start.offset, node.position!.end.offset);
-      value = value.replace(/Download file:(\s*)$/i, "下载文件：$1");
+      value = value.replace(/Download file:\s*$/i, "下载文件：");
       // Replace references and bare pointers once, without rescanning generated
       // Markdown (a filename itself may contain punctuation or pointer text).
       const tokens = [...references.keys(), ...citationRefs.keys()].filter(token => value.includes(token)).sort((a, b) => b.length - a.length);
