@@ -1,13 +1,9 @@
-# Reliability update
+# 可靠性更新
 
-The current source is the Git commit identified by the generated SHA256 manifest.
-Node 24 is required. CI installs from the lockfile, type-checks, runs unit/integration
-and mocked browser tests, builds production assets, and verifies the manifest.
+当前源代码版本以自动生成的 SHA256 清单所标识的 Git 提交为准。
 
-This update covers pagination, stream completion/error handling, coherent saved
-conversation state, session revision checks, authenticated local controls,
-memory-only one-shot turns, storage maintenance, explicit unsupported Work Mode
-reporting, and modular browser integration without Mirror-managed telemetry init.
+项目要求 Node 24。CI 从锁文件安装依赖，执行类型检查、单元／集成测试和模拟浏览器测试，构建生产资源，并验证完整性清单。
 
-Tests use temporary local storage and synthetic upstream responses. They do not
-validate live ChatGPT protocol compatibility or prove account entitlement to a model.
+本次更新涵盖分页、流式完成／错误处理、已保存对话状态一致性、会话修订号检查、经过身份验证的本地控制、仅保留在内存中的单次请求、存储维护、明确报告不支持的 Work Mode，以及不依赖 Mirror 遥测初始化的模块化浏览器集成。
+
+测试使用临时本地存储和合成上游响应。它们不会验证实时 ChatGPT 协议兼容性，也不能证明账号具备使用某个模型的资格。
