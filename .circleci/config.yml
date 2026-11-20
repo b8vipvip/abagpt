@@ -8,8 +8,8 @@
 # reachable provider with a generous open-source free tier (400,000 Linux
 # credits/month at last check).
 #
-# This now fully replaces .github/workflows/ci.yml (which has been removed -
-# see TODO.md), porting both of its jobs:
+# This remains an independent secondary CI lane alongside .github/workflows/ci.yml.
+# Both workflows run the same verification and container checks:
 #   - verify: typecheck, the 100%-enforced coverage gate, build, the storage
 #     backup/restore drill, Playwright e2e, and the manifest check.
 #   - container: builds the Docker image and verifies offline backup/restore
@@ -47,14 +47,14 @@ jobs:
           docker_layer_caching: false
       - run:
           name: Build the verified revision
-          command: docker build --build-arg MIRROR_BUILD_REVISION="$CIRCLE_SHA1" -t mirror-verified .
+          command: docker build --build-arg MIRROR_VERSION=development --build-arg MIRROR_BUILD_REVISION="$CIRCLE_SHA1" -t mirror-verified .
       - run:
           name: Verify recovery inside the runtime image without network access
           command: docker run --rm --network none --entrypoint node mirror-verified scripts/restore-drill.mjs
       - run:
           name: Verify embedded revision and record image identity
           command: |
-            docker run --rm --network none -e EXPECTED_REVISION="$CIRCLE_SHA1" --entrypoint node mirror-verified -e 'require("node:assert/strict").equal(process.env.MIRROR_BUILD_REVISION, process.env.EXPECTED_REVISION)'
+            docker run --rm --network none -e EXPECTED_REVISION="$CIRCLE_SHA1" -e EXPECTED_VERSION=development --entrypoint node mirror-verified -e 'const assert = require("node:assert/strict"); assert.equal(process.env.MIRROR_BUILD_REVISION, process.env.EXPECTED_REVISION); assert.equal(process.env.MIRROR_VERSION, process.env.EXPECTED_VERSION)'
             docker image inspect --format '{{.Id}} {{index .Config.Labels "org.opencontainers.image.revision"}}' mirror-verified
 
 workflows:
