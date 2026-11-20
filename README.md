@@ -31,10 +31,11 @@ Mirror 会在本地服务器上加密保存凭证，并使用它获取短期有�
 
 ```sh
 MIRROR_IMAGE=ghcr.io/b8vipvip/abagpt@sha256:<release-digest>
+docker compose pull mirror
 docker compose up -d
 ```
 
-使用镜像摘要部署时不要添加 `--build`；这会拉取并运行指定的不可变镜像。源码开发仍使用默认的 `:local` 镜像并执行 `docker compose up --build`。首次发布后，如需匿名公开拉取 GHCR 镜像，请在 GitHub Packages 中将该容器包的可见性设为 Public。
+使用镜像摘要部署时先执行 `docker compose pull mirror`，再执行 `docker compose up -d`，不要添加 `--build`；显式 pull 可确保摘要拉取失败时直接报错，而不是回退到本地源码构建。源码开发仍使用默认的 `:local` 镜像并执行 `docker compose up --build`。首次发布后，如需匿名公开拉取 GHCR 镜像，请在 GitHub Packages 中将该容器包的可见性设为 Public。
 
 ### 网络要求
 
