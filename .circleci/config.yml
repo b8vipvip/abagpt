@@ -35,6 +35,7 @@ jobs:
             VERSION="$(node -p "require('./package.json').version")"
             export RELEASE_VERSION="$VERSION"
             export GITHUB_REF_NAME="v$VERSION"
+            export CONTAINER_NODE_VERSION="$(node --version)"
             export GITHUB_SHA="$CIRCLE_SHA1"
             export GITHUB_REPOSITORY="b8vipvip/abagpt"
             export IMAGE_NAME="ghcr.io/b8vipvip/abagpt"
