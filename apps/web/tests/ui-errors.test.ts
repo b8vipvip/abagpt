@@ -28,6 +28,14 @@ test("localizeUiError uses a safe fallback for unknown HTTP codes and unknown me
   assert.equal(localizeUiError(new Error("unrecognized upstream message"), "转换失败"), "转换失败");
 });
 
+test("localizeUiError sanitizes mixed Chinese and English transport/upstream errors", () => {
+  assert.equal(localizeUiError(new Error("连接失败：ERR_NAME_NOT_RESOLVED"), "操作失败"), "网络连接失败，请检查服务器地址和网络后重试。");
+  assert.equal(localizeUiError("上游服务失败：upstream unavailable", "操作失败"), "操作失败");
+  assert.equal(localizeUiError("请求失败（HTTP 503：upstream unavailable）", "操作失败"), "服务暂时不可用，请稍后重试。");
+  assert.equal(localizeUiError("HTTP 418 upstream unavailable", "操作失败"), "服务器请求失败，请稍后重试。");
+  assert.equal(localizeUiError("ChatGPT 会话已过期，请重新登录。", "操作失败"), "ChatGPT 会话已过期，请重新登录。");
+});
+
 test("localizeUiError maps additional HTTP statuses and connection failures", () => {
   assert.equal(localizeUiError(new Error("HTTP 413 payload too large"), "操作失败"), "上传内容过大，请缩小文件或减少附件后重试。");
   assert.equal(localizeUiError(new Error("HTTP 421 Misdirected Request"), "操作失败"), "请求主机名未获信任，请检查服务器地址。");

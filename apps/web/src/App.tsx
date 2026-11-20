@@ -116,7 +116,7 @@ export function localizedStatus(status: string): string {
     "Stopped": "已停止",
     "Error": "出错",
   };
-  return labels[status] ?? status;
+  return labels[status] ?? (/[㐀-鿿]/.test(status) ? status : status.trim() ? "状态更新" : "");
 }
 
 export function localizedRole(role: string): string {

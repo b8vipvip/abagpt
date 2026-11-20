@@ -100,6 +100,19 @@ test("API documentation is localized without changing the OpenAPI contract", asy
  const spec = await specResponse.json();
  expect(spec.openapi).toBe("3.1.0");
  expect(spec.paths["/v1/chat/completions"].post.summary).toBe("创建聊天补全");
+ const documentationCopy: string[] = [];
+ const collectDocumentationCopy = (value: any): void => {
+  if (Array.isArray(value)) { for (const item of value) collectDocumentationCopy(item); return; }
+  if (!value || typeof value !== "object") return;
+  for (const [key, child] of Object.entries(value)) {
+   if ((key === "summary" || key === "description") && typeof child === "string") documentationCopy.push(child);
+   else if (key === "tags" && Array.isArray(child)) documentationCopy.push(...child.filter((tag): tag is string => typeof tag === "string"));
+   else collectDocumentationCopy(child);
+  }
+ };
+ collectDocumentationCopy(spec);
+ expect(documentationCopy.length).toBeGreaterThan(0);
+ for (const copy of documentationCopy) expect(copy).toMatch(/[\u3400-\u9fff]/);
  expect(spec.paths["/v1/chat/completions"].post.requestBody).toBeDefined();
  const requestSchema = spec.components.schemas.CompletionRequest;
  expect(requestSchema.properties.max_tokens).toBeDefined();
@@ -113,6 +126,59 @@ test("API documentation is localized without changing the OpenAPI contract", asy
  await expect(page.locator(".swagger-ui.swagger-container")).toContainText("请求体");
  await expect(page.locator(".swagger-ui.swagger-container")).toContainText("试用");
 });
+test("Swagger authorization and live API error states stay localized", async ({ page }) => {
+ await page.goto(`${serverBase}/mirror/playground`);
+ await page.goto(`${serverBase}/mirror/api-docs`);
+ const authorizeButton = page.locator(".swagger-ui .auth-wrapper .authorize");
+ await expect(authorizeButton).toHaveText("授权");
+ await authorizeButton.click();
+ const authDialog = page.locator(".swagger-ui .dialog-ux");
+ await expect(authDialog).toBeVisible();
+ await expect(authDialog).toContainText("可用的身份验证方式");
+ await expect(authDialog).toContainText("授权");
+ await authDialog.locator(".btn-done").click();
+ await expect(authDialog).not.toBeVisible();
+
+ const modelsBlock = page.locator(".swagger-ui .opblock").filter({ hasText: "列出可用模型" }).first();
+ await modelsBlock.locator(".opblock-summary").click();
+ await modelsBlock.locator(".try-out__btn").click();
+ await expect(modelsBlock.locator(".try-out__btn")).toHaveText("取消");
+ await modelsBlock.locator(".execute").click();
+ await expect(modelsBlock.getByRole("cell", { name: "401", exact: true }).first()).toHaveText("401");
+ await expect(modelsBlock).toContainText("服务器响应");
+ await expect(modelsBlock).toContainText("请配置有效的 Mirror API 密钥");
+ await expect(modelsBlock).toContainText("错误：未授权");
+ await expect(modelsBlock).toContainText("下载");
+ await expect(modelsBlock).toContainText("媒体类型");
+ await expect(modelsBlock).not.toContainText("Error: Unauthorized");
+ await expect(modelsBlock).not.toContainText("Download");
+ await expect(modelsBlock).not.toContainText("Media type");
+ await expect(modelsBlock).not.toContainText("Controls");
+ await expect(modelsBlock).not.toContainText("header.");
+ await expect(modelsBlock.locator('button[aria-label="授权状态：未锁定"]')).toBeVisible();
+ await expect(modelsBlock.getByRole("button", { name: "接口详情：GET /v1/models" })).toBeVisible();
+});
+
+test("command palette keeps dynamic empty and network-error states localized", async ({ page }) => {
+ await page.route("**/v1/models", route => route.fulfill({ json: { data: [] } }));
+ await page.route("**/api/conversations?*", route => route.fulfill({ json: { items: [], hasMore: false } }));
+ await page.route("**/api/conversations/search?*", route => {
+  const query = new URL(route.request().url()).searchParams.get("q");
+  return query === "断网" ? route.abort() : route.fulfill({ json: { items: [] } });
+ });
+ await page.goto("/mirror/playground");
+ await expect(page.locator(".playground-app")).toBeVisible();
+ await page.evaluate(() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true, bubbles: true, cancelable: true })));
+ const palette = page.getByRole("dialog", { name: "快速搜索并打开会话" });
+ await expect(palette).toBeVisible();
+ await palette.getByRole("textbox").fill("不存在");
+ await expect(palette.getByRole("status")).toHaveText("没有找到匹配的会话");
+ await palette.getByRole("textbox").fill("断网");
+ await expect(palette.getByRole("status")).toHaveText("网络连接失败，请检查服务器地址和网络后重试。");
+ await page.keyboard.press("Escape");
+ await expect(palette).not.toBeVisible();
+});
+
 test("mobile API documentation stays readable without horizontal page overflow", async ({ page }) => {
  await page.setViewportSize({ width: 390, height: 844 });
  await page.goto(`${serverBase}/mirror/playground`);
