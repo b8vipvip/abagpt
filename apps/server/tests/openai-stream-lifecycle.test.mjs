@@ -170,14 +170,31 @@ test("a paused TCP reader stops SSE production until drain and preserves the con
 
   const largeAnswer = "stream-start-" + "x".repeat(24 * 1024 * 1024) + "-stream-end\n";
   const sent = [];
-  globalThis.fetch = stubBackend(account, {
-    sent,
-    turnFrames: (body, turn) => [
-      assistantAddFrame(body?.conversation_id ?? `upstream-${turn}`, `assistant-${turn}`,
-        turn === 1 ? largeAnswer : "resumed after drain"),
-      "[DONE]",
-    ],
-  });
+  let upstreamPulls = 0;
+  const fallbackBackend = stubBackend(account, { sent });
+  globalThis.fetch = async (input, init) => {
+    const url = new URL(String(input));
+    if (url.pathname.endsWith("/f/conversation")) {
+      const requestBody = JSON.parse(String(init?.body ?? "{}"));
+      sent.push({ method: init?.method, pathname: url.pathname, body: requestBody });
+      const firstFrame = assistantAddFrame(requestBody?.conversation_id ?? "upstream-1", "assistant-1", largeAnswer);
+      let frameIndex = 0;
+      const upstreamBody = new ReadableStream({
+        pull(controller) {
+          upstreamPulls += 1;
+          if (frameIndex === 0) {
+            controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify(firstFrame)}\\n\\n`));
+          } else if (frameIndex === 1) {
+            controller.enqueue(new TextEncoder().encode("data: [DONE]\\n\\n"));
+            controller.close();
+          }
+          frameIndex += 1;
+        },
+      }, { highWaterMark: 0 });
+      return new Response(upstreamBody, { headers: { "content-type": "text/event-stream" } });
+    }
+    return fallbackBackend(input, init);
+  };
 
   let blocked = false;
   let writesWhileBlocked = 0;
@@ -237,6 +254,7 @@ test("a paused TCP reader stops SSE production until drain and preserves the con
     assert.equal(blocked, true, "the paused peer must keep the server write buffer blocked");
     assert.equal(writesWhileBlocked, 0, "no later SSE frame may overtake a blocked write");
     assert.equal(drainCount, 0, "the socket must not drain while the client is paused");
+    assert.equal(upstreamPulls, 1, "the upstream reader must pause while the downstream socket is blocked");
 
     let output = "";
     const body = new Promise((resolve, reject) => {
@@ -250,6 +268,7 @@ test("a paused TCP reader stops SSE production until drain and preserves the con
     const streamed = await body;
 
     assert.ok(drainCount >= 1, "resuming the reader must release the blocked writer");
+    assert.equal(upstreamPulls, 2, "the upstream reader may advance only after downstream drain");
     assert.equal(writesWhileBlocked, 0);
     assert.ok(streamed.includes("-stream-end\\n"));
     assert.ok(streamed.includes("[DONE]"));
@@ -257,6 +276,10 @@ test("a paused TCP reader stops SSE production until drain and preserves the con
     assert.ok(conversationId, "stream must expose its local continuation id");
     assert.equal(store.listMessages(conversationId).at(-1).content, largeAnswer);
 
+    globalThis.fetch = stubBackend(account, {
+      sent,
+      turnFrames: body => [assistantAddFrame(body?.conversation_id ?? "upstream-1", "assistant-2", "resumed after drain"), "[DONE]"],
+    });
     const retry = await app.inject({
       method: "POST",
       url: "/v1/chat/completions",
