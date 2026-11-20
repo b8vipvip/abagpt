@@ -21,7 +21,7 @@ const hashFile = (relativePath) =>
 
 const tag = process.env.GITHUB_REF_NAME ?? "";
 const version = process.env.RELEASE_VERSION ?? tag.replace(/^v/, "");
-assert.match(tag, /^v\\d+\\.\\d+\\.\\d+$/, "Release must use a stable vX.Y.Z tag");
+assert.match(tag, /^v\d+\.\d+\.\d+$/, "Release must use a stable vX.Y.Z tag");
 assert.equal(tag, "v" + version, "Release tag and version disagree");
 
 const packagePaths = [
@@ -55,7 +55,7 @@ assert.equal(checkedOutRevision, sourceRevision, "Release checkout does not matc
 
 const imageName = process.env.IMAGE_NAME ?? "";
 const imageDigest = process.env.IMAGE_DIGEST ?? "";
-assert.match(imageName, /^ghcr\\.io\\/[a-z0-9._-]+\\/[a-z0-9._-]+$/, "IMAGE_NAME must be a lowercase GHCR image");
+assert.match(imageName, /^ghcr\.io\/[a-z0-9._-]+\/[a-z0-9._-]+$/, "IMAGE_NAME must be a lowercase GHCR image");
 assert.match(imageDigest, /^sha256:[a-f0-9]{64}$/, "IMAGE_DIGEST must be a registry sha256 digest");
 
 const dockerfile = readFileSync(path.join(root, "Dockerfile"), "utf8");
