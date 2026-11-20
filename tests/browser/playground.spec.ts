@@ -156,7 +156,7 @@ test("Swagger authorization and live API error states stay localized", async ({ 
  await expect(modelsBlock).not.toContainText("Controls");
  await expect(modelsBlock).not.toContainText("header.");
  await expect(modelsBlock.locator('button[aria-label="授权状态：未锁定"]')).toBeVisible();
- await expect(modelsBlock.getByRole("button", { name: "收起 GET /v1/models 接口详情" })).toBeVisible();
+ await expect(modelsBlock.getByRole("button", { name: "接口详情：GET /v1/models" })).toBeVisible();
 });
 
 test("command palette keeps dynamic empty and network-error states localized", async ({ page }) => {
