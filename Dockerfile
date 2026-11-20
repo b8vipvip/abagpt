@@ -1,3 +1,5 @@
+# Multi-platform index digest for the official Node 24 Bookworm slim image.
+# Pin the index (not an amd64-only manifest) so both release architectures resolve identically.
 ARG NODE_IMAGE=node:24-bookworm-slim@sha256:dc26ae92c9fb15cf6b1d63e20f0944b2efe0f115b20e00be48fb23fceb061c54
 FROM ${NODE_IMAGE} AS build
 
