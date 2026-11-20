@@ -433,12 +433,12 @@ export async function registerOpenAiRoutes(
             if (!reply.raw.writableEnded) bridgeController?.abort();
           });
           await bridgeWriter.write({ id, object: "chat.completion.chunk", created, model: body.model,
-            choices: [{ index: 0, delta: { role: "assistant" }, finish_reason: null }] });
+            choices: [{ index: 0, delta: { role: "assistant" }, finish_reason: null }] }, undefined, bridgeController.signal);
           bridgeHeartbeat = setInterval(() => {
             if (bridgeHeartbeatPending || reply.raw.destroyed || reply.raw.writableEnded) return;
             bridgeHeartbeatPending = true;
             void bridgeWriter!.write({ id, object: "chat.completion.chunk", created, model: body.model,
-              choices: [{ index: 0, delta: {}, finish_reason: null }] })
+              choices: [{ index: 0, delta: {}, finish_reason: null }] }, undefined, bridgeController?.signal)
               .catch(error => bridgeController?.abort(error))
               .finally(() => { bridgeHeartbeatPending = false; });
           }, 10_000);
@@ -452,10 +452,10 @@ export async function registerOpenAiRoutes(
           await bridgeWriter.write({ id, object: "chat.completion.chunk", created, model: body.model,
             choices: [{ index: 0, delta: answer.toolCalls
               ? { tool_calls: answer.toolCalls.map((call, index) => ({ index, ...call })) }
-              : { content: answer.content }, finish_reason: null }] });
+              : { content: answer.content }, finish_reason: null }] }, undefined, bridgeController?.signal);
           await bridgeWriter.write({ id, object: "chat.completion.chunk", created, model: body.model,
-            choices: [{ index: 0, delta: {}, finish_reason }] });
-          await bridgeWriter.write("[DONE]");
+            choices: [{ index: 0, delta: {}, finish_reason }] }, undefined, bridgeController?.signal);
+          await bridgeWriter.write("[DONE]", undefined, bridgeController?.signal);
           await bridgeWriter.end();
           return;
         }
@@ -588,7 +588,7 @@ export async function registerOpenAiRoutes(
     const controller = new AbortController();
     const sseWriter = new SseWriter(reply);
     responses = responsesParsed?.success
-      ? createResponseWriter(responsesParsed.data, event => sseWriter.write(event, String(event.type)))
+      ? createResponseWriter(responsesParsed.data, (event, signal) => sseWriter.write(event, String(event.type), signal))
       : undefined;
     const deadline = turnDeadline(controller);
     const startedAt = Date.now();
@@ -624,7 +624,7 @@ export async function registerOpenAiRoutes(
         // setup inside try/finally so a failure after hijack still cleans up.
         if (typeof reply.raw.socket?.setNoDelay === "function")
           reply.raw.socket.setNoDelay(true);
-        if (responses) await responses.start();
+        if (responses) await responses.start(controller.signal);
         else await sseWriter.write({
           id: completionId,
           object: "chat.completion.chunk",
@@ -637,7 +637,7 @@ export async function registerOpenAiRoutes(
               finish_reason: null,
             },
           ],
-        });
+        }, undefined, controller.signal);
         // ChatGPTBox forwards every data event through a runtime.Port, keeping
         // Chrome's extension worker alive. SSE comments are ignored by its
         // parser, so use an empty content delta during silent preparation or
@@ -647,14 +647,14 @@ export async function registerOpenAiRoutes(
           if (heartbeatWritePending || reply.raw.destroyed || reply.raw.writableEnded) return;
           heartbeatWritePending = true;
           const pending = responses
-            ? responses.delta("")
+            ? responses.delta("", controller.signal)
             : sseWriter.write({
                 id: completionId,
                 object: "chat.completion.chunk",
                 created,
                 model: body.model,
                 choices: [{ index: 0, delta: { content: "" }, finish_reason: null }],
-              });
+              }, undefined, controller.signal);
           void pending.catch(error => controller.abort(error))
             .finally(() => { heartbeatWritePending = false; });
         }, 10_000);
@@ -920,9 +920,9 @@ export async function registerOpenAiRoutes(
                 const safe = streamedText.slice(0, reference < 0 ? boundary : Math.min(boundary, reference));
                 const delta = safe.slice(emittedText.length);
                 if (delta) {
-                  if (responses) await responses.delta(delta);
+                  if (responses) await responses.delta(delta, controller.signal);
                   else await sseWriter.write({ id: completionId, object: "chat.completion.chunk", created, model: body.model,
-                    choices: [{ index: 0, delta: { content: delta }, finish_reason: null }] });
+                    choices: [{ index: 0, delta: { content: delta }, finish_reason: null }] }, undefined, controller.signal);
                   emittedText += delta;
                 }
               }
@@ -957,9 +957,9 @@ export async function registerOpenAiRoutes(
         if (body.stream) {
           const delta = remainingStreamText(responseText, emittedText);
           if (delta) {
-            if (responses) await responses.delta(delta);
+            if (responses) await responses.delta(delta, controller.signal);
             else await sseWriter.write({ id: completionId, object: "chat.completion.chunk", created, model: body.model,
-              choices: [{ index: 0, delta: { content: delta }, finish_reason: null }] });
+              choices: [{ index: 0, delta: { content: delta }, finish_reason: null }] }, undefined, controller.signal);
           }
         }
         if (!oneShot) {
@@ -1044,7 +1044,7 @@ export async function registerOpenAiRoutes(
         if (oneShot) delete responseFields.conversation_id;
         if (body.stream) {
           if (responses) {
-            await responses.complete(responseText, conversation.model, responseFields);
+            await responses.complete(responseText, conversation.model, responseFields, controller.signal);
             await sseWriter.end();
             return;
           }
@@ -1053,7 +1053,7 @@ export async function registerOpenAiRoutes(
           // id, since HTTP response headers can no longer be set once the
           // stream has started and this may be a brand-new conversation whose
           // id was not known until runChat() returned.
-          if (!oneShot) await sseWriter.comment(`mirror-conversation-id ${conversation.id}`);
+          if (!oneShot) await sseWriter.comment(`mirror-conversation-id ${conversation.id}`, controller.signal);
           await sseWriter.write({
             id: completionId,
             object: "chat.completion.chunk",
@@ -1061,8 +1061,8 @@ export async function registerOpenAiRoutes(
             model: conversation.model,
             choices: [{ index: 0, delta: {}, finish_reason: "stop" }],
             ...(responseMetadata ? { metadata: responseMetadata } : {}),
-          });
-          await sseWriter.write("[DONE]");
+          }, undefined, controller.signal);
+          await sseWriter.write("[DONE]", undefined, controller.signal);
           await sseWriter.end();
           return;
         }
