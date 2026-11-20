@@ -35,7 +35,7 @@ test.describe("server / schema", () => {
       const db = new DatabaseSync(":memory:");
       try {
         db.exec(`PRAGMA user_version = ${version}`);
-        assert.throws(() => migrateDatabase(db), /Unsupported database schema/);
+        assert.throws(() => migrateDatabase(db), /数据库 Schema 版本不受支持/);
         assert.equal(databaseSchemaVersion(db), version);
         assert.equal(db.prepare("SELECT count(*) AS n FROM sqlite_master").get().n, 0);
       } finally { db.close(); }
