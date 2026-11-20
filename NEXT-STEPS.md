@@ -59,16 +59,16 @@ restore, and authenticated live continuation.
   digest-addressed images, build provenance/SBOM, generated OpenAPI documents,
   SHA-256 manifest, exact package-lock, and release metadata containing the
   source revision, Node/npm versions, and image/base-image digests.
-- Replace the current ad-hoc column-existence migrations with numbered,
-  transactional schema migrations and a stored schema version. Document the
-  oldest database version supported by each release.
-- Automate an **offline** backup -> isolated restore -> integrity check drill for
-  both generated `master.key` and supplied `MIRROR_STORE_KEY` configurations.
-  Keep the live-account continuation check as a separately approved manual
-  release gate; never put a session credential in CI.
-- Publish a rollback runbook. A rollback should start with a known-good backup,
-  state whether the previous binary can read the upgraded schema, and include
-  WARP, session, model-discovery, and one real continuation checks.
+- **Completed:** numbered transactional schema migrations and a stored schema
+  version are documented in `RELEASE-RECOVERY.md`; each release records the
+  tested source and lockfile revisions.
+- **Completed:** CI and the release workflow run the offline backup -> isolated
+  restore -> integrity check drill for generated `master.key` and supplied
+  `MIRROR_STORE_KEY` configurations. Live-account continuation remains a
+  separately approved manual gate; no session credential enters CI.
+- **Completed:** `RELEASE-RECOVERY.md` documents backup, isolated restore,
+  schema compatibility, image-digest pinning, and rollback. Real-volume and
+  authenticated continuation checks remain manual release acceptance.
 
 **Why first:** storage upgrades now have a transactional version contract.
 Release tags are checked against every workspace package and package-lock;
