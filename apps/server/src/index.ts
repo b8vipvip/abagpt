@@ -195,6 +195,28 @@ app.addHook("onSend", async (req, reply, payload) => {
   return payload;
 });
 
+function localizedZodError(error: ZodError): string {
+  const messages = error.issues.map((issue) => {
+    if (/[\\u3400-\\u9fff]/.test(issue.message)) return issue.message;
+    const field = issue.path.length ? issue.path.join(".") : "请求";
+    switch (issue.code) {
+      case "invalid_type":
+        return `字段 ${field} 的类型不正确。`;
+      case "invalid_enum_value":
+        return `字段 ${field} 的取值不在允许范围内。`;
+      case "too_small":
+        return `字段 ${field} 的值或长度过小。`;
+      case "too_big":
+        return `字段 ${field} 的值或长度过大。`;
+      case "unrecognized_keys":
+        return "请求包含不支持的字段。";
+      default:
+        return `字段 ${field} 的格式无效。`;
+    }
+  });
+  return messages.join("；") || "请求参数无效，请检查请求字段和数据格式。";
+}
+
 app.setErrorHandler((error, _req, reply) => {
   const status =
     error instanceof ZodError
@@ -202,7 +224,7 @@ app.setErrorHandler((error, _req, reply) => {
       : Number((error as { statusCode?: number }).statusCode ?? 500);
   const message =
     error instanceof ZodError
-      ? error.issues.map((issue) => issue.message).join("; ")
+      ? localizedZodError(error)
       : status >= 500
         ? "服务器内部发生错误。"
         : error instanceof Error

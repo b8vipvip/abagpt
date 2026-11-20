@@ -35,6 +35,9 @@ test("decoder challenges use the control gate, validate requests, and invalidate
   const create = headers => app.inject({ method: "POST", url: "/api/decoder-challenges", headers, payload: { format: "loaf" } });
   assert.equal((await create({ host: "localhost" })).statusCode, 401);
   assert.equal((await create({ ...AUTH, origin: "https://evil.example" })).statusCode, 403);
+  const invalidFormat = await app.inject({ method: "POST", url: "/api/decoder-challenges", headers: AUTH, payload: { format: "unknown" } });
+  assert.equal(invalidFormat.statusCode, 400);
+  assert.match(invalidFormat.json().error, /字段 format 的取值不在允许范围内/);
   const generated = await create(AUTH);
   assert.equal(generated.statusCode, 200);
   const { id } = generated.json();

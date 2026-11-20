@@ -50,8 +50,8 @@ The calibration alphabet and palette may vary; learn them from frame zero.`,
 } as const;
 
 
-// Human-readable Simplified Chinese copies for downloaded kits.
-// The English guides above remain in the GPT prompt to preserve its established instructions.
+// Human-readable Simplified Chinese guides used in generated prompts and downloaded kits.
+// The English reference guides remain available for format comparison and future tooling.
 export const decoderGuidesZh = {
   "loaf": "LoaF 是一行 ASCII 文本，格式为：SHA256(-)=<64 位小写十六进制哈希> <十六进制数据>。\n请对 ASCII 十六进制数据文本计算 SHA-256，并与头部中的哈希比较（哈希对象是十六进制文本，而不是解码后的字节）。\n将数据进行十六进制解码，再使用 gzip 解压，然后在内存中读取生成的 USTAR 归档。\n恢复 payload.bin 的精确内容字节。不要返回归档字节，也不要将归档路径提取到文件系统。",
   "pngspeak": "PngSpeak 将字节存储为 RGBA 像素，按行优先排列，每个像素四个字节（R、G、B、A）。\n本挑战使用 8 位 RGBA PNG，非隔行扫描，不进行缩放，也不使用艺术模式。\nPNG 的 iTXt 关键字 \"license\" 包含未压缩文本，其中有两个以空格分隔的十六进制整数：\n第一个整数表示第二个字段的 ASCII 文本长度；第二个整数表示原始载荷的字节长度。\n读取 PNG 像素时使用 RGBA，不要合成透明度；将像素字节串接起来，再截断到原始载荷长度。\n也可以串接 IDAT 块并进行 zlib 解压，然后移除每条扫描线的第一个滤波器字节（这些文件中的滤波器值均为 0）。\n必须原样保留 alpha 字节、零字节和末尾空白。",
