@@ -1,32 +1,18 @@
-# Release verification and recovery
+# 发布验证与恢复
 
-Before upgrading a persistent Mirror installation, keep the previous image and
-a database backup with its matching encryption key. The running database must
-never be the target of a restore test.
+升级已持久化数据的 Mirror 实例之前，请保留旧版本镜像，以及与数据库备份配套的加密密钥。绝不能将正在运行的数据库作为恢复测试的目标。
 
-## Database compatibility
+## 数据库兼容性
 
-The current schema version is **1**, stored in SQLite's `PRAGMA user_version`
-and exposed as `storage.schemaVersion` by `/api/diagnostics`. Version 0 means
-the historical unversioned SQLite schema. The baseline supports that schema,
-including databases lacking `attachments_json`, `is_private`, or `is_branch`.
-Existing encrypted sessions, messages, instructions, and upstream node IDs are
-preserved. The historical `store.json` session importer remains supported.
+当前 Schema 版本为 **1**，存储在 SQLite 的 `PRAGMA user_version` 中，并通过 `/api/diagnostics` 的 `storage.schemaVersion` 暴露。版本 0 表示历史上未进行版本标记的 SQLite Schema。当前基线兼容该 Schema，包括缺少 `attachments_json`、`is_private` 或 `is_branch` 字段的数据库。已有的加密会话、消息、指令和上游节点 ID 都会保留。历史版本的 `store.json` 会话导入器仍受支持。
 
-Schema changes and the version advance commit in one transaction. An error
-rolls back the entire upgrade. Reopening a current database does not replay the
-migration. A database with a newer version is refused with a compatibility
-error. Future migrations must be appended to `apps/server/src/schema.ts`;
-released migrations must remain unchanged. Never change `user_version` by hand
-to get past the compatibility check.
+Schema 变更和版本递增会在同一个事务中提交。发生错误时，整个升级事务都会回滚。重新打开当前版本的数据库不会重复执行迁移。若数据库版本高于当前版本，程序会以兼容性错误拒绝启动。未来的迁移必须追加到 `apps/server/src/schema.ts`；已经发布的迁移内容必须保持不变。切勿手动修改 `user_version` 来绕过兼容性检查。
 
-Older binaries predating this version check cannot enforce it. Although version
-1 adopts the existing schema, downgrade compatibility is not promised: restore
-the pre-upgrade backup into a new volume when returning to an older release.
+早于此版本检查机制的旧版二进制无法执行该检查。虽然版本 1 沿用现有 Schema，但不承诺可以降级兼容：如果要回退到旧版本，请将升级前的备份恢复到一个新的数据卷中。
 
-## Local release checks
+## 本地发布检查
 
-Run with Node 24 after installing dependencies:
+安装依赖后，使用 Node 24 执行：
 
 ```sh
 npm ci
@@ -38,88 +24,38 @@ npm run test:e2e
 npm run manifest -- --check
 ```
 
-The restore drill uses synthetic data under a new temporary directory and
-deletes that directory when finished. It ignores the configured data directory
-and replaces any configured storage key for its supplied-key case. It checks
-SQLite integrity, session decryption, instructions, message content, upstream
-conversation/parent identity, source preservation, overwrite refusal, and
-wrong-key refusal in both key modes. It does not contact ChatGPT or prove live
-continuation. CI runs it after the build. A dependent container job then builds
-the same revision, repeats the drill inside the runtime image with networking
-disabled, checks the embedded revision, and records the image ID and OCI label.
+恢复演练会在新的临时目录中使用合成数据，并在完成后删除该目录。它会忽略已配置的数据目录，并在“使用外部密钥”的测试场景中替换已配置的存储密钥。演练会在两种密钥模式下检查 SQLite 完整性、会话解密、指令、消息内容、上游对话/父节点身份、源数据保留、拒绝覆盖，以及拒绝错误密钥。它不会连接 ChatGPT，也不能证明真实对话可以继续。CI 会在构建后执行此演练。随后，依赖该任务的容器作业会构建同一版本，在禁用网络的运行时镜像中再次执行演练、检查镜像内嵌的版本，并记录镜像 ID 和 OCI 标签。
 
-## Identify and verify a candidate image
+## 识别并验证候选镜像
 
-Build from a committed, clean checkout. Set `MIRROR_BUILD_REVISION` to its full
-commit SHA before `docker compose build mirror`; Compose forwards it as a build
-argument. The resulting image includes an OCI revision label and the same
-default revision in diagnostics. Unspecified revisions remain `development`.
-Record the actual image ID, Node version, package-lock hash, source manifest,
-and OpenAPI outputs with the candidate. A revision argument is a label supplied
-by the builder, not proof that a dirty build matches that commit.
+请从已提交且工作区干净的代码检出版本进行构建。在执行 `docker compose build mirror` 之前，将完整 commit SHA 设置到 `MIRROR_BUILD_REVISION`。Compose 会将其作为构建参数传递。生成的镜像包含 OCI revision 标签，诊断接口也会显示相同的默认版本。未指定版本时显示为 `development`。请将实际镜像 ID、Node 版本、package-lock 哈希、源文件清单和 OpenAPI 输出与候选版本一起记录。revision 参数只是构建者提供的标签，并不能证明工作区干净，也不能证明构建产物确实与该 commit 完全一致。
 
-Before replacing the running service, run the candidate offline:
+替换正在运行的服务之前，请先离线运行候选镜像：
 
 ```sh
 docker run --rm --network none --entrypoint node CANDIDATE_IMAGE scripts/restore-drill.mjs
 ```
 
-Replace `CANDIDATE_IMAGE` with the verified image ID. This invocation mounts no
-production volume. Maintenance scripts are included in the runtime image.
-Mutable base-image tags and the absence of a publishing workflow mean current
-builds are not yet claimed to be bit-for-bit reproducible releases.
+将 `CANDIDATE_IMAGE` 替换为已经验证的镜像 ID。此命令不会挂载任何生产数据卷。维护脚本已包含在运行时镜像中。由于基础镜像使用可变标签，而且目前尚无发布流水线，因此当前构建尚不能宣称是逐字节可复现的正式发布产物。
 
-## Backup and isolated restore
+## 备份与隔离恢复
 
-Compose stores data at `/home/node/.mirror` in its `mirror-data` named volume.
-The volume's actual name includes the Compose project prefix. The separate
-`mirror-warp` volume stores WARP state. Do not remove either volume during an
-upgrade; in particular, do not use `docker compose down -v`.
+Compose 将数据存储在 `mirror-data` 命名卷中的 `/home/node/.mirror` 目录。该卷的实际名称会包含 Compose 项目前缀。单独的 `mirror-warp` 卷用于存储 WARP 状态。升级期间不要删除任一卷；尤其不要使用 `docker compose down -v`。
 
-The host maintenance command uses `.data` by default. It does not implicitly
-operate on the Compose volume. Set `MIRROR_DATA_DIR` to the actual mounted data
-directory when running maintenance in a container or against an offline copy.
+宿主机维护命令默认使用 `.data` 目录，不会自动操作 Compose 数据卷。在容器内运行维护命令或针对离线副本执行操作时，请将 `MIRROR_DATA_DIR` 设置为实际挂载的数据目录。
 
-1. Record the old image ID and stop the Mirror service before the offline
-   upgrade procedure. WARP can remain running.
-2. Run `node scripts/storage.mjs backup NEW_BACKUP_DIRECTORY` in an environment
-   where the source volume is mounted and `MIRROR_DATA_DIR` points to it.
-   Use a fresh backup destination outside that volume. The backup API includes
-   committed WAL data; copying only an active `mirror.db` is not equivalent.
-3. Protect the backup as private data. In generated-key mode it includes
-   `master.key`. In supplied-key mode preserve the original `MIRROR_STORE_KEY`
-   separately; it is deliberately not exported by the backup command.
-4. Mount a separate, empty target volume and run
-   `node scripts/storage.mjs restore BACKUP_DIRECTORY --offline` with
-   `MIRROR_DATA_DIR` pointing to the target. Restore refuses an existing
-   `mirror.db`. Start the candidate against that target with the matching key,
-   then confirm diagnostics and expected conversation history.
-5. After the offline checks pass, roll out the candidate using the intended
-   data volume. Confirm WARP health, schema/build diagnostics, model discovery,
-   and a disposable conversation through three turns using the returned
-   history. Record this separately as live upstream evidence.
+1. 记录旧镜像 ID，并在离线升级流程开始前停止 Mirror 服务。WARP 可以继续运行。
+2. 在源数据卷已挂载、且 `MIRROR_DATA_DIR` 指向该卷的环境中运行 `node scripts/storage.mjs backup NEW_BACKUP_DIRECTORY`。请使用该数据卷之外的全新备份目标目录。备份 API 会包含已提交的 WAL 数据；只复制正在使用的 `mirror.db` 并不等价于完整备份。
+3. 将备份视为私有敏感数据并妥善保护。在自动生成密钥模式下，备份中包含 `master.key`。在外部提供密钥的模式下，请单独保留原始 `MIRROR_STORE_KEY`；备份命令会刻意排除该密钥。
+4. 挂载一个单独的空目标数据卷，并在 `MIRROR_DATA_DIR` 指向该目标卷时运行 `node scripts/storage.mjs restore BACKUP_DIRECTORY --offline`。如果目标中已存在 `mirror.db`，恢复操作会拒绝执行。使用匹配的密钥，将候选版本启动到该目标卷，然后确认诊断信息和预期对话历史。
+5. 离线检查通过后，使用计划中的数据卷部署候选版本。确认 WARP 健康状态、Schema/构建诊断、模型发现，并使用返回的历史记录执行一个临时对话，连续完成三轮。将此结果单独记录为真实上游验证证据。
 
-## Rollback
+## 回滚
 
-If startup or acceptance fails, stop the candidate and retain the failed
-volume for diagnosis. Restore the pre-upgrade backup into another empty volume,
-supply its matching key, and start the recorded previous image against that
-volume. Verify WARP, diagnostics, model discovery, and a live continuation.
-Do not overwrite the failed database or force a lower schema version.
+如果启动或验收失败，请停止候选版本，并保留失败的数据卷用于诊断。将升级前的备份恢复到另一个空数据卷，提供与备份匹配的密钥，然后使用已记录的旧镜像启动该数据卷。验证 WARP、诊断信息、模型发现和真实对话续接。不要覆盖失败的数据库，也不要强行降低 Schema 版本。
 
-The offline drill proves the backup/restore mechanism. A real Compose volume
-restore with production-shaped data and authenticated continuation is a
-separate release acceptance task.
+离线演练只能证明备份/恢复机制正常。使用真实 Compose 数据卷、生产形态数据和已认证对话续接进行恢复，是单独的发布验收任务。
 
-## Tested revision (2026-09-14)
+## 已测试版本（2026-09-14）
 
-Base commit `e25cae9563407d9fb1d484191a511a42e18e0cbc` (working tree had further
-uncommitted changes on top from this pass - see TODO.md MIR-31/32/34/35 -
-not yet committed). On this base plus those changes: `npm run typecheck`,
-`npm run coverage` (552/552 tests, 100% line/branch/function/statement on
-every file per `.c8rc.json`'s per-file gate), and `npm run manifest` all
-passed from the actual working tree (not a from-scratch `npm ci` - see
-TODO.md MIR-20 for that remaining gap). `npm audit` reported 0
-vulnerabilities. The Playwright/browser e2e suite could not be run in this
-environment (see TODO.md MIR-21) - this is not proof it passes, only that
-everything else does.
+基准 commit 为 `e25cae9563407d9fb1d484191a511a42e18e0cbc`（本轮在该基准之上还有未提交的工作区修改——参见 TODO.md 中的 MIR-31/32/34/35——当时尚未提交）。在该基准及上述修改之上，`npm run typecheck`、`npm run coverage`（共 552/552 项测试；根据 `.c8rc.json` 的逐文件门禁，每个文件的行/分支/函数/语句覆盖率均为 100%）和 `npm run manifest` 均在实际工作区中通过（并非从头执行 `npm ci`，这一剩余缺口见 TODO.md 的 MIR-20）。`npm audit` 报告 0 个漏洞。该环境无法运行 Playwright/浏览器端到端测试（见 TODO.md 的 MIR-21）——这并不代表该测试已通过，只能说明其他检查均已通过。
