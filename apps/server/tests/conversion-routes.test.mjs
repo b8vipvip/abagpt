@@ -214,16 +214,16 @@ test.describe("server / conversion routes", () => {
     try {
       const loafDecode = await post("/api/convert/loaf/decode", { loaf: "not an archive" });
       assert.equal(loafDecode.statusCode, 400);
-      assert.match(loafDecode.json().error, /archive|LoaF|gzip/i);
+      assert.match(loafDecode.json().error, /归档|LoaF|gzip/i);
       const font = await post("/api/convert/gptgif-v4/font/validate", { fontBase64: b64("short") });
       assert.equal(font.json().valid, false);
-      assert.match(font.json().error, /font/i);
+      assert.match(font.json().error, /字体/);
       const palette = await post("/api/convert/gptgif-v4/palette/validate", { paletteBase64: b64("short") });
       assert.equal(palette.json().valid, false);
-      assert.match(palette.json().error, /palette/i);
+      assert.match(palette.json().error, /调色板/);
       const encode = await post("/api/convert/gptgif-v4/encode", { dataBase64: b64("x"), fontBase64: b64("short") });
       assert.equal(encode.statusCode, 400);
-      assert.match(encode.json().error, /font/i);
+      assert.match(encode.json().error, /字体/);
       const gauntlet = await post("/api/convert/gauntlet", { dataBase64: b64("x") });
       assert.equal(gauntlet.statusCode, 200);
     } finally {
