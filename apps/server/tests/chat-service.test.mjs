@@ -86,7 +86,7 @@ test("ephemeral chat uses upstream temporary mode and leaves no local rows", asy
     globalThis.fetch = originalFetch;
   }
 });
- 
+
 test("a whitespace-only prompt receives the localized default conversation title", async () => {
   useSession("account-empty-title");
   const originalFetch = globalThis.fetch;

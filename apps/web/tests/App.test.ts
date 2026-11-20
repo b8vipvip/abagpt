@@ -1459,7 +1459,7 @@ test("conversation branches list parents and nodes, and continuing from an assis
             { id: "m-pending", upstreamNodeId: null, role: "assistant", status: "streaming" },
             { id: "m-asst", upstreamNodeId: "node-7", role: "assistant", status: "done" },
             { id: "m-other", upstreamNodeId: "node-8", role: "tool", status: "queued" },
-            { id: "m-interrupted", upstreamNodeId: "node-9", role: "assistant", status: "interrupted" },
+            { id: "m-interrupted", upstreamNodeId: null, role: "assistant", status: "interrupted" },
             { id: "m-stopped", upstreamNodeId: null, role: "assistant", status: "stopped" },
           ],
         }),
