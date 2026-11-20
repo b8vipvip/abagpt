@@ -47,7 +47,7 @@
   "apps/server/src/openai.ts": "6231d775bed7748ae8bf21510defcc413958057a37d3b20a1f1a75f2efe03cdc",
   "apps/server/src/openapi-document.ts": "209eb5bebc3107261f157782d0a99eff4ead356f8321f3532f3d402968d91190",
   "apps/server/src/pngspeak.ts": "35071f8f85ee383906b9c117830ef376c94ad587fe0f25a2e954d5f9609c285d",
-  "apps/server/src/preflight.ts": "3e18f905134e200095079781f1b01f01335fd5a9fc5b4ffea498a76329d58792",
+  "apps/server/src/preflight.ts": "1e1670ee6c23ae230f0f3463d7ff68290b30561eeb7255f6000ec417a39e028e",
   "apps/server/src/proxy.ts": "3b83b76c49e730bc2d0c6ff56dabac2fe12b7ff5698b62a52bd215c7f0a945d5",
   "apps/server/src/responses.ts": "b8e168b8eee8a485ff8a09d9a9e1006bf9aa31b02d617606bf45ba54714e5005",
   "apps/server/src/rich-output.ts": "e32033e9a429bbb4946b42585dc2cc2b4dd5612f2b2a68d18f1b3be173be05ab",
