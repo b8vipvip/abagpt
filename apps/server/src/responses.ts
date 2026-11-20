@@ -35,7 +35,7 @@ export function responsesToCompletion(body: ResponsesRequest) {
     messages: [...(body.instructions === undefined ? [] : [{ role: "system" as const, content: body.instructions }]), ...messages] };
 }
 
-export function createResponseWriter(body: ResponsesRequest, emit: (event: Record<string, unknown>) => void) {
+export function createResponseWriter(body: ResponsesRequest, emit: (event: Record<string, unknown>) => void | Promise<void>) {
   const id = `resp_${crypto.randomUUID().replaceAll("-", "")}`;
   const itemId = `msg_${crypto.randomUUID().replaceAll("-", "")}`;
   const created = Math.floor(Date.now() / 1000);
@@ -53,36 +53,38 @@ export function createResponseWriter(body: ResponsesRequest, emit: (event: Recor
     tools: [], tool_choice: "none", parallel_tool_calls: false,
     max_output_tokens: null, previous_response_id: null,
   });
-  const event = (type: string, fields: Record<string, unknown>) => emit({ type, sequence_number: sequence++, ...fields });
+  const event = async (type: string, fields: Record<string, unknown>) => { await emit({ type, sequence_number: sequence++, ...fields }); };
   return {
     response,
     setSummaries(values: { text: string }[]) {
       summaries = values.map(value => ({ id: `rs_${crypto.randomUUID().replaceAll("-", "")}`, type: "reasoning", summary: [{ type: "summary_text", text: value.text }] }));
     },
-    start() {
-      event("response.created", { response: response("", "in_progress") });
-      event("response.in_progress", { response: response("", "in_progress") });
-      event("response.output_item.added", { output_index: 0, item: { ...item("", "in_progress"), content: [] } });
-      event("response.content_part.added", { item_id: itemId, output_index: 0, content_index: 0, part: part("") });
+    async start() {
+      await event("response.created", { response: response("", "in_progress") });
+      await event("response.in_progress", { response: response("", "in_progress") });
+      await event("response.output_item.added", { output_index: 0, item: { ...item("", "in_progress"), content: [] } });
+      await event("response.content_part.added", { item_id: itemId, output_index: 0, content_index: 0, part: part("") });
     },
-    delta(delta: string) { event("response.output_text.delta", { item_id: itemId, output_index: 0, content_index: 0, delta, logprobs: [] }); },
-    complete(text: string, model: string, metadata: Record<string, string>) {
-      event("response.output_text.done", { item_id: itemId, output_index: 0, content_index: 0, text, logprobs: [] });
-      event("response.content_part.done", { item_id: itemId, output_index: 0, content_index: 0, part: part(text) });
-      event("response.output_item.done", { output_index: 0, item: item(text, "completed") });
-      summaries.forEach((summary, index) => {
+    async delta(delta: string) {
+      await event("response.output_text.delta", { item_id: itemId, output_index: 0, content_index: 0, delta, logprobs: [] });
+    },
+    async complete(text: string, model: string, metadata: Record<string, string>) {
+      await event("response.output_text.done", { item_id: itemId, output_index: 0, content_index: 0, text, logprobs: [] });
+      await event("response.content_part.done", { item_id: itemId, output_index: 0, content_index: 0, part: part(text) });
+      await event("response.output_item.done", { output_index: 0, item: item(text, "completed") });
+      for (const [index, summary] of summaries.entries()) {
         const fields = { item_id: summary.id, output_index: index + 1, summary_index: 0 };
-        event("response.output_item.added", { output_index: index + 1, item: { ...summary, summary: [] } });
-        event("response.reasoning_summary_part.added", { ...fields, part: { type: "summary_text", text: "" } });
-        event("response.reasoning_summary_text.delta", { ...fields, delta: summary.summary[0].text });
-        event("response.reasoning_summary_text.done", { ...fields, text: summary.summary[0].text });
-        event("response.reasoning_summary_part.done", { ...fields, part: summary.summary[0] });
-        event("response.output_item.done", { output_index: index + 1, item: summary });
-      });
-      event("response.completed", { response: response(text, "completed", model, metadata) });
+        await event("response.output_item.added", { output_index: index + 1, item: { ...summary, summary: [] } });
+        await event("response.reasoning_summary_part.added", { ...fields, part: { type: "summary_text", text: "" } });
+        await event("response.reasoning_summary_text.delta", { ...fields, delta: summary.summary[0].text });
+        await event("response.reasoning_summary_text.done", { ...fields, text: summary.summary[0].text });
+        await event("response.reasoning_summary_part.done", { ...fields, part: summary.summary[0] });
+        await event("response.output_item.done", { output_index: index + 1, item: summary });
+      }
+      await event("response.completed", { response: response(text, "completed", model, metadata) });
     },
-    fail(message: string, code: string) {
-      event("response.failed", { response: { ...response("", "in_progress"), status: "failed", error: { message, code } } });
+    async fail(message: string, code: string) {
+      await event("response.failed", { response: { ...response("", "in_progress"), status: "failed", error: { message, code } } });
     },
   };
 }
