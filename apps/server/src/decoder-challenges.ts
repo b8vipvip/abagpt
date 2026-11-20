@@ -16,7 +16,7 @@ export const ChallengeBody = z.object({
 export const ChallengeParams = z.object({ id: z.string().uuid() });
 export const ChallengeKitBody = z.object({ ids: z.array(z.string().uuid()).min(1).max(4) }).strict();
 export const ChallengeAnswer = z.object({
-  hex: z.string().max(8192).regex(/^(?:[0-9a-fA-F]{2})*$/, "Answer must contain complete hexadecimal byte pairs, without spaces."),
+  hex: z.string().max(8192).regex(/^(?:[0-9a-fA-F]{2})*$/, "答案必须由完整的十六进制字节对组成，不能包含空格。"),
 }).strict();
 
 const formats = {

@@ -91,7 +91,10 @@ test.describe("server / decoder challenges", () => {
     f.app.setErrorHandler((e, req, reply) => reply.code(e.name === "ZodError" ? 400 : e.statusCode).send({ error: e.message }));
     for (const body of [{}, { format: "zip" }, { format: "loaf", guidance: "wrong" }, { format: "loaf", payload: "wrong" }, { format: "loaf", path: "/etc/passwd" }]) assert.equal((await f.create(body)).statusCode, 400);
     const { id } = (await f.create()).json();
-    for (const hex of ["0", "gg", "00 11", "00".repeat(4097)]) assert.equal((await f.verify(id, hex)).statusCode, 400);
+    const invalidHex = await f.verify(id, "00 11");
+    assert.equal(invalidHex.statusCode, 400);
+    assert.match(JSON.stringify(invalidHex.json().error), /答案必须由完整的十六进制字节对组成，不能包含空格/);
+    for (const hex of ["0", "gg", "00".repeat(4097)]) assert.equal((await f.verify(id, hex)).statusCode, 400);
     assert.equal((await f.verify("invalid", "00")).statusCode, 400);
     assert.equal((await f.artifact("invalid")).statusCode, 400);
     assert.equal((await f.verify(id, "00".repeat(6000))).statusCode, 413);
