@@ -60,7 +60,7 @@
   "apps/server/src/url-rewrite.ts": "4ad57dd2a6e9d197c5fc069d86986b2b89312e6fc9d68bfe9599d856f7248082",
   "apps/server/src/zod-openapi-init.ts": "e3ae339fdd09a60b6cf95daf0e8f0c7ae9c8fc2a1189e49ec473b79650c0a01f",
   "apps/server/tests/asset-content.test.mjs": "c8789b95a6a2068d4e3974b6ae0f8795f3207e05241be74ef5c95af95275b610",
-  "apps/server/tests/auth.test.mjs": "204572e2e2e9392fe3427919ac07b4a426992e7c8de65102acd848ca9bd80bdc",
+  "apps/server/tests/auth.test.mjs": "dd6ff6f6de65158362260bd8053c0304d30894f3a80dc46c415aac82e3e56ae4",
   "apps/server/tests/chat-service.test.mjs": "cc351452df24ed332f8537b10b60d9186e14297200ce3175e4a5d67370c8407d",
   "apps/server/tests/cm-integration.mjs": "ee6f012d6025d7996b94c83f74d574f8974463fc7b094a7e5161a29d6d34aa89",
   "apps/server/tests/conversation-continuation.test.mjs": "08e85de8c51871ae758bf8fdfa85a779e2e3e9332f7adfa4475c8ae545d1eefd",
