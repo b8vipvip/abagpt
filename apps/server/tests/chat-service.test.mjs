@@ -122,7 +122,7 @@ test("runChat rejects a second concurrent turn on the same conversation with a 4
       service.runChat({ conversationId: conversation.id, prompt: "second", model: "auto" }),
       (error) => {
         assert.equal(error.statusCode, 409);
-        assert.match(error.message, /already running/);
+        assert.match(error.message, /已有一个正在运行的响应/);
         return true;
       },
     );
@@ -218,7 +218,7 @@ test("runChat rejects with 404 when the given conversationId does not exist", as
     service.runChat({ conversationId: "does-not-exist", prompt: "hi", model: "auto" }),
     (error) => {
       assert.equal(error.statusCode, 404);
-      assert.match(error.message, /Conversation not found/);
+      assert.match(error.message, /未找到对话/);
       return true;
     },
   );
@@ -231,7 +231,7 @@ test("runChat rejects with 404 when the conversation belongs to a different acco
     service.runChat({ conversationId: conversation.id, prompt: "hi", model: "auto" }),
     (error) => {
       assert.equal(error.statusCode, 404);
-      assert.match(error.message, /Conversation not found/);
+      assert.match(error.message, /未找到对话/);
       return true;
     },
   );
