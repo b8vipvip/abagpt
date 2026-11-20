@@ -127,6 +127,7 @@ test("API documentation is localized without changing the OpenAPI contract", asy
  await expect(page.locator(".swagger-ui.swagger-container")).toContainText("试用");
 });
 test("Swagger authorization and live API error states stay localized", async ({ page }) => {
+ await page.goto(`${serverBase}/mirror/playground`);
  await page.goto(`${serverBase}/mirror/api-docs`);
  const authorizeButton = page.locator(".swagger-ui .auth-wrapper .authorize");
  await expect(authorizeButton).toHaveText("授权");
@@ -156,7 +157,8 @@ test("command palette keeps dynamic empty and network-error states localized", a
   return query === "断网" ? route.abort() : route.fulfill({ json: { items: [] } });
  });
  await page.goto("/mirror/playground");
- await page.keyboard.press("Control+k");
+ await expect(page.locator(".playground-app")).toBeVisible();
+ await page.evaluate(() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true, bubbles: true, cancelable: true })));
  const palette = page.getByRole("dialog", { name: "快速搜索并打开会话" });
  await expect(palette).toBeVisible();
  await palette.getByRole("textbox").fill("不存在");
