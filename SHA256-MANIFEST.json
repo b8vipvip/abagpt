@@ -44,7 +44,7 @@
   "apps/server/src/gif89a.ts": "2acce6b3f624c5275f647da26932ff8e55ed68a073d4eac6415b1efc13dab3a2",
   "apps/server/src/gptgif-v4.ts": "828f698975c512555228e4665a557e5d643e9780202fe86569a643c674fd0b73",
   "apps/server/src/gptgif.ts": "346da6ae2acb8e27bcce16923a3732ae0f3d69116952225b985eced6672dc3d7",
-  "apps/server/src/index.ts": "a68f13641ccb840f034561426979621d645c647548b53ed8c2d901f469495571",
+  "apps/server/src/index.ts": "576e02c52c364ce6a9a07ff1b32c1bad46836f17b256c9df207c145a58bd24bb",
   "apps/server/src/insights.ts": "13a96c266924539ec28e28f39674896e4fc208501e0abb676ae4140381a5a7ca",
   "apps/server/src/loaf.ts": "dbb1a148c8bcfe6609f479ebd101c22e692676e4d8425294ac7131718375b2a8",
   "apps/server/src/mirror-controls.ts": "07abeb6873651f3e76cb3b04883c9b3038a53e2098316406735a2fe5dcac48cf",
