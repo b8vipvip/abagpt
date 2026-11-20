@@ -1480,7 +1480,7 @@ test("conversation branches list parents and nodes, and continuing from an assis
   // to a plain label instead of rendering a blank <code> element - and
   // does not offer to "continue" from it (that button only appears once
   // an assistant node has a real upstream node id).
-  assert.ok(within(panel).getByText("无上游节点"));
+  assert.equal(within(panel).getAllByText("无上游节点").length, 3);
   assert.ok(within(panel).getByText("用户 · 已完成"));
   assert.ok(within(panel).getByText("助手 · 生成中"));
   assert.ok(within(panel).getByText("工具 · 排队中"));
