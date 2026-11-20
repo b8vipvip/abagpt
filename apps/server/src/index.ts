@@ -197,7 +197,7 @@ app.addHook("onSend", async (req, reply, payload) => {
 
 function localizedZodError(error: ZodError): string {
   const messages = error.issues.map((issue) => {
-    if (/[\\u3400-\\u9fff]/.test(issue.message)) return issue.message;
+    if (/[㐀-鿿]/.test(issue.message)) return issue.message;
     const field = issue.path.length ? issue.path.join(".") : "请求";
     switch (issue.code) {
       case "invalid_type":
