@@ -143,7 +143,7 @@ class RawIoError extends Error {
 function rawBody(req: FastifyRequest): Buffer {
   if (!Buffer.isBuffer(req.body)) {
     throw new RawIoError(
-      `raw_in requires the request body to be raw bytes. Send it with Content-Type: ${RAW_BODY_CONTENT_TYPES.join(", ")}, not JSON.`,
+      `raw_in 需要请求体为原始字节。请使用以下 Content-Type 之一发送：${RAW_BODY_CONTENT_TYPES.join(", ")}；不要发送 JSON。`,
     );
   }
   return req.body;
