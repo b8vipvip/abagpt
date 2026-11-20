@@ -194,6 +194,28 @@ test("Responses API validation errors are localized", async () => {
   assert.equal(res.json().error.message, "至少需要一条输入消息。");
 });
 
+test("Responses API localizes nested content validation errors", async () => {
+  useSession("account-responses-content-validate");
+  const res = await app.inject({
+    method: "POST",
+    url: "/v1/responses",
+    payload: { input: [{ role: "user", content: [] }] },
+  });
+  assert.equal(res.statusCode, 400);
+  assert.equal(res.json().error.message, "至少需要一个内容片段。");
+});
+
+test("Responses API converts unrecognized union errors to Chinese", async () => {
+  useSession("account-responses-type-validate");
+  const res = await app.inject({
+    method: "POST",
+    url: "/v1/responses",
+    payload: { input: 42 },
+  });
+  assert.equal(res.statusCode, 400);
+  assert.equal(res.json().error.message, "字段 input 的格式无效。");
+});
+
 test("OpenAI validation errors localize default Zod type messages", async () => {
   useSession("account-validation-type");
   const res = await app.inject({
