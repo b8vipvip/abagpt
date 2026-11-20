@@ -177,7 +177,7 @@ test("decoding with no length override and no embedded length header returns the
 });
 
 test("rejects a buffer that isn't a PNG at all", () => {
-  assert.throws(() => decodePngSpeak(Buffer.from("not a png")), /not a PNG file/);
+  assert.throws(() => decodePngSpeak(Buffer.from("not a png")), /不是有效的 PNG 文件/);
 });
 
 test("interoperates byte-for-byte with the reference pngspeak Python implementation when it's available", () => {
