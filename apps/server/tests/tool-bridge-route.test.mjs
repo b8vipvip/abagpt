@@ -19,7 +19,7 @@ const tools = [{ type: 'function', function: { name: 'read_file', parameters: { 
 test.describe('server / tool bridge route', () => {
   test('formats Error and non-Error tool-bridge failures', () => {
     assert.equal(toolBridgeErrorMessage(new Error('fixture failure')), 'fixture failure');
-    assert.equal(toolBridgeErrorMessage('primitive failure'), 'Tool bridge failed');
+    assert.equal(toolBridgeErrorMessage('primitive failure'), '工具桥接处理失败。');
   });
 
   test.after(() => rmSync(dir, { recursive: true, force: true }));
