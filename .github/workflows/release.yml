@@ -123,6 +123,7 @@ jobs:
           push-to-registry: true
 
       - name: Verify the immutable published image
+        id: verify-image
         env:
           IMAGE_NAME: ${{ steps.image.outputs.name }}
           IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
@@ -135,12 +136,14 @@ jobs:
           docker run --rm --platform linux/amd64 --network none \
             -e EXPECTED_VERSION -e EXPECTED_REVISION --entrypoint node "$IMAGE_REF" \
             -e 'const assert = require("node:assert/strict"); assert.equal(process.env.MIRROR_VERSION, process.env.EXPECTED_VERSION); assert.equal(process.env.MIRROR_BUILD_REVISION, process.env.EXPECTED_REVISION);'
+          echo "node_version=$(docker run --rm --platform linux/amd64 --network none --entrypoint node "$IMAGE_REF" --version)" >> "$GITHUB_OUTPUT"
 
       - name: Assemble versioned release assets
         env:
           RELEASE_VERSION: ${{ steps.version.outputs.version }}
           IMAGE_NAME: ${{ steps.image.outputs.name }}
           IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
+          CONTAINER_NODE_VERSION: ${{ steps.verify-image.outputs.node_version }}
           GITHUB_REF_NAME: ${{ github.ref_name }}
           GITHUB_SHA: ${{ github.sha }}
           GITHUB_REPOSITORY: ${{ github.repository }}
