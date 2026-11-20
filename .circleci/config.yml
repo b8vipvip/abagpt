@@ -34,6 +34,17 @@ jobs:
           command: npx playwright install --with-deps chromium
       - run: npm run test:e2e
       - run: npm run manifest -- --check
+      - run:
+          name: Validate release asset assembly without publishing
+          command: |
+            VERSION="$(node -p "require('./package.json').version")"
+            export RELEASE_VERSION="$VERSION"
+            export GITHUB_REF_NAME="v$VERSION"
+            export GITHUB_SHA="$CIRCLE_SHA1"
+            export GITHUB_REPOSITORY="b8vipvip/abagpt"
+            export IMAGE_NAME="ghcr.io/b8vipvip/abagpt"
+            export IMAGE_DIGEST="sha256:0000000000000000000000000000000000000000000000000000000000000000"
+            npm run release:assets
       - store_artifacts:
           path: test-results
           destination: test-results
