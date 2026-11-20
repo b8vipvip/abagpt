@@ -10,6 +10,9 @@ test.describe('server / tool bridge', () => {
     const prompt = toolBridgePrompt([{ role: 'tool', tool_call_id: 'call_1', content: 'file data' }], tools, 'auto');
     assert.match(prompt, /read_file/);
     assert.match(prompt, /file data/);
+    assert.match(prompt, /你正在处理一个 Chat Completions 轮次/);
+    assert.match(prompt, /只能回复一个 JSON 对象/);
+    assert.doesNotMatch(prompt, /You are translating a Chat Completions turn/);
   });
   test('returns OpenAI shaped tool calls with JSON argument strings', () => {
     const answer = parseToolBridgeAnswer('{"tool_calls":[{"name":"read_file","arguments":{"path":"a.txt"}}]}', tools, 'auto');
@@ -45,9 +48,9 @@ test.describe('server / tool bridge', () => {
   });
 
   test('selects the matching prompt instruction for none, required, and automatic tool choice', () => {
-    assert.match(toolBridgePrompt([], tools, 'none'), /Do not request functions this turn/);
-    assert.match(toolBridgePrompt([], tools, 'required'), /Request at least one function this turn/);
-    assert.match(toolBridgePrompt([], tools, 'auto'), /Request functions only when needed/);
+    assert.match(toolBridgePrompt([], tools, 'none'), /本轮不要请求执行任何函数/);
+    assert.match(toolBridgePrompt([], tools, 'required'), /本轮至少请求执行一个函数/);
+    assert.match(toolBridgePrompt([], tools, 'auto'), /仅在确有需要时请求执行函数/);
   });
 
   test('rejects malformed JSON and non-object top-level answers', () => {

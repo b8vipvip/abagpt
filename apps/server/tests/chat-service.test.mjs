@@ -73,6 +73,7 @@ test("ephemeral chat uses upstream temporary mode and leaves no local rows", asy
       ephemeral: true,
     });
     assert.equal(result.result.text, "done");
+    assert.equal(result.conversation.title, "hello");
     assert.equal(store.getConversation(result.conversation.id), null);
     const initBody = bodies.find((item) =>
       item.pathname.endsWith("/conversation/init"),
@@ -82,6 +83,18 @@ test("ephemeral chat uses upstream temporary mode and leaves no local rows", asy
     )?.body;
     assert.equal(initBody.history_and_training_disabled, true);
     assert.equal(sendBody.history_and_training_disabled, true);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+ 
+test("a whitespace-only prompt receives the localized default conversation title", async () => {
+  useSession("account-empty-title");
+  const originalFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = stubHappyBackend("account-empty-title");
+    const result = await service.runChat({ prompt: "   ", model: "auto", ephemeral: true });
+    assert.equal(result.conversation.title, "新对话");
   } finally {
     globalThis.fetch = originalFetch;
   }

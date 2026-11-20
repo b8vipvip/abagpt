@@ -50,7 +50,7 @@ function titleFromPrompt(prompt: string): string {
   const oneLine = prompt.replace(/\s+/g, " ").trim();
   return oneLine.length > 54
     ? `${oneLine.slice(0, 53)}…`
-    : oneLine || "New chat";
+    : oneLine || "新对话";
 }
 
 function linkedAbortController(signal?: AbortSignal): AbortController {

@@ -112,13 +112,13 @@ test.describe("server / conversion routes", () => {
     const artifact = Buffer.from(encoded.json().dataBase64, "base64");
     const clusterMap = firstSeenClusterMap(source.toString("hex"), 16);
     const calibrated = await post("/api/convert/gptgif/calibrate", { dataBase64: artifact.toString("base64"), clusterMap });
-    assert.match(calibrated.json().clusterMap, /Cluster Label/);
+    assert.match(calibrated.json().clusterMap, /聚类标签：/);
     const decoded = await post("/api/convert/gptgif/decode", { dataBase64: artifact.toString("base64"), clusterMap });
     assert.deepEqual(Buffer.from(decoded.json().dataBase64, "base64"), source);
     const rawEncoded = await post("/api/convert/gptgif/encode?raw_in=1&raw_out=1", source, "application/octet-stream");
     assert.equal(rawEncoded.headers["content-type"], "image/gif");
     const rawMap = await post(`/api/convert/gptgif/calibrate?raw_in=1&clusterMap=${clusterMap}`, rawEncoded.rawPayload, "image/gif");
-    assert.match(rawMap.json().clusterMap, /Cluster Label/);
+    assert.match(rawMap.json().clusterMap, /聚类标签：/);
     const rawDecoded = await post(`/api/convert/gptgif/decode?raw_in=1&clusterMap=${clusterMap}`, rawEncoded.rawPayload, "image/gif");
     assert.deepEqual(Buffer.from(rawDecoded.json().dataBase64, "base64"), source);
   });

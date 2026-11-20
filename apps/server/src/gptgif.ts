@@ -236,9 +236,9 @@ export function calibrateGptgif(gif: Buffer, options: { clusterMap?: string } = 
   const image = readGif(gif);
   const tiles = extractGlyphTiles(image);
   const { centroids } = clusterGlyphTiles(tiles, clusterMap.length);
-  const lines: string[] = ["K-Means Cluster Centroids (visualized as 8x8 glyphs):"];
+  const lines: string[] = ["K-Means 聚类质心（以 8×8 字形网格显示）："];
   for (let i = 0; i < centroids.length; i++) {
-    lines.push("", `Cluster Label: ${i}`);
+    lines.push("", `聚类标签：${i}`);
     for (let row = 0; row < GLYPH_HEIGHT; row++) {
       let line = "";
       for (let col = 0; col < GLYPH_WIDTH; col++) {
@@ -248,7 +248,7 @@ export function calibrateGptgif(gif: Buffer, options: { clusterMap?: string } = 
     }
     lines.push("-".repeat(20));
   }
-  lines.push("", "Now associate each index with the correct character from the cluster map.");
+  lines.push("", "现在请将每个索引与聚类映射中的正确字符对应起来。");
   return lines.join("\n");
 }
 
