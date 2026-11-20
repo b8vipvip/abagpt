@@ -86,6 +86,32 @@ test("SseWriter aborts a blocked write when the client closes", async () => {
   await assert.rejects(writer.write("after-close"), abortError);
 });
 
+test("SseWriter lets a request abort cancel a blocked frame but keeps the socket for a terminal error", async () => {
+  const reply = fakeReply();
+  reply.raw.write = (chunk) => {
+    reply.raw.writes.push(chunk);
+    return false;
+  };
+  const controller = new AbortController();
+  const writer = new SseWriter(reply);
+  const pending = writer.write("generation", undefined, controller.signal);
+
+  await new Promise((resolve) => setImmediate(resolve));
+  controller.abort();
+  await assert.rejects(pending, abortError);
+  assert.equal(reply.raw.destroyed, false);
+
+  await assert.rejects(writer.write("still-aborted", undefined, controller.signal), abortError);
+  reply.raw.write = (chunk) => {
+    reply.raw.writes.push(chunk);
+    return true;
+  };
+  await writer.write({ error: "generation_aborted" });
+  await writer.end();
+  assert.deepEqual(reply.raw.writes, ['data: generation\\n\\n', 'data: {"error":"generation_aborted"}\\n\\n']);
+  assert.equal(reply.raw.endCalls, 1);
+});
+
 test("SseWriter destroys a client that never drains before the stall timeout", async () => {
   const reply = fakeReply();
   reply.raw.write = (chunk) => {
