@@ -16,7 +16,7 @@ import fastifyStatic from "@fastify/static";
 import fastifySwagger from "@fastify/swagger";
 import fastifySwaggerUi from "@fastify/swagger-ui";
 import { stringify as toYaml } from "yaml";
-import { z } from "zod";
+import { z, ZodError } from "zod";
 import { buildOpenApiDocument } from "./openapi-document.js";
 import {
   SetSessionBody,
