@@ -40,7 +40,7 @@ docker run --rm --network none --entrypoint node CANDIDATE_IMAGE scripts/restore
 
 ## 使用固定摘要部署与回滚
 
-优先从 GitHub Release 下载 `release-metadata.json`，将 `container.immutableReference` 原样保存为部署记录。Compose 的 `MIRROR_IMAGE` 支持 `ghcr.io/...@sha256:...`；部署发布镜像时运行 `docker compose up -d`，不要添加 `--build`。回滚时使用上一版本 Release 元数据中的镜像摘要，并按下文步骤将升级前备份恢复到新的空数据卷。不要只依赖可变的 `:latest` 标签。
+优先从 GitHub Release 下载 `release-metadata.json`，将 `container.immutableReference` 原样保存为部署记录。Compose 的 `MIRROR_IMAGE` 支持 `ghcr.io/...@sha256:...`；部署发布镜像时先运行 `docker compose pull mirror`，再运行 `docker compose up -d`，不要添加 `--build`。显式 pull 可避免镜像不可用时意外回退到本地源码构建。回滚时使用上一版本 Release 元数据中的镜像摘要，并按下文步骤将升级前备份恢复到新的空数据卷。不要只依赖可变的 `:latest` 标签。
 
 ## 备份与隔离恢复
 
