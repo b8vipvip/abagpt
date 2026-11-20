@@ -69,7 +69,7 @@ test("getValidCredentials refuses to mint with no session configured", async () 
   store.clearSession();
   await assert.rejects(auth.getValidCredentials(), (error) => {
     assert.equal(error.statusCode, 401);
-    assert.match(error.message, /POST \/api\/session first/);
+    assert.match(error.message, /请先调用 POST \/api\/session/);
     return true;
   });
 });
@@ -98,6 +98,7 @@ test("getValidCredentials marks a rejected session token as a 401", async () => 
     globalThis.fetch = async () => new Response("unauthorized", { status: 401 });
     await assert.rejects(auth.getValidCredentials(), (error) => {
       assert.equal(error.statusCode, 401);
+      assert.match(error.message, /ChatGPT 会话令牌验证失败/);
       return true;
     });
   } finally {
@@ -145,6 +146,20 @@ test("verifyCandidateSessionToken returns a newly supplied pending challenge tok
     globalThis.fetch = async () => Response.json({ accessToken: jwtWithExp(3600) });
     const result = await auth.verifyCandidateSessionToken("candidate-with-challenge", "fresh-challenge");
     assert.equal(result.turnstileToken, "fresh-challenge");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("verifyCandidateSessionToken localizes a rejected session token", async () => {
+  const originalFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = async () => new Response("unauthorized", { status: 401 });
+    await assert.rejects(auth.verifyCandidateSessionToken("bad-candidate"), (error) => {
+      assert.equal(error.statusCode, 401);
+      assert.match(error.message, /ChatGPT 会话令牌验证失败（HTTP 401）/);
+      return true;
+    });
   } finally {
     globalThis.fetch = originalFetch;
   }
