@@ -41,7 +41,7 @@ function decodeConfiguredKey(value: string): Buffer {
     ? Buffer.from(value, "hex")
     : Buffer.from(value, "base64");
   if (key.byteLength !== 32)
-    throw new Error("MIRROR_STORE_KEY must decode to exactly 32 bytes");
+    throw new Error("MIRROR_STORE_KEY 解码后必须恰好为 32 字节。");
   return key;
 }
 
@@ -77,7 +77,7 @@ function encrypt(value: string): string {
 function decrypt(value: string): string {
   const [version, iv, tag, ciphertext] = value.split(".");
   if (version !== "v1" || !iv || !tag || !ciphertext)
-    throw new Error("Unsupported encrypted value");
+    throw new Error("不支持的加密数据格式。");
   const decipher = createDecipheriv(
     "aes-256-gcm",
     encryptionKey,
@@ -104,7 +104,7 @@ export function getSessionRevision(): number { return sessionRevision; }
 export function onSessionChange(listener: () => void): () => void { sessionListeners.add(listener); return () => { sessionListeners.delete(listener); }; }
 function changedSession(): void { sessionRevision++; for (const listener of sessionListeners) listener(); }
 export function assertSessionRevision(expected: number): void {
-  if (expected !== sessionRevision) throw Object.assign(new Error("Session changed; retry with the current account"), {statusCode: 409});
+  if (expected !== sessionRevision) throw Object.assign(new Error("会话已更改；请使用当前账号重试。"), {statusCode: 409});
 }
 export interface StoredSession {
   sessionToken: string;
@@ -295,7 +295,7 @@ export interface AssetTicket {
  * No extra history or file bytes are persisted, including for store:false. */
 export function sealAssetTicket(asset: AssetTicket, now = Date.now()): string {
   const session = getSession();
-  if (!session) throw new Error("No session configured");
+  if (!session) throw new Error("尚未配置 ChatGPT 会话。");
   return encrypt(JSON.stringify({ purpose: "mirror-asset-v1", ...asset,
     accountId: session.accountId ?? "default", sessionGeneration: session.assetLinkGeneration ?? session.savedAt,
     expiresAt: now + 7 * 24 * 60 * 60 * 1000 }));
