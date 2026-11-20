@@ -41,7 +41,7 @@ jobs:
 
           const tag = process.env.RELEASE_TAG;
           const version = process.env.RELEASE_VERSION;
-          assert.match(tag, /^v\\d+\\.\\d+\\.\\d+$/, "Only stable vX.Y.Z tags may publish");
+          assert.match(tag, /^v\d+\.\d+\.\d+$/, "Only stable vX.Y.Z tags may publish");
           for (const file of [
             "package.json",
             "apps/server/package.json",
