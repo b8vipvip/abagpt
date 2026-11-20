@@ -179,15 +179,11 @@ test("verifyCandidateSessionToken localizes a response without an access token",
   }
 });
 
-test("verifyCandidateSessionToken preserves non-authentication response errors", async () => {
+test("verifyCandidateSessionToken preserves non-authentication network errors", async () => {
   const originalFetch = globalThis.fetch;
   try {
-    globalThis.fetch = async () => ({
-      ok: true,
-      status: 200,
-      json: async () => { throw new Error("response parsing failed"); },
-    });
-    await assert.rejects(auth.verifyCandidateSessionToken("response-error-candidate"), /response parsing failed/);
+    globalThis.fetch = async () => { throw new Error("network unavailable"); };
+    await assert.rejects(auth.verifyCandidateSessionToken("network-candidate"), /network unavailable/);
   } finally {
     globalThis.fetch = originalFetch;
   }
