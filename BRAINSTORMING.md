@@ -1,229 +1,93 @@
-# Mirror: 30 ways to make it way more awesomer
+# Mirror：30 个让它更强大的想法
 
-Free-associated 2026-09-14, deliberately not filtered down to "safe" ideas
-first — filtering happens in conversation, not here. Every idea below is
-checked against what Mirror actually is (a local, single-user, WARP-gated
-proxy in front of chatgpt.com's private protocol, with a SQLite store and an
-OpenAI-compatible shim) so nothing here secretly requires abandoning that
-architecture. A few explicitly do NOT fit that architecture cleanly and say
-so; they're included anyway because "would this actually work" and "is this
-worth wanting" are different questions, and this file is for the second one.
-Grouped by theme, not by priority — that's the next conversation.
+自由联想记录于 2026-09-14：首先刻意不按“安全”与否筛选想法——筛选留到讨论中进行，而不是在这里提前完成。下面每个想法都根据 Mirror 的真实形态进行核对：它是一个本地、单用户、由 WARP 出站门禁保护的代理，位于 chatgpt.com 私有协议前端，使用 SQLite 存储，并提供 OpenAI 兼容适配层。因此，没有任何想法会暗中要求放弃现有架构。少数想法明确说明它们与当前架构并不完全契合，但仍然保留，因为“实际上能不能实现”和“值不值得拥有”是两个不同的问题，而本文讨论的是后者。按主题分组，不按优先级排序——优先级留待下一轮讨论。
 
+**状态标记说明（持续更新）：** 一旦我们采取行动——无论是实际交付，还是明确决定不做——就会在相应条目旁添加简短的“已决定”或“已实现”说明（例如下文第 3 项）。尚未决定的条目不会带有这类说明。
 
-**Status key, kept current as we go:** items get a short "Decided"/"Built" note
-inline (like #3 below) the moment we act on them — either shipping something
-or explicitly deciding not to. Undecided items have no such note.
+## 身份与会话
 
-## Identity & sessions
+**1. 同时使用多个 ChatGPT 账号／会话。**（已列入 TODO.md 的 MIR-24。）支持命名会话，在 Mirror 控制面板中直接切换当前活动会话，并为每个会话分别保存对话历史。对于不止自己一个人使用 Mirror 的场景——例如家庭共享，或个人与工作账号分离——这会是最大的能力提升。但这意味着必须调整 `store.ts` 的数据库结构、`auth.ts`，以及 `security.ts` 中单例控制 Cookie 的模型，不能再假设系统中永远只有一份凭证。
 
-**1. Multiple concurrent ChatGPT accounts/sessions.** (Already TODO.md's
-MIR-24.) Named sessions, an active-session switcher right in the Mirror
-controls panel, separate conversation history per session. The biggest
-single unlock for anyone running Mirror for more than themselves — a
-household, a personal+work split — but it means `store.ts`'s schema,
-`auth.ts`, and the singleton control-cookie model in `security.ts` all need
-to stop assuming exactly one credential exists.
+**2. 一键创建“临时／一次性”会话。** 从粘贴的 Token 导入一个会话，只用于一次对话，并在浏览器标签页关闭的瞬间进行密码学意义上的彻底销毁（而不只是软删除）；整个会话从不写入数据库。它比现有的 `private`／`ephemeral` 标记更进一步：被销毁的不只是对话，而是会话本身。
 
-**2. One-tap "burner" session.** A session imported from a pasted token,
-used for exactly one conversation, and cryptographically shredded (not just
-soft-deleted) the moment the tab closes — never written to the database at
-all, going further than the existing `private`/`ephemeral` flag by making
-the *session itself* disposable, not just the conversation.
+## 记忆与上下文
 
-## Memory & context
+**3. 本地“长期指令”。**（TODO 的 MIR-25。）由用户编辑的一段备注，在每个新对话的提示上下文前自动追加。它是 Mirror 自己实现“记忆”的方式，完全可以利用现有的 `promptFor`／instructions 机制，不需要改动上游协议。
 
-**3. Local "standing instructions."** (TODO's MIR-25.) A user-editable note
-that gets prepended to every *new* conversation's prompt context — Mirror's
-own local answer to "memory," entirely within reach of the existing
-`promptFor`/instructions machinery, no upstream protocol work needed.
+**已实现，2026-09-14——实际方案比上面的设想更好。** 没有另建设置面板，而是直接把 Playground 现有的 System 输入框作为持久字段。内容会在服务端按账号保存（`GET`／`PUT /api/settings/default-system-instructions`，以及 `store.ts` 中的 `getDefaultSystemInstructions`／`setDefaultSystemInstructions`）。因此，在任何登录到同一个 Mirror 实例的浏览器或设备上，新对话都会自动使用你上次留下的内容。无需学习第二套概念，也不依赖 localStorage。参见 README.md 中的 Playground 章节。
 
-**Built, 2026-09-14 — in a better shape than proposed above.** Rather than a
-separate settings panel, the Playground's existing System box itself is now
-the sticky field: it's saved account-wide server-side
-(`GET`/`PUT /api/settings/default-system-instructions`, `store.ts`'s
-`getDefaultSystemInstructions`/`setDefaultSystemInstructions`), so a new
-conversation always starts from whatever you last left in it, on any
-browser/device signed into this Mirror instance — no second concept to
-learn, no localStorage. See README.md's Playground section.
+**4. 自动提炼主题笔记。** 定期在本地执行一次经你批准的后台模型调用，把长期未活动的旧对话压缩成简短的长期笔记——记录“我们得出了什么结论”，而不是保存完整转录。这样，六个月前的对话仍然可以影响新对话，你不必重新阅读旧内容，也不必手动把内容复制到第 3 项。
 
-**4. Auto-distilled topic notes.** Periodically (locally, using the model
-itself in a background turn you approve) compress an old, inactive
-conversation into a short standing note — "what we concluded," not the full
-transcript — so a six-month-old conversation still informs new ones without
-you having to re-read it or manually copy anything into #3.
+**5. 每个对话都能标注“我为什么开启它”。** 只需一句话，创建时设置一次，并在对话列表中显示在标题旁边。ChatGPT 自动生成的标题往往无法帮助你回忆三周前为什么打开某个线程；这个功能完全不需要协议层改动，只需增加一个数据库字段和一个文本输入框。
 
-**5. A per-conversation "why I started this" tag.** One sentence, set once,
-shown in the conversation list next to the title — because ChatGPT's
-auto-generated titles are often useless for remembering *why* you opened a
-thread three weeks ago, and this needs no protocol work at all, just a
-column and a text field.
+## 整理已有内容
 
-## Organizing what you already have
+**6. 文件夹、标签和置顶。**（MIR-26。）真实使用几周后，单纯按时间排序的平面列表就会难以管理。
 
-**6. Folders, tags, and pinning.** (MIR-26.) Flat chronological lists stop
-scaling around a few weeks of real use.
+**7. 快速打开命令面板。**（MIR-28。）在现有搜索接口（`/api/conversations/search`）上提供 `Cmd/Ctrl+K` 快捷入口。这主要缺少的是 UI 入口，而不是后端能力。
 
-**7. A quick-open command palette.** (MIR-28.) `Cmd/Ctrl+K` over the search
-endpoint that already exists (`/api/conversations/search`) — this is mostly
-a missing UI affordance, not missing backend.
+**已实现，2026-09-14。** `CommandPalette.tsx` 已经实现了覆盖在现有 `/api/conversations/search` 接口之上的 `Cmd/Ctrl+K` 浮层：支持输入即搜索、方向键导航，以及按 Enter 直接跳转到对话。最终还顺带实现了一个相关功能：应用中的每个快捷键（目前只有这个）现在都可以配置，并按账号保存在服务端（`GET`／`PUT /api/settings/hotkeys`，以及 `hotkeys.ts` 中的 `DEFAULT_HOTKEYS`／`matchesHotkey`／`describeHotkey`）。用户可以在新增的“键盘快捷键”面板（`HotkeySettings.tsx`，位于 Playground 其他工具面板旁边）编辑或恢复默认值；未来新增快捷键也无需修改代码。按原计划，没有触碰 `openai.ts` 中的对话续接逻辑。每个文件仍保持 100% 覆盖率。
 
-**Built, 2026-09-14.** `CommandPalette.tsx` is a `Cmd/Ctrl+K` overlay over
-the existing `/api/conversations/search` endpoint - type-ahead search,
-arrow-key navigation, Enter to jump straight into a conversation. Ended up
-paired with a second, related feature: every hotkey in the app (currently
-just this one) is now configurable and saved per-account server-side
-(`GET`/`PUT /api/settings/hotkeys`, `hotkeys.ts`'s `DEFAULT_HOTKEYS`/
-`matchesHotkey`/`describeHotkey`), editable from a new "Keyboard shortcuts"
-panel (`HotkeySettings.tsx`) next to the other Playground utility panels -
-so this and any future shortcut can be rebound or reset without touching
-code. Didn't touch `openai.ts`'s conversation-continuation logic at all, as
-planned. 100%-per-file coverage maintained.
+**8. 跨对话分支总览图。** 不只是展示单个对话的分支树（MIR-14 已经改进过这部分），而是把所有对话的分支结构放在一张可缩放的地图中。对于经常编辑和重新生成内容的重度用户，这就像跨所有历史项目查看一张 Git 日志图，可以直观了解自己的整体探索路径。
 
-**8. A cross-conversation branch atlas.** Not just one conversation's branch
-tree (already improved per MIR-14) — a zoomable map of *every* conversation's
-branch structure at once, so heavy editors/regenerators can see their whole
-exploration pattern like a git log across every repo they've ever touched.
+**9. 本地活动热力图。** 类似 GitHub 贡献图的日历，显示每天的消息数量。完全使用 SQLite 中已有的数据，不增加任何跟踪，只是为现有记录增加一种新的可视化方式。
 
-**9. A local activity heatmap.** A GitHub-contributions-style calendar of
-message counts per day, built entirely from data already in SQLite — zero
-new tracking, just a new view over existing rows.
+## 多模型与对比
 
-## Multi-model & comparison
+**10. Playground 并排对比模式。**（MIR-29。）对同一个提示，同时运行 Chat 与 Responses，或 Custom GPT 与基础模型，并将结果并排显示。
 
-**10. Side-by-side compare mode in the Playground.** (MIR-29.) Same prompt,
-Chat vs. Responses, or Custom GPT vs. base model, rendered next to each
-other.
+**11. 手动多模型分发。** 明确不做自动的 `n>1` 请求（Mirror 目前拒绝在用户不知情的情况下悄悄放大用量，这是正确的）。但可以在 Playground 中提供一个按钮，让用户主动选择 2～3 个模型／GPT，一键向每个目标发送相同提示。每次请求都是用户明确选择的独立操作，结果则在本地逐行比较差异。
 
-**11. Manual model fan-out.** Explicitly *not* an automatic `n>1` (Mirror
-already, correctly, refuses to silently multiply usage) — but a Playground
-button that lets you deliberately pick 2-3 models/GPTs and fire the same
-prompt at each with one click, each a distinct visible action you chose,
-with results diffed locally line-by-line.
+**12. 提示词变体实验室。** 保存命名的系统提示词或上下文框架变体，定期对每个变体运行相同的测试问题，并在本地记录你主观评判的效果排名。对于使用 Custom GPT 进行真实提示词工程的人尤其有用。它本质上只是结构化本地存储，加上第 10 项的对比 UI。
 
-**12. A prompt-variant lab.** Save named variants of a system prompt or
-framing, re-run the same test question against each over time, and keep a
-local scoreboard of which variant a *you* judged better — useful for anyone
-doing real prompt engineering against Custom GPTs, and it's just structured
-local storage plus the comparison UI from #10.
+## 理解自己的历史记录
 
-## Understanding your own history
+**13. 本地使用模式统计。**（MIR-27。）每天的轮次数、工具调用频率、响应时间等。绝不伪造 Token 数量或费用，只统计 Mirror 已经观察到的数据。
 
-**13. Local usage-pattern stats.** (MIR-27.) Turns/day, tool-invocation
-frequency, response time — never fabricated tokens/cost, only what Mirror
-already observes.
+**14. “快速通读”摘要模式。** 对于很长的对话，生成一份线性、便于快速浏览的摘要，概括分支树中*实际走过的路径*。这样重新查看一段庞大而复杂的旧对话时，就不必逐条重读所有编辑和重新生成内容，才能找到真正重要的讨论主线。
 
-**14. A "read-through" digest mode.** For a long conversation, generate a
-linear skim-friendly summary of the *path actually taken* through the
-branch tree, so revisiting an old sprawling conversation doesn't mean
-re-reading every edit and regeneration to find the thread that mattered.
+**15. 语气／长度漂移标记。** 使用轻量级本地启发式分析（不额外调用 API），标记长对话中语气或回答长度明显发生变化的位置。这样可以发现某个 Custom GPT 的“个性”究竟从哪里开始偏离原有指令。
 
-**15. Tone/length drift markers.** A lightweight local heuristic (no extra
-API call) that flags where a long conversation's tone or response length
-visibly shifted — useful for noticing exactly where a Custom GPT's
-"personality" started drifting from its instructions.
+## 协议韧性与开发者工具
 
-## Protocol resilience & developer tooling
+**16. 对测试夹具语料进行模糊测试。** 在 MIR-31 新增的故障分类器和现有 `sse.test.mjs` 测试夹具基础上，自动生成结构被扰动的已知正确响应变体（字段缺失、Patch 顺序变化、Token 中途截断等），确认 SSE reducer 要么能正确处理，要么返回*分类明确*的错误，绝不能静默地产生错误结果。
 
-**16. Fuzz the fixture corpus.** Building on MIR-31's new failure classifier
-and the existing `sse.test.mjs` fixtures — generate structurally-mutated
-variants of known-good captures (dropped fields, reordered patches,
-truncated mid-token) and confirm the SSE reducer either handles them or
-fails with a *classified* error, never a silent wrong answer.
+**17. 持续运行的协议漂移监视器。** 基于已经实现的 `scripts/protocol-canary.mjs` 增加定时运行模式，从真实调用中采集响应*结构*快照（只记录字段名称和类型，绝不记录内容），并与上一次快照比较。当 backend-api 的结构发生变化时，提前提示具体变化位置，而不是等它变成用户可见的神秘故障后才发现。
 
-**17. A standing protocol-drift watcher.** Take `scripts/protocol-canary.mjs`
-(already built) and give it a cron mode that snapshots response *shapes*
-(field names/types, never content) from real calls and diffs them against
-the last snapshot, surfacing "backend-api's shape just changed here" before
-it shows up as a mysterious user-facing failure.
+**18. 富内容渲染器插件系统。** 目前每当上游出现新的事件类型（工具调用、引用、Widget 等），都要手动在 `rich-output.ts` 中添加渲染器。可以设计一个小型的注册式渲染器接口，让新增事件类型无需修改核心文件就能注册渲染器——尤其适合 ChatGPT 将来推出新型聊天内 Widget 的情况。
 
-**18. A rich-output renderer plugin system.** Right now new upstream event
-types (tool calls, citations, widgets) get a renderer added to
-`rich-output.ts` by hand each time. A small registered-renderer interface
-would let new event kinds get a renderer without touching the core file -
-useful the day ChatGPT ships some new in-chat widget type.
+## 生态与集成
 
-## Ecosystem & integration
+**19. 真正可安装的 PWA。**（MIR-30。）为 Playground 增加 Manifest 和 Service Worker，让它可以作为桌面图标安装，并在离线时仍能正常使用本地服务器提供的功能——始终严格限制在仅允许 `127.0.0.1` 的边界内。
 
-**19. A real installable PWA.** (MIR-30.) Manifest + service worker for the
-Playground, installable as a desktop icon, fully functional offline against
-the local server — stays entirely inside the `127.0.0.1`-only boundary.
+**20. 可嵌入的聊天面板 SDK。** 提供一个基于 `<iframe>` 的小型 Widget，让本机上的其他工具（例如笔记应用、个人仪表盘）可以嵌入由 Mirror 提供支持的聊天面板。认证方式与 Playground 现有的同源限制机制保持一致。
 
-**20. An embeddable chat-panel SDK.** A tiny `<iframe>`-based widget other
-local tools on your machine (a notes app, a personal dashboard) could embed
-to get a Mirror-backed chat panel, authenticated the same origin-restricted
-way the Playground already is.
+**21. 将 Mirror 作为 MCP Server。** 对正在阅读本文的工具来说，这个想法尤其有趣：把 Mirror 自己的对话引擎暴露为 MCP Server，让 Claude Code、Claude Desktop 或任何 MCP 客户端都能通过一个可调用工具，驱动真实的 ChatGPT 对话。这个想法有一种很有趣的递归感：一个为镜像 ChatGPT 而构建的系统，最终可以通过它自己的工具所使用的同一种协议被访问。
 
-**21. Mirror-as-an-MCP-server.** Genuinely fun one given what tool you're
-reading this in right now: expose Mirror's own conversation engine as an MCP
-server, so Claude Code / Claude Desktop / any MCP client could drive a real
-ChatGPT conversation through Mirror as a callable tool. Recursive in a
-pleasing way - the thing built to mirror ChatGPT becomes reachable by the
-same protocol its own tooling runs on.
+**22. 本地自动化 Webhook。** 当某轮对话匹配用户配置的条件时，触发一个仅允许 localhost 访问的 Webhook（例如助手返回了代码、生成了图片，或出现了特定关键词）。必须由用户主动启用、经过脱敏，并且严格限制在本机范围内。这样可以连接 Home Assistant 或个人 n8n 实例，而无需让数据离开本机。
 
-**22. Local automation webhooks.** Fire a `localhost`-only webhook when a
-turn matches a pattern you configured (assistant returned code, an image
-was generated, a specific keyword appeared) - opt-in, sanitized, and
-strictly local, for wiring into something like Home Assistant or a personal
-n8n instance without ever leaving your machine.
+## 多模态与创作
 
-## Multi-modal & creative
+**23. 本地文本转语音朗读。** 这不是“语音模式”（根据 COMPATIBILITY.md 的分析，真正的语音模式在结构上无法通过当前方式桥接，因为它需要完整的上游音频处理管线）。这里只是让本地 TTS 引擎朗读*已经接收到的*文本回答。这是对语音能力缺口一个真实、诚实的部分补足，而不是假装实现了完整语音模式。
 
-**23. Local text-to-speech read-aloud.** Not "voice mode" (structurally
-unbridgeable per COMPATIBILITY.md - that needs a real upstream audio
-pipeline) - just a local TTS engine reading the *already-received* text
-reply aloud. A real, honest partial answer to the voice gap rather than
-faking the real thing.
+**24. 生成图片图库。** 把所有对话中生成的 DALL-E 图片集中到一个可浏览的图库中。目前这些图片都埋在各自的对话消息里。图片和元数据已经保存在存储中，只需要增加一个聚合视图。
 
-**24. A generated-image gallery.** Every in-chat DALL-E image across every
-conversation, currently buried inline in whichever conversation it was
-generated in, aggregated into one browsable gallery view - the images and
-metadata already exist in the store.
+**25. 实时沙盒文件浏览器。** 当代码解释器沙盒在对话过程中写入文件时，将这些文件同步到一个小型本地文件浏览器，用户可以直接打开，而不是只能在对话记录中点击下载链接。
 
-**25. A live sandbox-file browser.** When the code-interpreter sandbox
-writes files mid-conversation, mirror them into a small local file browser
-you can open directly, instead of only a download link inline in the
-transcript.
+## 真正有点超现实的想法
 
-## The genuinely trippy ones
+**26. 灵媒模式。** 把一段过去很喜欢的对话以实时重演的方式播放出来，按照当时的节奏逐字呈现，而不是瞬间显示全部内容。它的乐趣在于重新体验一段精彩交流，而不只是重新阅读。（仓库父目录旁边已经有一个 `psychedelic_terminal.sh`，看来这个想法的时机已经有一半成熟了。）
 
-**26. Séance mode.** Replay an old, favorite conversation as a live
-re-enactment, typed out at its original cadence instead of appearing
-instantly - for the specific pleasure of reliving a good exchange rather
-than just re-reading it. (There's a `psychedelic_terminal.sh` sitting right
-next to this repo in the parent folder - this is clearly an idea whose time
-has already half-arrived.)
+**27. 环境式 Token 流可视化。** 在 Playground 背后增加一个可选的生成式视觉背景，根据实际收到的流式 delta 节奏变化。这不只是为了装饰，而是把 backend-api 原本不可见的真实时序行为可视化出来——README.md 已经用文字记录了相同的心跳／delta 时间信息。
 
-**27. Ambient token-stream visualization.** An optional generative-visual
-backdrop behind the Playground that reacts to the actual cadence of
-incoming stream deltas - not decoration for its own sake, but a literal
-visualization of backend-api's real, otherwise-invisible timing behavior
-(the same heartbeat/delta timing README.md already documents in prose).
+**28. 对话星图。** 将全部对话历史绘制成力导向图，按共享词汇／主题聚类。用户可以把数月的 ChatGPT 使用记录当作地图探索，而不是在列表中翻找。这相当于把第 14 项的“快速通读摘要”变成一种空间导航体验，而不是从上到下阅读。
 
-**28. Conversation constellations.** A force-directed graph of your entire
-conversation history, clustered by shared vocabulary/topics, for exploring
-months of ChatGPT usage as a map instead of a list - the "read-through
-digest" (#14) turned into something you navigate spatially instead of
-reading top to bottom.
+## 信任与数据所有权
 
-## Trust & data ownership
+**29. 防篡改本地审计日志。** 为 Mirror 对自身数据库所做的每一次凭证／会话／设置变更，写入一个采用哈希链连接的只追加日志。这样用户可以独立验证本地安装是否被其他拥有文件系统访问权限的程序悄悄修改。对于一个本来就高度重视安全性的项目，这项能力非常契合。
 
-**29. A tamper-evident local audit log.** A hash-chained append-only log of
-every credential/session/settings change Mirror makes to its own database,
-so you can independently verify your local install wasn't silently modified
-by anything else with filesystem access - a genuinely nice fit for a project
-this security-conscious already.
-
-**30. A one-click cold-storage archive.** Distinct from the existing
-per-conversation export (MIR-15): a single encrypted archive of the *entire*
-database - every account, conversation, and setting - meant for an offline
-backup drive, not a re-import target. Storage-drill-tested the same way
-`storage:drill` already tests backup/restore, but scoped to "get everything
-off this machine safely" rather than day-to-day maintenance.
+**30. 一键冷存储归档。** 与现有的单对话导出（MIR-15）不同，这里要生成一个包含*整个数据库*的加密归档——所有账号、对话和设置都包括在内。它的用途是存放到离线备份盘，而不是作为重新导入的目标。可以像现有的 `storage:drill` 一样进行存储演练测试，但目标从日常维护变成“安全地把这台机器上的所有数据都备份出去”。
 
 ---
 
-None of these are commitments - this is the wide net before the next
-conversation narrows it down. Good next question once you've read through:
-which handful excite you enough to actually want them running, versus which
-ones were fun to imagine and can stay imaginary?
+以上都不是承诺——这只是先尽可能广泛地收集想法，之后再通过讨论缩小范围。读完之后，一个很好的下一步问题是：哪些想法真正让你兴奋，值得投入实现并长期运行；哪些只是想象起来很有趣，留在设想阶段就好？
