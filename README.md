@@ -1,6 +1,6 @@
 # Mirror
 
-[![CircleCI](https://circleci.com/gh/defcron/mirror.svg?style=svg)](https://circleci.com/gh/defcron/mirror) [![GitHub Actions CI](https://github.com/defcron/mirror/actions/workflows/ci.yml/badge.svg)](https://github.com/defcron/mirror/actions/workflows/ci.yml) [![Coverage](https://codecov.io/github/defcron/mirror/branch/main/graph/badge.svg)](https://app.codecov.io/github/defcron/mirror) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![Node](https://img.shields.io/badge/node-%3E%3D24-brightgreen)](.nvmrc)
+[![CircleCI](https://circleci.com/gh/b8vipvip/abagpt.svg?style=svg)](https://circleci.com/gh/b8vipvip/abagpt) [![GitHub Actions CI](https://github.com/b8vipvip/abagpt/actions/workflows/ci.yml/badge.svg)](https://github.com/b8vipvip/abagpt/actions/workflows/ci.yml) [![Coverage](https://codecov.io/github/b8vipvip/abagpt/branch/main/graph/badge.svg)](https://app.codecov.io/github/b8vipvip/abagpt) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![Node](https://img.shields.io/badge/node-%3E%3D24-brightgreen)](.nvmrc)
 
 Mirror 是一个自托管的 ChatGPT 客户端和 OpenAI 兼容 API。它的 Web 界面通过本地代理提供官方 ChatGPT 应用，因此你可以直接使用自己的 ChatGPT 账号访问对话和自定义 GPT，无需 OpenAI API Key，也无需浏览器自动化。Mirror 还提供 API 测试台、四种文件格式的转换工具，以及 REST/SSE API。
 
