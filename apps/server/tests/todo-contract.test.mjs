@@ -74,9 +74,9 @@ test("public API compatibility preflight, errors, request IDs and allowlisted di
   assert.equal(health.json().storage.schemaVersion, 1);
   process.env.MIRROR_BUILD_REVISION = "abcdef0";
   globalThis.fetch = async () => new Response("warp=on"); await egress.verifyRequiredEgress();
-  assert.match((await app.inject({ url: "/api/diagnostics", headers: auth })).json().nextAction, /Test model/);
+  assert.match((await app.inject({ url: "/api/diagnostics", headers: auth })).json().nextAction, /请先测试模型发现/);
   store.clearSession();
-  assert.match((await app.inject({ url: "/api/diagnostics", headers: auth })).json().nextAction, /Save a session/);
+  assert.match((await app.inject({ url: "/api/diagnostics", headers: auth })).json().nextAction, /请在 Mirror 控制台中保存 ChatGPT 会话/);
   delete process.env.MIRROR_BUILD_REVISION;
   const cap = await app.inject({ url: "/v1/capabilities", headers: { ...auth, origin: "https://extension.example" } });
   assert.equal(cap.statusCode, 200); assert.ok(cap.json().fields.includes("messages"));

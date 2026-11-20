@@ -323,7 +323,7 @@ export function sse(reply: FastifyReply, data: unknown, now: number = Date.now()
     } else if (now - stalledSince > SLOW_CONSUMER_STALL_MS) {
       slowConsumerStalledSince.delete(raw);
       raw.destroy();
-      throw new Error("Response consumer is too slow");
+      throw new Error("响应客户端读取过慢。");
     }
   } else if (slowConsumerStalledSince.has(raw)) {
     slowConsumerStalledSince.delete(raw);
@@ -369,7 +369,7 @@ function withConversationLock<T>(
  */
 /** SSE is append-only: reject a renderer that would rewrite delivered text. */
 export function remainingStreamText(responseText: string, emittedText: string): string {
-  if (!responseText.startsWith(emittedText)) throw new Error("Upstream changed text already delivered to the client");
+  if (!responseText.startsWith(emittedText)) throw new Error("上游修改了已发送给客户端的文本。");
   return responseText.slice(emittedText.length);
 }
 
@@ -696,7 +696,7 @@ export async function registerOpenAiRoutes(
         ) {
           throw Object.assign(
             new Error(
-              `metadata.conversation_id is already in use: ${explicitConversationId}`,
+              `metadata.conversation_id 已被占用：${explicitConversationId}`,
             ),
             { statusCode: 400 },
           );
@@ -783,7 +783,7 @@ export async function registerOpenAiRoutes(
         ) {
           throw Object.assign(
             new Error(
-              "Assistant messages are read-only and cannot be changed or removed while continuing a Mirror conversation.",
+              "继续 Mirror 对话时，assistant 消息为只读，不能修改或删除。",
             ),
             { statusCode: 400 },
           );
@@ -847,7 +847,7 @@ export async function registerOpenAiRoutes(
           ) {
             throw Object.assign(
               new Error(
-                "The GPT/Project cannot change while continuing a Mirror conversation; start a new conversation id.",
+                "继续 Mirror 对话时不能更换 GPT/Project；请使用新的 conversation ID。",
               ),
               { statusCode: 400 },
             );
@@ -859,7 +859,7 @@ export async function registerOpenAiRoutes(
           ) {
             throw Object.assign(
               new Error(
-                "The model cannot change while continuing a Mirror conversation; start a new conversation id.",
+                "继续 Mirror 对话时不能更换模型；请使用新的 conversation ID。",
               ),
               { statusCode: 400 },
             );
@@ -870,7 +870,7 @@ export async function registerOpenAiRoutes(
           ) {
             throw Object.assign(
               new Error(
-                "Private-chat mode cannot change while continuing a Mirror conversation; start a new conversation id.",
+                "继续 Mirror 对话时不能更改隐私对话模式；请使用新的 conversation ID。",
               ),
               { statusCode: 400 },
             );
@@ -1108,7 +1108,7 @@ export async function registerOpenAiRoutes(
       }), controller.signal);
     } catch (error) {
       if (reply.raw.destroyed) return;
-      const message = error instanceof Error ? error.message : "Generation failed";
+      const message = error instanceof Error ? error.message : "生成失败。";
       const status = Number((error as { statusCode?: number }).statusCode ?? 502);
       const envelope = apiError(status, message, req.id);
       // Classify against the private-protocol drift taxonomy (MIR-31) so a

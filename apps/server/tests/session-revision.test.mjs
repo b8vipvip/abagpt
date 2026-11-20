@@ -11,7 +11,7 @@ test('a pending refresh cannot write credentials into a replacement session',asy
  try{
   store.saveVerifiedSession('old-session','old-account');
   globalThis.fetch=async()=>{await gate;return Response.json({accessToken:'old-access'});};
-  const pending=auth.getValidCredentials();const rejected=assert.rejects(pending,/Session changed/);
+  const pending=auth.getValidCredentials();const rejected=assert.rejects(pending,/会话已更改/);
   store.saveVerifiedSession('new-session','new-account');release();await rejected;
   assert.equal(store.getSession().sessionToken,'new-session');assert.equal(store.getSession().cachedAccessToken,undefined);
  }finally{globalThis.fetch=original;rmSync(dir,{recursive:true,force:true});}

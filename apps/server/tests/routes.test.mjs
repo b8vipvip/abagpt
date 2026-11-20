@@ -145,7 +145,7 @@ test("a ZodError from body validation becomes a 400 with the schema's custom mes
     payload: { sessionToken: "too-short" },
   });
   assert.equal(res.statusCode, 400);
-  assert.match(JSON.parse(res.body).error, /doesn't look like a valid session token/);
+  assert.match(JSON.parse(res.body).error, /不像有效的 ChatGPT 会话令牌/);
 });
 
 test("an unexpected non-statusCode error is hidden behind a generic 500 message", () =>

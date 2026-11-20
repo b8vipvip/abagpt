@@ -161,7 +161,7 @@ test("redirect loops, missing Location and the legacy sandbox resolver", async (
 });
 
 test("capability issuance requires a session and bounds malformed tokens", () => {
-  store.clearSession(); assert.throws(ticket, /No session/); session();
+  store.clearSession(); assert.throws(ticket, /尚未配置 ChatGPT 会话/); session();
   assert.equal(store.openAssetTicket("x".repeat(12001)), null);
   store.saveVerifiedSession("synthetic-session");
   const value = ticket(); assert.ok(store.openAssetTicket(value)); session();

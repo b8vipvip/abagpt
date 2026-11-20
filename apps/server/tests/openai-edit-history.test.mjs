@@ -130,7 +130,7 @@ test("assistant history is immutable while user edits rebase and continue", asyn
       },
     });
     assert.equal(rejectedAssistantEdit.statusCode, 400, rejectedAssistantEdit.body);
-    assert.match(rejectedAssistantEdit.body, /Assistant messages are read-only/);
+    assert.match(rejectedAssistantEdit.body, /assistant 消息为只读/);
     assert.equal(sent.length, 1, "a rejected assistant edit must not reach upstream");
     assert.deepEqual(
       store.listMessages(conversationId).map(({ role, content }) => ({
@@ -161,7 +161,7 @@ test("assistant history is immutable while user edits rebase and continue", asyn
       400,
       rejectedAssistantRemoval.body,
     );
-    assert.match(rejectedAssistantRemoval.body, /Assistant messages are read-only/);
+    assert.match(rejectedAssistantRemoval.body, /assistant 消息为只读/);
     assert.equal(sent.length, 1, "a rejected assistant removal must not reach upstream");
 
     const edited = await app.inject({

@@ -53,9 +53,9 @@ export async function verifyRequiredEgress(): Promise<EgressStatus> {
       headers: { accept: "text/plain" },
       signal: AbortSignal.timeout(15_000),
     });
-    if (!response.ok) throw new Error(`Cloudflare trace returned HTTP ${response.status}`);
+    if (!response.ok) throw new Error(`Cloudflare 网络检测接口返回 HTTP ${response.status}。`);
     const trace = parseCloudflareTrace(await response.text());
-    if (trace.warp !== "on") throw new Error("Cloudflare trace did not report warp=on");
+    if (trace.warp !== "on") throw new Error("Cloudflare 网络检测未报告 warp=on。");
     status = {
       mode: "warp",
       required: true,
@@ -69,9 +69,9 @@ export async function verifyRequiredEgress(): Promise<EgressStatus> {
       required: true,
       verified: false,
       checkedAt: new Date().toISOString(),
-      error: error instanceof Error ? error.message : "WARP verification failed",
+      error: error instanceof Error ? error.message : "WARP 验证失败。",
     };
-    throw new Error(`Mirror requires WARP, but WARP egress could not be verified: ${status.error}`);
+    throw new Error(`Mirror 必须通过 WARP 出站，但无法验证 WARP 网络出口：${status.error}`);
   }
   return getEgressStatus();
 }

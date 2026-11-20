@@ -18,7 +18,7 @@ let refreshInFlight: Promise<SessionCredentials> | null = null;
 export async function getValidCredentials(): Promise<SessionCredentials> {
   const session = getSession();
   if (!session) {
-    const err = new Error("No session configured. POST /api/session first.");
+    const err = new Error("尚未配置 ChatGPT 会话。请先调用 POST /api/session。");
     (err as any).statusCode = 401;
     throw err;
   }
@@ -41,33 +41,44 @@ export async function getValidCredentials(): Promise<SessionCredentials> {
     refreshRevision = getSessionRevision();
     const startedRevision = refreshRevision;
     refreshInFlight = (async () => {
-      try {
-        // No await precedes this operation, so the validated session snapshot
-        // is still current. The revision check below guards the asynchronous mint.
-        const current = session;
-        const revision = getSessionRevision();
-        const minted = await mintAccessToken(current.sessionToken);
-        assertSessionRevision(revision);
-        updateMintedToken(
-          minted.accessToken,
-          minted.expiresAt,
-          minted.rotatedSessionToken,
-        );
-        return {
-          accessToken: minted.accessToken,
-          deviceId: current.deviceId,
-          sessionToken: minted.rotatedSessionToken ?? current.sessionToken,
-        };
-      } catch (err) {
-        if (err instanceof SessionTokenInvalidError)
-          (err as any).statusCode = 401;
-        throw err;
-      }
+      // No await precedes this operation, so the validated session snapshot
+      // is still current. The revision check below guards the asynchronous mint.
+      const current = session;
+      const revision = getSessionRevision();
+      const minted = await mintSessionToken(current.sessionToken);
+      assertSessionRevision(revision);
+      updateMintedToken(
+        minted.accessToken,
+        minted.expiresAt,
+        minted.rotatedSessionToken,
+      );
+      return {
+        accessToken: minted.accessToken,
+        deviceId: current.deviceId,
+        sessionToken: minted.rotatedSessionToken ?? current.sessionToken,
+      };
     })().finally(() => {
       if (refreshRevision === startedRevision) refreshInFlight = null;
     });
   }
   return refreshInFlight;
+}
+
+function localizedSessionTokenError(error: SessionTokenInvalidError): Error {
+  const status = error.message.match(/returned (\d+)/)?.[1];
+  const message = status
+    ? `ChatGPT 会话令牌验证失败（HTTP ${status}）。请确认令牌有效后重试。`
+    : "ChatGPT 会话令牌无效或已过期，无法获取访问令牌。请重新登录并复制新的 Session Token。";
+  return Object.assign(new Error(message), { statusCode: 401 });
+}
+
+async function mintSessionToken(sessionToken: string) {
+  try {
+    return await mintAccessToken(sessionToken);
+  } catch (error) {
+    if (error instanceof SessionTokenInvalidError) throw localizedSessionTokenError(error);
+    throw error;
+  }
 }
 
 /** Verify a candidate without replacing the last known-good stored credential. */
@@ -80,7 +91,7 @@ export async function verifyCandidateSessionToken(
   expiresAt: number;
   turnstileToken?: string;
 }> {
-  const minted = await mintAccessToken(sessionToken);
+  const minted = await mintSessionToken(sessionToken);
   const prior = getSession();
   // The device id represents this Mirror installation, not one spelling of
   // a rotating session cookie. Keep it stable across successful rotations.

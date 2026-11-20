@@ -57,7 +57,7 @@ export function classifyStartupFailure(error: unknown): ClassifiedStartupFailure
     };
   }
 
-  if (message.includes("Mirror requires WARP")) {
+  if (message.includes("Mirror 必须通过 WARP 出站")) {
     return {
       category: "warp-egress",
       message,
@@ -66,10 +66,7 @@ export function classifyStartupFailure(error: unknown): ClassifiedStartupFailure
     };
   }
 
-  if (
-    message.includes("Unsupported database schema version") ||
-    message.includes("database schema")
-  ) {
+  if (message.includes("数据库 Schema 版本不受支持")) {
     return {
       category: "database-migration",
       message,
@@ -78,10 +75,7 @@ export function classifyStartupFailure(error: unknown): ClassifiedStartupFailure
     };
   }
 
-  if (
-    message.includes("MIRROR_STORE_KEY") ||
-    message.includes("must decode to exactly 32 bytes")
-  ) {
+  if (message.includes("MIRROR_STORE_KEY")) {
     return {
       category: "configuration",
       message,

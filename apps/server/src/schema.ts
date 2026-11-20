@@ -70,7 +70,7 @@ export function migrateDatabase(db: DatabaseSync): void {
   try {
     const version = databaseSchemaVersion(db);
     if (version > DATABASE_SCHEMA_VERSION || version < 0) {
-      throw new Error("Unsupported database schema version; use a compatible Mirror release or restore a pre-upgrade backup.");
+      throw new Error("数据库 Schema 版本不受支持；请使用兼容的 Mirror 版本，或恢复升级前的备份。");
     }
     for (let index = version; index < migrations.length; index++) {
       migrations[index](db);

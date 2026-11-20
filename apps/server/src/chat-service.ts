@@ -94,16 +94,16 @@ export async function runChat(
         accountId: getSession()?.accountId ?? "default",
       });
   if (!conversation)
-    throw Object.assign(new Error("Conversation not found"), {
+    throw Object.assign(new Error("未找到对话。"), {
       statusCode: 404,
     });
   if (conversation.accountId !== (getSession()?.accountId ?? "default"))
-    throw Object.assign(new Error("Conversation not found"), {
+    throw Object.assign(new Error("未找到对话。"), {
       statusCode: 404,
     });
   if (activeTurns.has(conversation.id))
     throw Object.assign(
-      new Error("A response is already running for this conversation"),
+      new Error("该对话已有一个正在运行的响应。"),
       { statusCode: 409 },
     );
 
@@ -224,14 +224,11 @@ export async function runChat(
       storedAssistantMessageId: assistant.id,
     };
   } catch (error) {
-    const message =
-      error instanceof Error && error.name === "AbortError"
-        ? "Generation stopped"
-        : "Generation failed";
+    const stopped = error instanceof Error && error.name === "AbortError";
     if (!transient) updateMessage(
       assistant.id,
       fullText,
-      message === "Generation stopped" ? "stopped" : "error",
+      stopped ? "stopped" : "error",
       null,
       events,
     );

@@ -16,7 +16,7 @@ export const SetSessionBody = z
   .object({
     sessionToken: z
       .string()
-      .min(20, "That doesn't look like a valid session token")
+      .min(20, "这不像有效的 ChatGPT 会话令牌。")
       .openapi({
         description:
           "从 chatgpt.com/api/auth/session 获取的 __Secure-next-auth.session-token Cookie 值。",

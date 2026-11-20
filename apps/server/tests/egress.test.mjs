@@ -47,7 +47,7 @@ test("verifyRequiredEgress throws and records an error when the trace endpoint f
   const original = globalThis.fetch;
   try {
     globalThis.fetch = async () => new Response("nope", { status: 503 });
-    await assert.rejects(egress.verifyRequiredEgress(), /WARP egress could not be verified/);
+    await assert.rejects(egress.verifyRequiredEgress(), /无法验证 WARP 网络出口/);
     const status = egress.getEgressStatus();
     assert.equal(status.mode, "direct");
     assert.equal(status.verified, false);
@@ -62,7 +62,7 @@ test("verifyRequiredEgress throws when the trace doesn't actually report warp=on
   const original = globalThis.fetch;
   try {
     globalThis.fetch = async () => new Response("warp=off\n", { status: 200 });
-    await assert.rejects(egress.verifyRequiredEgress(), /did not report warp=on/);
+    await assert.rejects(egress.verifyRequiredEgress(), /未报告 warp=on/);
   } finally {
     globalThis.fetch = original;
   }
@@ -76,7 +76,7 @@ test("verifyRequiredEgress records a generic message for a non-Error rejection",
       throw "not an Error instance";
     };
     await assert.rejects(egress.verifyRequiredEgress());
-    assert.equal(egress.getEgressStatus().error, "WARP verification failed");
+    assert.equal(egress.getEgressStatus().error, "WARP 验证失败。");
   } finally {
     globalThis.fetch = original;
   }

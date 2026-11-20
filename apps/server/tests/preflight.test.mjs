@@ -12,7 +12,7 @@ test.describe("server / preflight", () => {
   });
 
   test("classifies a WARP egress verification failure", () => {
-    const error = new Error("Mirror requires WARP, but WARP egress could not be verified: fixture");
+    const error = new Error("Mirror 必须通过 WARP 出站，但无法验证 WARP 网络出口：fixture");
     const result = classifyStartupFailure(error);
     assert.equal(result.category, "warp-egress");
     assert.match(result.nextAction, /WARP_ACCEPT_TOS/);
@@ -20,7 +20,7 @@ test.describe("server / preflight", () => {
   });
 
   test("classifies an unsupported/incompatible database schema version", () => {
-    const error = new Error("Unsupported database schema version; use a compatible Mirror release or restore a pre-upgrade backup.");
+    const error = new Error("数据库 Schema 版本不受支持；请使用兼容的 Mirror 版本，或恢复升级前的备份。");
     const result = classifyStartupFailure(error);
     assert.equal(result.category, "database-migration");
     assert.match(result.nextAction, /RELEASE-RECOVERY/);
@@ -28,7 +28,7 @@ test.describe("server / preflight", () => {
   });
 
   test("classifies a malformed MIRROR_STORE_KEY", () => {
-    const error = new Error("MIRROR_STORE_KEY must decode to exactly 32 bytes");
+    const error = new Error("MIRROR_STORE_KEY 解码后必须恰好为 32 字节。");
     const result = classifyStartupFailure(error);
     assert.equal(result.category, "configuration");
     assert.match(result.nextAction, /32 字节/);
@@ -42,8 +42,8 @@ test.describe("server / preflight", () => {
   });
 
   test("formatStartupFailure renders the category, message and next step as one block", () => {
-    const rendered = formatStartupFailure(new Error("Mirror requires WARP, but WARP egress could not be verified: fixture"));
-    assert.match(rendered, /^Mirror 启动失败 \[warp-egress\]：Mirror requires WARP/);
+    const rendered = formatStartupFailure(new Error("Mirror 必须通过 WARP 出站，但无法验证 WARP 网络出口：fixture"));
+    assert.match(rendered, /^Mirror 启动失败 \[warp-egress\]：Mirror 必须通过 WARP 出站/);
     assert.match(rendered, /下一步建议：请确认随附的 WARP 容器/);
   });
 });
