@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { request as httpRequest } from "node:http";
 import Fastify from "fastify";
-import { stubBackend } from "./helpers/backend.mjs";
+import { assistantAddFrame, stubBackend } from "./helpers/backend.mjs";
 
 const dir = mkdtempSync(path.join(tmpdir(), "mirror-stream-lifecycle-"));
 process.env.MIRROR_DATA_DIR = dir;
