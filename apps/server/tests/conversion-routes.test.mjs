@@ -53,6 +53,10 @@ test.describe("server / conversion routes", () => {
     assert.equal(response.statusCode, 200);
     assert.deepEqual(response.json().formats.map((f) => f.id), ["loaf", "pngspeak", "gptgif", "gptgif-v4"]);
     assert.deepEqual(response.json().formats.map((f) => f.extension), ["loaf", "pngspk.png", "gptgif.gif", "gptgif-v4.gif"]);
+    assert.match(response.json().formats.find((f) => f.id === "loaf").blurb, /归档/);
+    assert.equal(response.json().formats.find((f) => f.id === "gptgif").label, "gptgif（原版）");
+    assert.match(response.json().io.raw_in, /将请求体作为原始字节发送/);
+    assert.match(response.json().io.raw_out, /以原始字节形式返回响应/);
     assert.match(response.json().io.raw_in, /application\/octet-stream/);
   });
 
@@ -80,7 +84,9 @@ test.describe("server / conversion routes", () => {
     const emptyDecode = await post("/api/convert/onion/decode", { dataBase64: b64(emptyArchive), chain: ["loaf"] });
     assert.equal(emptyDecode.statusCode, 500);
     assert.equal((await post("/api/convert/loaf/decode?raw_in=1", Buffer.from("nope"), "text/plain")).statusCode, 400);
-    assert.equal((await post("/api/convert/loaf/encode?raw_in=1", { data: "not bytes" })).statusCode, 400);
+    const invalidRawBody = await post("/api/convert/loaf/encode?raw_in=1", { data: "not bytes" });
+    assert.equal(invalidRawBody.statusCode, 400);
+    assert.match(invalidRawBody.json().error, /raw_in 需要请求体为原始字节/);
   });
 
   test("PngSpeak supports JSON and raw transports, dimensions and binary recovery", async (t) => {
