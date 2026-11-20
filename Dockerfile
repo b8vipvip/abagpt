@@ -1,4 +1,7 @@
-FROM node:24-bookworm-slim AS build
+# Multi-platform index digest for the official Node 24 Bookworm slim image.
+# Pin the index (not an amd64-only manifest) so both release architectures resolve identically.
+ARG NODE_IMAGE=node:24-bookworm-slim@sha256:dc26ae92c9fb15cf6b1d63e20f0944b2efe0f115b20e00be48fb23fceb061c54
+FROM ${NODE_IMAGE} AS build
 
 WORKDIR /app
 COPY package.json package-lock.json ./
@@ -19,11 +22,15 @@ RUN npm run build
 # node_modules the build stage already produced, dev packages and all.
 # Bigger runtime image, but it actually finishes building.
 
-FROM node:24-bookworm-slim AS runtime
+FROM ${NODE_IMAGE} AS runtime
 
+ARG MIRROR_VERSION=development
 ARG MIRROR_BUILD_REVISION=development
-LABEL org.opencontainers.image.revision=$MIRROR_BUILD_REVISION
-ENV MIRROR_BUILD_REVISION=$MIRROR_BUILD_REVISION
+LABEL org.opencontainers.image.source="https://github.com/b8vipvip/abagpt" \
+      org.opencontainers.image.version=$MIRROR_VERSION \
+      org.opencontainers.image.revision=$MIRROR_BUILD_REVISION
+ENV MIRROR_VERSION=$MIRROR_VERSION \
+    MIRROR_BUILD_REVISION=$MIRROR_BUILD_REVISION
 
 ENV NODE_ENV=production \
     HOST=0.0.0.0 \

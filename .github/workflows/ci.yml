@@ -47,6 +47,16 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
       - run: npm run manifest -- --check
+      - name: Validate release asset assembly without publishing
+        env:
+          IMAGE_NAME: ghcr.io/b8vipvip/abagpt
+          IMAGE_DIGEST: sha256:0000000000000000000000000000000000000000000000000000000000000000
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          export RELEASE_VERSION="$VERSION"
+          export GITHUB_REF_NAME="v$VERSION"
+          export CONTAINER_NODE_VERSION="$(node --version)"
+          npm run release:assets
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
@@ -59,12 +69,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build the verified revision
-        run: docker build --build-arg MIRROR_BUILD_REVISION="${{ github.sha }}" -t mirror-verified .
+        run: docker build --build-arg MIRROR_VERSION=development --build-arg MIRROR_BUILD_REVISION="${{ github.sha }}" -t mirror-verified .
       - name: Verify recovery inside the runtime image without network access
         run: docker run --rm --network none --entrypoint node mirror-verified scripts/restore-drill.mjs
       - name: Verify embedded revision and record image identity
         env:
           EXPECTED_REVISION: ${{ github.sha }}
         run: |
-          docker run --rm --network none -e EXPECTED_REVISION --entrypoint node mirror-verified -e 'require("node:assert/strict").equal(process.env.MIRROR_BUILD_REVISION, process.env.EXPECTED_REVISION)'
+          docker run --rm --network none -e EXPECTED_REVISION -e EXPECTED_VERSION=development --entrypoint node mirror-verified -e 'const assert = require("node:assert/strict"); assert.equal(process.env.MIRROR_BUILD_REVISION, process.env.EXPECTED_REVISION); assert.equal(process.env.MIRROR_VERSION, process.env.EXPECTED_VERSION)'
           docker image inspect --format '{{.Id}} {{index .Config.Labels "org.opencontainers.image.revision"}}' mirror-verified

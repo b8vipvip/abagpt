@@ -39,7 +39,7 @@ export async function registerInsightRoutes(app: FastifyInstance) {
     const egress = getEgressStatus();
     return {
       schemaVersion: 1,
-      build: { version: "0.1.0", revision: /^[a-f0-9]{7,40}$/.test(process.env.MIRROR_BUILD_REVISION ?? "") ? process.env.MIRROR_BUILD_REVISION : "development" },
+      build: { version: process.env.MIRROR_VERSION ?? "development", revision: /^[a-f0-9]{7,40}$/.test(process.env.MIRROR_BUILD_REVISION ?? "") ? process.env.MIRROR_BUILD_REVISION : "development" },
       api: { reachable: true, keyConfigured: configuredApiKeys().length > 0 },
       storage: { engine: "sqlite", healthy: databaseHealthy(), schemaVersion: DATABASE_SCHEMA_VERSION },
       egress: { required: egress.required, verified: egress.verified, mode: egress.mode, checkedAt: egress.checkedAt },

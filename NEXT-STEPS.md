@@ -42,36 +42,45 @@ test-runner warnings that are under the project's control.
 
 Complete MIR-05, MIR-06, and MIR-18 together as one release-readiness project.
 
-**Progress (2026-09-12):** the numbered transactional baseline migration,
-schema diagnostics, two-key-mode offline restore drill, container revision
-plumbing, runtime maintenance scripts, and [recovery runbook](RELEASE-RECOVERY.md)
-are implemented. The remaining release work is artifact publishing and
-digest/version recording, plus real-volume and authenticated live acceptance.
-The bullets below describe the full acceptance target.
+**Progress (2026-11-20):** the numbered transactional migrations, schema
+diagnostics, two-key-mode offline restore drill, container revision plumbing,
+and recovery runbook are implemented. The new `.github/workflows/release.yml`
+now validates stable workspace versions, reruns the full CI gate, publishes
+multi-platform GHCR images by immutable digest, attaches SBOM/build provenance,
+and uploads OpenAPI, SHA-256 manifest, package-lock, and release metadata to
+GitHub Releases. The Node 24 multi-platform base image is digest-pinned, and
+diagnostics report the injected version/revision. The release workflow is
+prepared but has not yet been triggered: the repository has no version tags or
+published releases. Remaining release gates are the first stable tag, one-time
+GHCR package visibility configuration if public pulls are desired, real-volume
+restore, and authenticated live continuation.
 
-- Add a release workflow that produces a versioned, digest-pinned container,
-  injects `MIRROR_BUILD_REVISION`, publishes the generated OpenAPI document and
-  SHA256 manifest, and records the exact Node and dependency-lock revisions.
-- Replace the current ad-hoc column-existence migrations with numbered,
-  transactional schema migrations and a stored schema version. Document the
-  oldest database version supported by each release.
-- Automate an **offline** backup -> isolated restore -> integrity check drill for
-  both generated `master.key` and supplied `MIRROR_STORE_KEY` configurations.
-  Keep the live-account continuation check as a separately approved manual
-  release gate; never put a session credential in CI.
-- Publish a rollback runbook. A rollback should start with a known-good backup,
-  state whether the previous binary can read the upgraded schema, and include
-  WARP, session, model-discovery, and one real continuation checks.
+- **Completed:** tag-triggered release workflow publishes versioned, multi-platform
+  digest-addressed images, build provenance/SBOM, generated OpenAPI documents,
+  SHA-256 manifest, exact package-lock, and release metadata containing the
+  source revision, Node/npm versions, and image/base-image digests.
+- **Completed:** numbered transactional schema migrations and a stored schema
+  version are documented in `RELEASE-RECOVERY.md`; each release records the
+  tested source and lockfile revisions.
+- **Completed:** CI and the release workflow run the offline backup -> isolated
+  restore -> integrity check drill for generated `master.key` and supplied
+  `MIRROR_STORE_KEY` configurations. Live-account continuation remains a
+  separately approved manual gate; no session credential enters CI.
+- **Completed:** `RELEASE-RECOVERY.md` documents backup, isolated restore,
+  schema compatibility, image-digest pinning, and rollback. Real-volume and
+  authenticated continuation checks remain manual release acceptance.
 
-**Why first:** storage upgrades now have a transactional version contract, but
-the package version is still `0.1.0` and build revision remains optional for local
-development. A published artifact still needs to identify its tested source,
-dependencies, image digest, and migration contract.
+**Why first:** storage upgrades now have a transactional version contract.
+Release tags are checked against every workspace package and package-lock;
+local builds remain explicitly marked `development`, while tagged images carry
+an immutable revision and version. The first tag and real-volume/live-account
+acceptance still need to be performed before calling a release production-ready.
 
-**Definition of done:** a clean machine can install a tagged artifact, restore a
-fixture backup without touching the source database, verify/decrypt it, upgrade
-it, and follow the documented rollback decision tree. CI records artifact
-digests and all required checks against the tagged commit.
+**Definition of done:** CI and the release workflow now verify the tagged
+source, image digest, artifact hashes, and offline restore drills. The remaining
+manual acceptance is to deploy a tagged image against a real volume, verify
+WARP/session/model discovery, complete a disposable three-turn continuation,
+and rehearse rollback using the prior image digest and backup.
 
 ### 2. Turn client compatibility into an executable contract (P0)
 

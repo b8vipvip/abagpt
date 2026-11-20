@@ -54,7 +54,7 @@ Effort: S / M / L as before.
   `npm ci` - `npm install` was used to pull in a missing platform-specific
   optional dependency (see MIR-21) - so a truly clean-checkout run is still
   worth doing once, but every check passed against the real working tree.
-- [ ] **MIR-21 · Enhancement · M — Run the Playwright/browser suite for real.**
+- [x] **MIR-21 · Enhancement · M — Run the Playwright/browser suite for real.**
   **Progress (2026-09-14):** the `apps/web` unit test runner now actually
   runs (previously always skipped as "can't run here") - the real blocker was
   a stale mac-only `node_modules` missing the Linux `rolldown`/`esbuild`
@@ -127,6 +127,12 @@ Effort: S / M / L as before.
   more than it looks: this bug was invisible in every local run this whole
   session because the sandbox quietly runs v22 despite the `>=24 <25`
   `engines` constraint.
+**Final verification (2026-11-20):** GitHub Actions CI passed on the merged
+  fifteenth-pass revision, including `npm run test:e2e`, the full 100% coverage
+  gate, `npm run manifest -- --check`, both offline key-mode restore drills,
+  and the container recovery/revision check. The Playwright suite is now a
+  repeatable CI gate; only live-account acceptance remains manual (MIR-23).
+
 - [x] **MIR-22 · Verify · S — `npm audit` and dependency freshness.**
   **Evidence (2026-09-14):** `npm audit` reports 0 vulnerabilities. `npm outdated`
   shows mostly minor/patch drift (Fastify 5.12.3->5.12.4, `@fastify/rate-limit`
@@ -283,12 +289,10 @@ Effort: S / M / L as before.
   every "not supported"/"structurally impossible" claim still matches the
   actual `openai.ts`/`sse.ts` behavior, since both files have changed since
   some of that prose was written.
-- [ ] **MIR-36 · Enhancement · S — A CHANGELOG.md.** The repo has extensive
-  point-in-time progress notes scattered across `TODO.md`, `NEXT-STEPS.md`,
-  and regression-specific docs (`ASSET-RENDERING-REGRESSION.md`,
-  `CONTINUATION-REGRESSION.md`), but nothing chronological and user-facing.
-  Once MIR-18's release/versioning work lands, a real changelog would make
-  upgrades legible without reading five different audit documents.
+- [x] **MIR-36 · Enhancement · S — A CHANGELOG.md.** Added a user-facing
+  `CHANGELOG.md` with an Unreleased section for the versioned image/release
+  pipeline and build metadata. Future tagged releases can append their
+  user-visible changes without turning `TODO.md` into release notes.
 
 ## Shared work with cm
 
@@ -300,10 +304,9 @@ Effort: S / M / L as before.
 
 ---
 
-Remaining open work, roughly in order: MIR-21 (run the real Playwright suite
-on the actual Mac and wire both suites into CI), MIR-23 (the live acceptance
-checklist - needs a person and a real account), MIR-33 (the file
-decomposition - deliberately not rushed), then the rest of MIR-34 (full
-per-request structured logs) and the fixture-provenance half of MIR-31.
+Remaining open work, roughly in order: MIR-23 (live acceptance with a real
+ChatGPT account), MIR-33 (incremental core-module decomposition), MIR-34
+(semantic structured logs), MIR-31 (sanitized fixture provenance), MIR-19
+(shared streaming/persistence contract), and MIR-11 (compatibility documentation audit).
 After that: whichever P2 feature idea (MIR-24 through MIR-30) you actually
 want Mirror to become — that's the next conversation.

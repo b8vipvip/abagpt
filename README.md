@@ -1,6 +1,6 @@
 # Mirror
 
-[![CircleCI](https://circleci.com/gh/defcron/mirror.svg?style=svg)](https://circleci.com/gh/defcron/mirror) [![GitHub Actions CI](https://github.com/defcron/mirror/actions/workflows/ci.yml/badge.svg)](https://github.com/defcron/mirror/actions/workflows/ci.yml) [![Coverage](https://codecov.io/github/defcron/mirror/branch/main/graph/badge.svg)](https://app.codecov.io/github/defcron/mirror) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![Node](https://img.shields.io/badge/node-%3E%3D24-brightgreen)](.nvmrc)
+[![CircleCI](https://circleci.com/gh/b8vipvip/abagpt.svg?style=svg)](https://circleci.com/gh/b8vipvip/abagpt) [![GitHub Actions CI](https://github.com/b8vipvip/abagpt/actions/workflows/ci.yml/badge.svg)](https://github.com/b8vipvip/abagpt/actions/workflows/ci.yml) [![Coverage](https://codecov.io/github/b8vipvip/abagpt/branch/main/graph/badge.svg)](https://app.codecov.io/github/b8vipvip/abagpt) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![Node](https://img.shields.io/badge/node-%3E%3D24-brightgreen)](.nvmrc)
 
 Mirror 是一个自托管的 ChatGPT 客户端和 OpenAI 兼容 API。它的 Web 界面通过本地代理提供官方 ChatGPT 应用，因此你可以直接使用自己的 ChatGPT 账号访问对话和自定义 GPT，无需 OpenAI API Key，也无需浏览器自动化。Mirror 还提供 API 测试台、四种文件格式的转换工具，以及 REST/SSE API。
 
@@ -22,6 +22,20 @@ Mirror 是一个自托管的 ChatGPT 客户端和 OpenAI 兼容 API。它的 Web
 3. 打开 [http://127.0.0.1:8799](http://127.0.0.1:8799)。在 ChatGPT 侧边栏中选择 **Mirror 控制台**，粘贴刚才复制的令牌，然后点击 **保存并刷新**。
 
 Mirror 会在本地服务器上加密保存凭证，并使用它获取短期有效的访问令牌。控制台还会显示连接状态和 WARP 状态，并提供 API 测试台、API 文档和解码挑战的入口。
+
+### 使用已发布的固定版本镜像
+
+每个稳定版 `vX.Y.Z` 标签都会触发发布流水线：重新执行完整测试、发布 Linux amd64/arm64 镜像、生成 SBOM 和构建来源证明，并在 GitHub Release 附上 OpenAPI、SHA-256 清单、依赖锁文件及 `release-metadata.json`。
+
+要部署固定发布版本，请从对应 Release 的 `release-metadata.json` 复制 `container.immutableReference`，写入 `.env`：
+
+```sh
+MIRROR_IMAGE=ghcr.io/b8vipvip/abagpt@sha256:<release-digest>
+docker compose pull mirror
+docker compose up -d
+```
+
+使用镜像摘要部署时先执行 `docker compose pull mirror`，再执行 `docker compose up -d`，不要添加 `--build`；显式 pull 可确保摘要拉取失败时直接报错，而不是回退到本地源码构建。源码开发仍使用默认的 `:local` 镜像并执行 `docker compose up --build`。首次发布后，如需匿名公开拉取 GHCR 镜像，请在 GitHub Packages 中将该容器包的可见性设为 Public。
 
 ### 网络要求
 
@@ -159,3 +173,4 @@ Mirror 提供本地控制路由、格式转换路由、解码挑战路由，以�
 - [COMPATIBILITY.md](COMPATIBILITY.md)：OpenAI API 兼容性详情。
 - [TODO.md](TODO.md)：按 Issue 组织的项目待办事项。
 - [NEXT-STEPS.md](NEXT-STEPS.md)：仓库审计路线图。
+- [CHANGELOG.md](CHANGELOG.md)：面向用户的版本变更记录。

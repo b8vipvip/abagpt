@@ -28,7 +28,7 @@ npm run manifest -- --check
 
 ## 识别并验证候选镜像
 
-请从已提交且工作区干净的代码检出版本进行构建。在执行 `docker compose build mirror` 之前，将完整 commit SHA 设置到 `MIRROR_BUILD_REVISION`。Compose 会将其作为构建参数传递。生成的镜像包含 OCI revision 标签，诊断接口也会显示相同的默认版本。未指定版本时显示为 `development`。请将实际镜像 ID、Node 版本、package-lock 哈希、源文件清单和 OpenAPI 输出与候选版本一起记录。revision 参数只是构建者提供的标签，并不能证明工作区干净，也不能证明构建产物确实与该 commit 完全一致。
+请从已提交且工作区干净的代码检出版本进行构建。在执行 `docker compose build mirror` 之前，将完整 commit SHA 设置到 `MIRROR_BUILD_REVISION`，并将发布版本设置到 `MIRROR_VERSION`。Compose 会将二者作为构建参数传递。镜像的 OCI 标签和 `/api/diagnostics` 都会报告版本及源码修订；本地源码构建默认显示 `development`。Node 24 基础镜像使用官方多平台索引摘要固定，避免同一 Dockerfile 因基础镜像标签漂移而悄然换底。revision 参数仍只是构建者提供的标签，并不能单独证明工作区干净或构建产物与该 commit 完全一致。
 
 替换正在运行的服务之前，请先离线运行候选镜像：
 
@@ -36,7 +36,11 @@ npm run manifest -- --check
 docker run --rm --network none --entrypoint node CANDIDATE_IMAGE scripts/restore-drill.mjs
 ```
 
-将 `CANDIDATE_IMAGE` 替换为已经验证的镜像 ID。此命令不会挂载任何生产数据卷。维护脚本已包含在运行时镜像中。由于基础镜像使用可变标签，而且目前尚无发布流水线，因此当前构建尚不能宣称是逐字节可复现的正式发布产物。
+将 `CANDIDATE_IMAGE` 替换为已经验证的镜像 ID 或不可变镜像摘要。此命令不会挂载任何生产数据卷。维护脚本已包含在运行时镜像中。稳定版标签 `vX.Y.Z` 会触发 `.github/workflows/release.yml`：流水线在发布前执行类型检查、全量覆盖率、构建、双密钥恢复演练、Playwright 和清单校验，然后推送 amd64/arm64 镜像，生成 SBOM/来源证明，并在 GitHub Release 上传 OpenAPI、SHA-256 清单、package-lock 和 `release-metadata.json`。后者记录源码 SHA、Node/npm 版本、依赖锁文件哈希、Node 基础镜像摘要及最终镜像的不可变引用。该流程保证已发布产物可被精确识别和回滚；由于 Playwright 浏览器及 Debian 系统依赖仍从上游软件源安装，它不宣称不同日期的重新构建必然得到逐字节相同的镜像。
+
+## 使用固定摘要部署与回滚
+
+优先从 GitHub Release 下载 `release-metadata.json`，将 `container.immutableReference` 原样保存为部署记录。Compose 的 `MIRROR_IMAGE` 支持 `ghcr.io/...@sha256:...`；部署发布镜像时先运行 `docker compose pull mirror`，再运行 `docker compose up -d`，不要添加 `--build`。显式 pull 可避免镜像不可用时意外回退到本地源码构建。回滚时使用上一版本 Release 元数据中的镜像摘要，并按下文步骤将升级前备份恢复到新的空数据卷。不要只依赖可变的 `:latest` 标签。
 
 ## 备份与隔离恢复
 
