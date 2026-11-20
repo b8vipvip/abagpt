@@ -719,7 +719,7 @@ export function deleteConversation(id: string): void {
 export function branchConversation(
   sourceId: string,
   currentNodeId: string,
-  title = "Branched chat",
+  title = "分支对话",
   throughMessageId?: string,
 ): StoredConversation | null {
   const source = getConversation(sourceId);
