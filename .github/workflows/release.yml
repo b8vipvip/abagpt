@@ -94,6 +94,10 @@ jobs:
           tags: |
             type=ref,event=tag
             type=raw,value=latest
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.version=${{ steps.version.outputs.version }}
+            org.opencontainers.image.revision=${{ github.sha }}
       - name: Build and publish multi-platform image
         id: build
         uses: docker/build-push-action@v6
@@ -102,11 +106,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
-          labels: |
-            org.opencontainers.image.source=https://github.com/${{ github.repository }}
-            org.opencontainers.image.version=${{ steps.version.outputs.version }}
-            org.opencontainers.image.revision=${{ github.sha }}
-            org.opencontainers.image.created=${{ steps.meta.outputs.created }}
+          labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             MIRROR_VERSION=${{ steps.version.outputs.version }}
             MIRROR_BUILD_REVISION=${{ github.sha }}
