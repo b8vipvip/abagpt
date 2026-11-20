@@ -41,27 +41,22 @@ export async function getValidCredentials(): Promise<SessionCredentials> {
     refreshRevision = getSessionRevision();
     const startedRevision = refreshRevision;
     refreshInFlight = (async () => {
-      try {
-        // No await precedes this operation, so the validated session snapshot
-        // is still current. The revision check below guards the asynchronous mint.
-        const current = session;
-        const revision = getSessionRevision();
-        const minted = await mintAccessToken(current.sessionToken);
-        assertSessionRevision(revision);
-        updateMintedToken(
-          minted.accessToken,
-          minted.expiresAt,
-          minted.rotatedSessionToken,
-        );
-        return {
-          accessToken: minted.accessToken,
-          deviceId: current.deviceId,
-          sessionToken: minted.rotatedSessionToken ?? current.sessionToken,
-        };
-      } catch (err) {
-        if (err instanceof SessionTokenInvalidError) throw localizedSessionTokenError(err);
-        throw err;
-      }
+      // No await precedes this operation, so the validated session snapshot
+      // is still current. The revision check below guards the asynchronous mint.
+      const current = session;
+      const revision = getSessionRevision();
+      const minted = await mintSessionToken(current.sessionToken);
+      assertSessionRevision(revision);
+      updateMintedToken(
+        minted.accessToken,
+        minted.expiresAt,
+        minted.rotatedSessionToken,
+      );
+      return {
+        accessToken: minted.accessToken,
+        deviceId: current.deviceId,
+        sessionToken: minted.rotatedSessionToken ?? current.sessionToken,
+      };
     })().finally(() => {
       if (refreshRevision === startedRevision) refreshInFlight = null;
     });
@@ -77,6 +72,15 @@ function localizedSessionTokenError(error: SessionTokenInvalidError): Error {
   return Object.assign(new Error(message), { statusCode: 401 });
 }
 
+async function mintSessionToken(sessionToken: string) {
+  try {
+    return await mintAccessToken(sessionToken);
+  } catch (error) {
+    if (error instanceof SessionTokenInvalidError) throw localizedSessionTokenError(error);
+    throw error;
+  }
+}
+
 /** Verify a candidate without replacing the last known-good stored credential. */
 export async function verifyCandidateSessionToken(
   sessionToken: string,
@@ -87,13 +91,7 @@ export async function verifyCandidateSessionToken(
   expiresAt: number;
   turnstileToken?: string;
 }> {
-  let minted;
-  try {
-    minted = await mintAccessToken(sessionToken);
-  } catch (error) {
-    if (error instanceof SessionTokenInvalidError) throw localizedSessionTokenError(error);
-    throw error;
-  }
+  const minted = await mintSessionToken(sessionToken);
   const prior = getSession();
   // The device id represents this Mirror installation, not one spelling of
   // a rotating session cookie. Keep it stable across successful rotations.
