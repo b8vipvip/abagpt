@@ -44,7 +44,7 @@
   "apps/server/src/gif89a.ts": "2acce6b3f624c5275f647da26932ff8e55ed68a073d4eac6415b1efc13dab3a2",
   "apps/server/src/gptgif-v4.ts": "828f698975c512555228e4665a557e5d643e9780202fe86569a643c674fd0b73",
   "apps/server/src/gptgif.ts": "346da6ae2acb8e27bcce16923a3732ae0f3d69116952225b985eced6672dc3d7",
-  "apps/server/src/index.ts": "c9d875ee7551c34237413b7223282b90f13a805b42e13eb3e8b3154a70552828",
+  "apps/server/src/index.ts": "08d5ce90ee35ca186ce138a3fcdf90cfbb7fdd74db1058d7ec0711f1fcf460bb",
   "apps/server/src/insights.ts": "13a96c266924539ec28e28f39674896e4fc208501e0abb676ae4140381a5a7ca",
   "apps/server/src/loaf.ts": "dbb1a148c8bcfe6609f479ebd101c22e692676e4d8425294ac7131718375b2a8",
   "apps/server/src/mirror-controls.ts": "07abeb6873651f3e76cb3b04883c9b3038a53e2098316406735a2fe5dcac48cf",
@@ -171,7 +171,7 @@
   "scripts/restore-drill.mjs": "05917168b3b909b7403c6ecb6e1d6939482e8e30c254a6103b7968cf077dbd08",
   "scripts/storage.mjs": "1df9e21d08fd0a99d17698c0ecc079a599499d6873a99398ec95e4dead11d1bf",
   "tests/browser/decoder-challenges.spec.ts": "703c4d5284b915c2df799f15b8c2fd801e7ed5a66c54398c2b79880eae9a9c36",
-  "tests/browser/playground.spec.ts": "e2c2b0652032accf2232ac504bbe8cd2b48a4f62a19a029035278deb8cf4c4fe",
+  "tests/browser/playground.spec.ts": "70ae538be4da57bb68c469f35ba0799e0d3eecc795dd522c539923027905890e",
   "tests/browser/server.mjs": "f533bfd6c46958c88f04d4e1dd8ad818c35676e85e52e96843c69e56ea458d9a",
   "tsconfig.base.json": "ea903f97b8096f3cea4d123a67c5f816f1501980dd5317408a0fbc8f411be4e4"
 }
