@@ -11,7 +11,7 @@ test("late citation mapping replaces private marker inline and preserves the sur
   const marker = "\uE200filecite\uE202turn0file0\uE201";
   const calls = [];
   const result = await renderRichOutput([text(`Before ${marker} after.`), message({ metadata: { content_references: [{ matched_text: marker, file_id: "file-1", name: "report.csv" }] } })], "", async p => { calls.push(p); return url; });
-  assert.equal(result.text, `Before Download file: [report.csv](<${url}>) after.`);
+  assert.equal(result.text, `Before 下载文件：[report.csv](<${url}>) after.`);
   assert.deepEqual(calls, ["file-service://file-1"]);
 });
 test("web-search citation markers resolve to the real title/url from content_references", async () => {
@@ -21,7 +21,7 @@ test("web-search citation markers resolve to the real title/url from content_ref
     message({ metadata: { content_references: [{ matched_text: marker, type: "webpage", title: "David Bowie", url: "https://en.wikipedia.org/wiki/David_Bowie" }] } }),
   ], "", async () => url);
   assert.equal(result.text, `Ground Control to Major Tom is from [David Bowie](<https://en.wikipedia.org/wiki/David_Bowie>) 1969 song.`);
-  assert.ok(!result.text.includes("Reference unavailable"));
+  assert.ok(!result.text.includes("引用不可用"));
 });
 test("non-webpage citation shapes (mcp_source, grouped_webpages, description-only) resolve their display text", async () => {
   const m1 = "\uE200cite\uE202turn0mcp0\uE201";
@@ -40,7 +40,7 @@ test("non-webpage citation shapes (mcp_source, grouped_webpages, description-onl
     }),
   ], "", async () => url);
   assert.equal(result.text, "See [Internal Wiki](<https://wiki.internal/page>), also [Example Source](<https://example.com/a>), and note A short internal description with no link.");
-  assert.ok(!result.text.includes("Reference unavailable"));
+  assert.ok(!result.text.includes("引用不可用"));
 });
 test("citation data delivered after the message via a citation_patch event still resolves (sidebar/popup references)", async () => {
   const marker = "\uE200cite\uE202turn0async0\uE201";
@@ -50,7 +50,7 @@ test("citation data delivered after the message via a citation_patch event still
     citationPatch("a", [{ matched_text: marker, type: "hidden", description: "Async sidebar description" }]),
   ], "", async () => url);
   assert.equal(result.text, "See the Async sidebar description for details.");
-  assert.ok(!result.text.includes("Reference unavailable"));
+  assert.ok(!result.text.includes("引用不可用"));
 });
 test("inline self-contained widget markers (entity, image_group) render without content_references", async () => {
   // Real markers observed from a live ChatGPTBox session: the type name and
@@ -63,7 +63,7 @@ test("inline self-contained widget markers (entity, image_group) render without 
     text(`${entityMarker}'s ${songMarker}.${imageGroupMarker}`),
   ], "", async () => url);
   assert.equal(result.text, "David Bowie's Space Oddity.");
-  assert.ok(!result.text.includes("Reference unavailable"));
+  assert.ok(!result.text.includes("引用不可用"));
 });
 test("malformed and sparse inline widget markers degrade safely", async () => {
   const malformed = "\uE200entity\uE202[not-json]\uE201";
@@ -72,7 +72,7 @@ test("malformed and sparse inline widget markers degrade safely", async () => {
   const result = await renderRichOutput([
     text(`${malformed} ${fallbackName} ${emptyEntity}`),
   ], "", async () => url);
-  assert.equal(result.text, "[Reference unavailable] Only available label [Reference unavailable]");
+  assert.equal(result.text, "[引用不可用] Only available label [引用不可用]");
 });
 test("citation field variants and empty reference shapes resolve or stay unavailable without leaking markers", async () => {
   const markers = Array.from({ length: 12 }, (_, index) => `\uE200cite\uE202variant${index}\uE201`);
@@ -99,7 +99,7 @@ test("citation field variants and empty reference shapes resolve or stay unavail
   assert.match(result.text, /\[https:\/\/example\.com\/cloud\]/);
   assert.match(result.text, /Ignored second item/);
   assert.match(result.text, /\[https:\/\/example\.com\/url-only\]/);
-  assert.match(result.text, /\[Reference unavailable\]$/);
+  assert.match(result.text, /\[引用不可用\]$/);
 });
 test("alternate citation containers and late patch merging preserve every reference", async () => {
   const groupedMarker = "\uE200cite\uE202grouped\uE201";
@@ -119,26 +119,26 @@ test("alternate citation containers and late patch merging preserve every refere
 test("sandbox and image pointers keep Markdown positions; duplicate pointer snapshots resolve once", async () => {
   const value = "First [report](sandbox:/mnt/data/report.csv) then ![plot](sediment://file-plot) done.";
   const result = await renderRichOutput([text(value), text(value)], "", async () => url);
-  assert.equal(result.text, `First Download file: [report.csv](<${url}>) then ![file-plot](<${url}>)\n\nDownload file: [file-plot](<${url}>) done.`);
+  assert.equal(result.text, `First 下载文件：[report.csv](<${url}>) then ![图片](<${url}>)\n\n下载文件：[图片](<${url}>) done.`);
   assert.equal(result.assets.length, 2);
 });
 test("sandbox metadata alias uses its file id without a second failed download", async () => {
   const calls = [];
   const result = await renderRichOutput([text("[report](sandbox:/mnt/data/r.csv)"), message({ metadata: { references: [{ file_id: "file-r", path: "sandbox:/mnt/data/r.csv" }] } })], "", async p => { calls.push(p); return url; });
-  assert.equal(result.text, `Download file: [r.csv](<${url}>)`);
+  assert.equal(result.text, `下载文件：[r.csv](<${url}>)`);
   assert.deepEqual(calls, ["file-service://file-r"]);
 });
 test("failed and non-HTTPS downloads do not leak internal reference syntax or create executable links", async () => {
   for (const resolver of [async () => { throw new Error("private upstream error"); }, async () => "javascript:alert(1)"]) {
     const result = await renderRichOutput([text("[x](file-service://file-x) \uE200unknown\uE201")], "", resolver);
-    assert.equal(result.text, "[file-x — download unavailable] [Reference unavailable]");
+    assert.equal(result.text, "[file-x — 下载不可用] [引用不可用]");
     assert.equal(result.assets[0].status, "unavailable");
   }
 });
 test("tool patches preserve complete stdout, stderr and widget plain text at the tool's position", async () => {
   const tool = raw => ({kind:"tool", messageId:"python-1",name:"python_user_visible",raw});
-  const result = await renderRichOutput([text("Start."), tool({content:{stdout:"1"}}), tool({content:{stdout:"12",stderr:"warning",data:{"text/plain":"table view","text/html":"<script>bad()</script>"}}}), text("Start. Finished.")], "", async () => url);
-  assert.match(result.text, /Start\.[\s\S]*python_user_visible[\s\S]*12[\s\S]*warning[\s\S]*table view[\s\S]*Finished\./);
+  const result = await renderRichOutput([text("Start."), tool({content:{stdout:"1"}}), tool({text:"tool text",content:{parts:["part output"],stdout:"12",stderr:"warning",data:{"text/plain":"table view","text/html":"<script>bad()</script>"}}}), text("Start. Finished.")], "", async () => url);
+  assert.match(result.text, /Start\.[\s\S]*python_user_visible[\s\S]*输出[\s\S]*part output[\s\S]*文本[\s\S]*tool text[\s\S]*标准输出[\s\S]*12[\s\S]*标准错误[\s\S]*warning[\s\S]*显示内容[\s\S]*table view[\s\S]*Finished\./);
   assert.ok(!result.text.includes("<script>"));
   assert.equal(result.tools.length, 1);
 });
@@ -163,7 +163,7 @@ test("partial pointer snapshots never trigger downloads for incomplete file IDs"
   const calls=[];
   const result = await renderRichOutput([text("file-service://fi"),text("file-service://file-complete")], "", async p => {calls.push(p);return url;});
   assert.deepEqual(calls,["file-service://file-complete"]);
-  assert.equal(result.text,`Download file: [file-complete](<${url}>)`);
+  assert.equal(result.text,`下载文件：[file-complete](<${url}>)`);
 });
 
 test("summary parts, tool log arrays, empty labels and unrelated events render safely", async () => {
@@ -174,8 +174,8 @@ test("summary parts, tool log arrays, empty labels and unrelated events render s
     { kind: "tool", name: "[]<>\n", messageId: null, raw: { content: { logs: ["one", "two"], stderr: ["mixed", 2] } } },
     { kind: "citation", raw: [null, 2, true] },
   ], "", async () => assert.fail("No assets expected"));
-  assert.match(result.text, /\*\*Download file\*\*/);
-  assert.match(result.text, /one\ntwo/);
+  assert.match(result.text, /\*\*工具输出\*\*/);
+  assert.match(result.text, /日志[\s\S]*one\ntwo/);
   assert.doesNotMatch(result.text, /mixed/);
   assert.equal((await renderRichOutput([], "fallback", async () => url)).text, "fallback");
 });
@@ -188,18 +188,18 @@ test("standalone output assets render images and file labels once, with explicit
     { kind: "file", assetPointer: "file-service://file", title: "Duplicate", raw: {} },
   ];
   const result = await renderRichOutput(events, "", async () => url);
-  assert.match(result.text, /!\[image\]/);
+  assert.match(result.text, /!\[图片\]/);
   assert.match(result.text, /\[Report\]/);
   assert.equal(result.assets.length, 3);
   const failed = await renderRichOutput([text("sediment://missing")], "", async () => { throw new Error("unavailable"); });
-  assert.equal(failed.text, "[missing — download unavailable]");
+  assert.equal(failed.text, "[图片 — 下载不可用]");
 });
 
 test("an unavailable sandbox alias whose label repeats its path leaves no raw sandbox pointer", async () => {
   const pointer = "sandbox:/mnt/data/report.csv";
   const result = await renderRichOutput([text(pointer), message({ metadata: { references: [{ file_id: "report", path: pointer, name: pointer }] } })], "", async () => { throw new Error("Unavailable"); });
   assert.doesNotMatch(result.text, /sandbox:|file-service:/);
-  assert.match(result.text, /report.csv — download unavailable/);
+  assert.match(result.text, /report.csv — 下载不可用/);
   assert.equal(result.assets.length, 1);
 });
 
@@ -228,7 +228,15 @@ test("reference links and sandbox aliases use a full escaped destination and fil
   const result = await renderRichOutput([text(value), message({ metadata: { references: [{ file_id: "file-1", path: pointer }] } })], "", async p => { calls.push(p); return "https://files.oaiusercontent.com/file(1)?a=1&b=2"; });
   assert.deepEqual(calls, ["file-service://file-1"]);
   assert.match(result.text, /^Download file: \[report\(1\).csv\]\(<https:/);
-  assert.doesNotMatch(result.text, /Download file: Download file:|sandbox:/);
+  assert.doesNotMatch(result.text, /(?:Download file:|下载文件：)\s*(?:Download file:|下载文件：)|sandbox:/);
+});
+
+test("Chinese download prefixes are not duplicated and legacy English prefixes remain compatible", async () => {
+  const pointer = "sandbox:/mnt/data/报告.csv";
+  const chinese = await renderRichOutput([text(`下载文件：[点击下载](<${pointer}>)`)], "", async () => url);
+  assert.equal(chinese.text, `下载文件：[报告.csv](<${url}>)`);
+  const english = await renderRichOutput([text(`Download file: [Download now](<${pointer}>)`)], "", async () => url);
+  assert.equal(english.text, `Download file: [报告.csv](<${url}>)`);
 });
 
 test("embedded previews and literal percent filenames preserve safe Markdown", async () => {
@@ -237,8 +245,8 @@ test("embedded previews and literal percent filenames preserve safe Markdown", a
   }));
   assert.match(result.text, /!\[20%\.png\]\(<data:image\/png;base64,aGVsbG8=>\)/);
   const fallback = await renderRichOutput([text("[Download now](sandbox:/mnt/data/20%.csv)")], "", async () => url);
-  assert.match(fallback.text, /Download file: \[20%\.csv\]/);
+  assert.match(fallback.text, /下载文件：\[20%\.csv\]/);
   const partial = await renderRichOutput([text("sandbox:/mnt/data/report\n[full](sandbox:/mnt/data/report(1).csv)")], "", async () => url);
-  assert.match(partial.text, /Download file: \[report\]/);
+  assert.match(partial.text, /下载文件：\[report\]/);
 });
 });

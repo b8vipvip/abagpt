@@ -68,7 +68,7 @@ for (const endpoint of ["chat/completions","responses"]) for (const stream of [f
     conversation??=metadata?.conversation_id;
     if(turn===1){
       assert.match(answer,/starting\nfinished/);assert.match(answer,/sample warning/);
-      assert.match(answer,/Here is Download file: \[report.csv\]\(<http:\/\/127\.0\.0\.1/);
+      assert.match(answer,/Here is 下载文件：\[report.csv\]\(<http:\/\/127\.0\.0\.1/);
       assert.ok(!/[\uE000-\uF8FF]|sandbox:|file-service:/.test(answer));
       assert.equal(JSON.parse(metadata.mirror_assets).length,2);
       assert.equal(downloads.find(u=>u.pathname.includes("interpreter")).searchParams.get("sandbox_path"),"/mnt/data/plot.png");
