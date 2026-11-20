@@ -43,7 +43,7 @@ export interface RunChatOptions {
   turnstileToken?: string | null;
   signal?: AbortSignal;
   onDelta?: (delta: string, full: string) => void;
-  onEvent?: (event: NormalizedConversationEvent) => void;
+  onEvent?: (event: NormalizedConversationEvent) => void | Promise<void>;
 }
 
 function titleFromPrompt(prompt: string): string {
@@ -197,11 +197,11 @@ export async function runChat(
         fullText = full;
         opts.onDelta?.(delta, full);
       },
-      onEvent: (event) => {
+      onEvent: async (event) => {
         controller.signal.throwIfAborted();
         deadline.touch();
         events.push(event);
-        opts.onEvent?.(event);
+        await opts.onEvent?.(event);
       },
     }), controller.signal);
 
