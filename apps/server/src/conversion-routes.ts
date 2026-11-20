@@ -48,22 +48,22 @@ import { writeGif, readGif, type GifColor, type GifFrame } from "./gif89a.js";
 // `randAllowFilePath: false` so that mode can never trigger an arbitrary
 // local file read no matter what string a caller sends.
 
-const b64 = z.string().max(8_000_000, "Payload too large for a single request.");
+const b64 = z.string().max(8_000_000, "单次请求的载荷过大。");
 const bytesOf = (s: string) => Buffer.from(s, "base64");
 
 const FORMATS = ["loaf", "pngspeak", "gptgif", "gptgif-v4"] as const;
 type FormatName = (typeof FORMATS)[number];
 
 const FORMAT_INFO: Record<FormatName, { label: string; extension: string; mime: string; roundTrips: boolean; blurb: string }> = {
-  loaf: { label: "LoaF", extension: "loaf", mime: "text/plain", roundTrips: true, blurb: "A tar+gzip archive hex-encoded onto a single checksummed line." },
-  pngspeak: { label: "PngSpeak", extension: "pngspk.png", mime: "image/png", roundTrips: true, blurb: "Raw bytes stored one-to-one as RGBA pixels in an uncompressed-scanline PNG." },
+  loaf: { label: "LoaF", extension: "loaf", mime: "text/plain", roundTrips: true, blurb: "将 tar+gzip 归档以十六进制编码，写入一行带校验和的文本。" },
+  pngspeak: { label: "PngSpeak", extension: "pngspk.png", mime: "image/png", roundTrips: true, blurb: "将原始字节逐一存储为 RGBA 像素，并封装在未压缩扫描线的 PNG 图像中。" },
   // Not self-round-trippable through this API without help: gptgif clusters
   // glyph tiles with k-means, and cluster label order is not deterministic
   // (see gptgif.ts/calibrateGptgif's own doc comment) -- decoding for real
   // needs a clusterMap derived from /api/convert/gptgif/calibrate plus a
   // human or GPT reading the rendered glyphs, exactly like decoder-challenges.
-  gptgif: { label: "gptgif (original)", extension: "gptgif.gif", mime: "image/gif", roundTrips: false, blurb: "Bytes rendered as a grid of glyph tiles in an animated GIF; decoding needs a calibrated cluster map (see /calibrate)." },
-  "gptgif-v4": { label: "gptgif v4", extension: "gptgif-v4.gif", mime: "image/gif", roundTrips: true, blurb: "gptgif with a randomizable glyph font and color palette (seed-reproducible)." },
+  gptgif: { label: "gptgif（原版）", extension: "gptgif.gif", mime: "image/gif", roundTrips: false, blurb: "将字节渲染为动画 GIF 中的字形网格；解码需要经过校准的簇映射（参见 /calibrate）。" },
+  "gptgif-v4": { label: "gptgif v4", extension: "gptgif-v4.gif", mime: "image/gif", roundTrips: true, blurb: "使用可随机化的字形字体和调色板进行编码（可通过 seed 复现）。" },
 };
 
 function encodeWithFormat(format: FormatName, data: Buffer, opts: { fontSeed?: number; paletteSeed?: number } = {}): Buffer {
@@ -82,7 +82,7 @@ function decodeWithFormat(format: FormatName, artifact: Buffer): Buffer {
   switch (format) {
     case "loaf": {
       const [entry] = extractLoaf(artifact.toString("utf8"));
-      if (!entry) throw new Error("LoaF archive contains no entries.");
+      if (!entry) throw new Error("LoaF 归档中没有任何条目。");
       return entry.content;
     }
     case "pngspeak": return decodePngSpeak(artifact);
@@ -143,7 +143,7 @@ class RawIoError extends Error {
 function rawBody(req: FastifyRequest): Buffer {
   if (!Buffer.isBuffer(req.body)) {
     throw new RawIoError(
-      `raw_in requires the request body to be raw bytes. Send it with Content-Type: ${RAW_BODY_CONTENT_TYPES.join(", ")}, not JSON.`,
+      `raw_in 需要请求体为原始字节。请使用以下 Content-Type 之一发送：${RAW_BODY_CONTENT_TYPES.join(", ")}；不要发送 JSON。`,
     );
   }
   return req.body;
@@ -200,7 +200,7 @@ function bodyToInputs(body: { dataBase64?: string; parts?: string[] }): Buffer[]
   return body.parts ? body.parts.map(bytesOf) : [bytesOf(body.dataBase64!)];
 }
 const GptgifEncodeBody = z.object({ dataBase64: b64.optional(), parts: partsField }).strict()
-  .refine((v) => (v.dataBase64 !== undefined) !== (v.parts !== undefined), { message: "gptgif encode: provide exactly one of dataBase64 or parts." });
+  .refine((v) => (v.dataBase64 !== undefined) !== (v.parts !== undefined), { message: "gptgif 编码：dataBase64 和 parts 必须且只能提供其中一项。" });
 
 const LoafEntryIn = z.object({
   name: z.string().min(1).max(4096),
@@ -274,7 +274,7 @@ const GptgifV4EncodeBody = z.object({
   /** Exactly 768 bytes: gptgif-v4.c's `--palette FILE` binary format (256 x RGB). */
   paletteBase64: b64.optional(),
 }).strict()
-  .refine((v) => (v.dataBase64 !== undefined) !== (v.parts !== undefined), { message: "gptgif-v4 encode: provide exactly one of dataBase64 or parts." });
+  .refine((v) => (v.dataBase64 !== undefined) !== (v.parts !== undefined), { message: "gptgif-v4 编码：dataBase64 和 parts 必须且只能提供其中一项。" });
 
 /** Wraps a thrown Error as a 400 rather than letting it fall through to a 500 -- used for caller-input problems (bad font/palette bytes) that aren't Zod errors. */
 function as400<T>(fn: () => T): T {
@@ -287,14 +287,14 @@ function as400<T>(fn: () => T): T {
 
 function resolveGptgifV4Font(opts: { fontSeed?: number; fontBase64?: string }): GlyphFont | undefined {
   if (opts.fontSeed !== undefined && opts.fontBase64 !== undefined) {
-    throw new RawIoError("gptgif-v4: choose fontSeed or fontBase64, not both.");
+    throw new RawIoError("gptgif-v4：fontSeed 和 fontBase64 不能同时提供。");
   }
   if (opts.fontBase64 !== undefined) return as400(() => fontFromBytes(bytesOf(opts.fontBase64!)));
   return opts.fontSeed !== undefined ? randomFont(opts.fontSeed) : undefined;
 }
 function resolveGptgifV4Palette(opts: { paletteSeed?: number; paletteBase64?: string }): GifColor[] | undefined {
   if (opts.paletteSeed !== undefined && opts.paletteBase64 !== undefined) {
-    throw new RawIoError("gptgif-v4: choose paletteSeed or paletteBase64, not both.");
+    throw new RawIoError("gptgif-v4：paletteSeed 和 paletteBase64 不能同时提供。");
   }
   if (opts.paletteBase64 !== undefined) return as400(() => paletteFromBytes(bytesOf(opts.paletteBase64!)));
   return opts.paletteSeed !== undefined ? randomPalette(opts.paletteSeed) : undefined;
@@ -320,7 +320,7 @@ const GifEncodeBody = z.object({
 const GifRawEncodeOptsQuery = IoQuery.extend({
   width: z.coerce.number().int().min(1).max(2048),
   height: z.coerce.number().int().min(1).max(2048),
-  colors: z.string().regex(/^[0-9a-fA-F]{6}(,[0-9a-fA-F]{6})*$/, "colors must be comma-separated 6-digit hex RRGGBB values, e.g. ff0000,00ff00,0000ff.").optional(),
+  colors: z.string().regex(/^[0-9a-fA-F]{6}(,[0-9a-fA-F]{6})*$/, "colors 必须是以逗号分隔的 6 位十六进制 RRGGBB 颜色值，例如 ff0000,00ff00,0000ff。").optional(),
   delayCs: z.coerce.number().int().min(0).max(65535).optional(),
 }).strict();
 
@@ -339,7 +339,7 @@ const formatCsv = z.string().transform((s, ctx) => {
   const parts = s.split(",").map((p) => p.trim());
   for (const p of parts) {
     if (!(FORMATS as readonly string[]).includes(p)) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: `"${p}" is not a known format (${FORMATS.join(", ")}).` });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: `"${p}" 不是已知格式（${FORMATS.join(", ")}）。` });
       return z.NEVER;
     }
   }
@@ -364,14 +364,14 @@ const RoundtripOptsQuery = IoQuery.extend({ format: z.enum(FORMATS) }).strict();
 const RoundtripBody = z.object({ dataBase64: b64, format: z.enum(FORMATS) }).strict();
 
 const FORTUNES = [
-  "You will decode a byte you weren't looking for.",
-  "A GIF you generate today will outlive every chat that made it.",
-  "Somewhere, a base64 string is dreaming of being an image.",
-  "The bug is not in your code. It is in the format spec you invented.",
-  "Trust the checksum. The checksum has seen things.",
-  "Every pixel you emit is a promise to some future decoder.",
-  "Today's lucky palette seed: it is whatever you pass in.",
-  "A tar archive, once gzipped, forgets it was ever readable by eye.",
+  "你将解码一个意想不到的字节。",
+  "今天生成的 GIF 将比生成它的每一次聊天都存在得更久。",
+  "某个 Base64 字符串正梦想着自己变成一张图片。",
+  "Bug 不在你的代码里，而在你发明的格式规范中。",
+  "相信校验和。它见过很多事情。",
+  "你输出的每个像素，都是对未来解码器的一份承诺。",
+  "今天的幸运调色板 seed：就是你传入的那个值。",
+  "tar 归档一旦经过 gzip 压缩，就再也不像是人眼能直接读懂的东西了。",
 ];
 
 export function registerConversionRoutes(app: FastifyInstance) {
@@ -381,9 +381,9 @@ export function registerConversionRoutes(app: FastifyInstance) {
   app.get("/api/convert/formats", async () => ({
     formats: FORMATS.map((f) => ({ id: f, ...FORMAT_INFO[f] })),
     io: {
-      raw_in: `Send the request body as raw bytes (Content-Type one of: ${RAW_BODY_CONTENT_TYPES.join(", ")}) instead of a JSON dataBase64 field. Non-binary options move to the query string.`,
-      raw_out: "Get the response as raw bytes with the right content-type instead of a JSON dataBase64 field.",
-      raw: "Shorthand for raw_in=1&raw_out=1.",
+      raw_in: `将请求体作为原始字节发送（Content-Type 必须为以下类型之一：${RAW_BODY_CONTENT_TYPES.join(", ")}），而不是使用 JSON dataBase64 字段。非二进制选项请放在查询参数中。`,
+      raw_out: "以原始字节形式返回响应，并设置正确的 Content-Type，而不是返回 JSON dataBase64 字段。",
+      raw: "raw_in=1&raw_out=1 的简写。",
     },
   }));
 
@@ -606,10 +606,10 @@ export function registerConversionRoutes(app: FastifyInstance) {
       colors = opts.colors ? parseColorsCsv(opts.colors) : grayscalePalette();
       const pixels = rawBody(req);
       if (pixels.length !== width * height) {
-        return reply.code(400).send({ error: `Raw body has ${pixels.length} bytes, expected width*height = ${width * height} (one palette-index byte per pixel, single frame only in raw_in mode).` });
+        return reply.code(400).send({ error: `原始请求体包含 ${pixels.length} 个字节；预期长度为 width*height = ${width * height}（raw_in 模式下每个像素使用 1 个调色板索引字节，且仅支持单帧）。` });
       }
       for (const idx of pixels) {
-        if (idx >= colors.length) return reply.code(400).send({ error: `Pixel byte ${idx} is out of range for a ${colors.length}-color palette. Pass ?colors=RRGGBB,RRGGBB,... for a custom palette.` });
+        if (idx >= colors.length) return reply.code(400).send({ error: `像素字节值 ${idx} 超出 ${colors.length} 色调色板的范围。自定义调色板请传入 ?colors=RRGGBB,RRGGBB,...。` });
       }
       frames = [{ pixels: Uint8Array.from(pixels), delayCs: opts.delayCs }];
     } else {
@@ -620,10 +620,10 @@ export function registerConversionRoutes(app: FastifyInstance) {
       colors = body.colors;
       for (const f of body.frames) {
         if (f.pixels.length !== width * height) {
-          return reply.code(400).send({ error: `Frame has ${f.pixels.length} pixels, expected width*height = ${width * height}.` });
+          return reply.code(400).send({ error: `当前帧包含 ${f.pixels.length} 个像素；预期像素数为 width*height = ${width * height}。` });
         }
         for (const idx of f.pixels) {
-          if (idx >= colors.length) return reply.code(400).send({ error: `Pixel index ${idx} is out of range for a ${colors.length}-color palette.` });
+          if (idx >= colors.length) return reply.code(400).send({ error: `像素索引 ${idx} 超出 ${colors.length} 色调色板的范围。` });
         }
       }
       frames = body.frames.map((f) => ({ pixels: Uint8Array.from(f.pixels), delayCs: f.delayCs }));
