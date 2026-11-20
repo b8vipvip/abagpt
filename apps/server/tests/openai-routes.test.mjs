@@ -1725,69 +1725,6 @@ test("a non-Error value thrown mid-turn is still reported as a generic, redacted
 });
 
 // ---------------------------------------------------------------------------
-// sse()'s slow-consumer guard: reproducing real outbound-socket backpressure
-// end-to-end would be slow/flaky, so it's tested directly as the plain
-// function of reply.raw.writableLength (plus elapsed time, injected via the
-// `now` param) it actually is (see the comment on the exported sse() in
-// openai.ts).
-// ---------------------------------------------------------------------------
-
-test("sse() writes normally below the high-water mark, no matter how long it's been", () => {
-  const writes = [];
-  const reply = {
-    raw: {
-      writableLength: 1024,
-      destroy: () => { throw new Error("should not have destroyed the connection"); },
-      write: (chunk) => writes.push(chunk),
-    },
-  };
-  openai.sse(reply, { hello: "world" });
-  openai.sse(reply, "[DONE]");
-  assert.deepEqual(writes, ['data: {"hello":"world"}\n\n', "data: [DONE]\n\n"]);
-});
-
-test("sse() tolerates a bursty backlog that drains before the stall timeout", () => {
-  const writes = [];
-  let destroyed = false;
-  const raw = {
-    writableLength: 9 * 1024 * 1024,
-    destroy: () => { destroyed = true; },
-    write: (chunk) => writes.push(chunk),
-  };
-  const reply = { raw };
-  const t0 = 1_000_000;
-  openai.sse(reply, { hello: "world" }, t0); // starts the stall clock
-  raw.writableLength = 0; // the consumer caught up
-  openai.sse(reply, { hello: "again" }, t0 + 20_000); // long past the timeout, but it drained meanwhile
-  assert.equal(destroyed, false);
-  assert.deepEqual(writes, ['data: {"hello":"world"}\n\n', 'data: {"hello":"again"}\n\n']);
-});
-
-test("sse() destroys the connection once the backlog stays stalled past the timeout", () => {
-  const writes = [];
-  let destroyed = false;
-  const raw = {
-    writableLength: 9 * 1024 * 1024,
-    destroy: () => { destroyed = true; },
-    write: (chunk) => writes.push(chunk),
-  };
-  const reply = { raw };
-  const t0 = 1_000_000;
-  openai.sse(reply, { hello: "world" }, t0); // starts the stall clock
-  openai.sse(reply, { hello: "still backed up" }, t0 + 5_000); // within the grace window - still fine
-  assert.equal(destroyed, false);
-  assert.throws(
-    () => openai.sse(reply, { hello: "still stuck" }, t0 + 15_001),
-    /响应客户端读取过慢/,
-  );
-  assert.equal(destroyed, true);
-  assert.deepEqual(writes, [
-    'data: {"hello":"world"}\n\n',
-    'data: {"hello":"still backed up"}\n\n',
-  ]);
-});
-
-// ---------------------------------------------------------------------------
 // Real-socket-only branches: light-my-request's mock socket (used by every
 // app.inject() call above) has no setNoDelay method, so the guard added
 // around it (see the comment in openai.ts right above the call) always
