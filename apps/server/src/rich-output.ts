@@ -310,18 +310,13 @@ export async function renderRichOutput(
       : node.type === "linkReference" || node.type === "imageReference" ? definitions.get(node.identifier) : undefined;
     if (destination && internal(destination)) {
       const pointer = alias(destination);
-      const before = text.slice(0, node.position!.start.offset);
-      const englishPrefix = /Download file:(\s*)$/i.exec(before);
-      const prefixed = /(?:Download file:|下载文件：)\s*$/i.test(before);
-      if (englishPrefix) {
-        const end = node.position!.start.offset!;
-        edits.push({ start: end - englishPrefix[0].length, end, value: `下载文件：${englishPrefix[1]}` });
-      }
+      const prefixed = /(?:Download file:|下载文件：)\s*$/i.test(text.slice(0, node.position!.start.offset));
       edit(node as RootContent, link(pointer, pointers.get(pointer)!.title, node.type === "image" || node.type === "imageReference", prefixed));
       return;
     }
     if (node.type === "text") {
       let value = text.slice(node.position!.start.offset, node.position!.end.offset);
+      value = value.replace(/Download file:(\s*)$/i, "下载文件：$1");
       // Replace references and bare pointers once, without rescanning generated
       // Markdown (a filename itself may contain punctuation or pointer text).
       const tokens = [...references.keys(), ...citationRefs.keys()].filter(token => value.includes(token)).sort((a, b) => b.length - a.length);

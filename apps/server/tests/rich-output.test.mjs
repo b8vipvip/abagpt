@@ -223,11 +223,11 @@ test("filenames, preview and download URLs survive ChatGPTBox Markdown parsing",
 
 test("reference links and sandbox aliases use a full escaped destination and filename", async () => {
   const pointer = "sandbox:/mnt/data/report(1).csv";
-  const value = `Download file: [Download now][report]\n\n[report]: <${pointer}>`;
+  const value = `Here is the file: Download file: [Download now][report]\n\n[report]: <${pointer}>`;
   const calls = [];
   const result = await renderRichOutput([text(value), message({ metadata: { references: [{ file_id: "file-1", path: pointer }] } })], "", async p => { calls.push(p); return "https://files.oaiusercontent.com/file(1)?a=1&b=2"; });
   assert.deepEqual(calls, ["file-service://file-1"]);
-  assert.match(result.text, /^下载文件：\[report\(1\).csv\]\(<https:/);
+  assert.match(result.text, /^Here is the file: 下载文件：\[report\(1\).csv\]\(<https:/);
   assert.doesNotMatch(result.text, /(?:Download file:|下载文件：)\s*(?:Download file:|下载文件：)|sandbox:/);
 });
 
