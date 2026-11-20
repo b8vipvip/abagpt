@@ -3,6 +3,7 @@ import test from "node:test";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import { request as httpRequest } from "node:http";
 import Fastify from "fastify";
 import { stubBackend } from "./helpers/backend.mjs";
 
@@ -161,6 +162,120 @@ for (const failure of ["idle deadline", "heartbeat write"]) {
   });
 }
 
+
+test("a paused TCP reader stops SSE production until drain and preserves the continuation transcript", { timeout: 25_000 }, async () => {
+  const account = "slow-tcp-reader-account";
+  store.saveVerifiedSession("fixture-session", account);
+  store.updateMintedToken("fixture-access", Date.now() + 3600000, null);
+
+  const largeAnswer = "stream-start-" + "x".repeat(24 * 1024 * 1024) + "-stream-end\n";
+  const sent = [];
+  globalThis.fetch = stubBackend(account, {
+    sent,
+    turnFrames: (body, turn) => [
+      assistantAddFrame(body?.conversation_id ?? `upstream-${turn}`, `assistant-${turn}`,
+        turn === 1 ? largeAnswer : "resumed after drain"),
+      "[DONE]",
+    ],
+  });
+
+  let blocked = false;
+  let writesWhileBlocked = 0;
+  let drainCount = 0;
+  let resolveBackpressure;
+  const backpressure = new Promise(resolve => { resolveBackpressure = resolve; });
+  const app = Fastify();
+  app.addHook("onRequest", async (_req, reply) => {
+    const raw = reply.raw;
+    const write = raw.write;
+    raw.write = function (...args) {
+      if (blocked) writesWhileBlocked += 1;
+      const accepted = write.apply(this, args);
+      if (!accepted && !blocked) {
+        blocked = true;
+        resolveBackpressure();
+      }
+      return accepted;
+    };
+    raw.on("drain", () => {
+      if (blocked) {
+        blocked = false;
+        drainCount += 1;
+      }
+    });
+  });
+  await registerOpenAiRoutes(app);
+
+  let response;
+  try {
+    const address = await app.listen({ host: "127.0.0.1", port: 0 });
+    response = await new Promise((resolve, reject) => {
+      const request = httpRequest(address + "/v1/chat/completions", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+      }, incoming => {
+        incoming.pause();
+        resolve(incoming);
+      });
+      request.once("error", reject);
+      request.end(JSON.stringify({
+        model: "auto",
+        messages: [{ role: "user", content: "large streamed answer" }],
+        stream: true,
+      }));
+    });
+
+    let timeout;
+    await Promise.race([
+      backpressure,
+      new Promise((_, reject) => {
+        timeout = setTimeout(() => reject(new Error("The real TCP socket never applied backpressure")), 5000);
+      }),
+    ]).finally(() => clearTimeout(timeout));
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    assert.equal(blocked, true, "the paused peer must keep the server write buffer blocked");
+    assert.equal(writesWhileBlocked, 0, "no later SSE frame may overtake a blocked write");
+    assert.equal(drainCount, 0, "the socket must not drain while the client is paused");
+
+    let output = "";
+    const body = new Promise((resolve, reject) => {
+      response.setEncoding("utf8");
+      response.on("data", chunk => { output += chunk; });
+      response.once("end", () => resolve(output));
+      response.once("error", reject);
+      response.once("aborted", () => reject(new Error("TCP response aborted before completion")));
+    });
+    response.resume();
+    const streamed = await body;
+
+    assert.ok(drainCount >= 1, "resuming the reader must release the blocked writer");
+    assert.equal(writesWhileBlocked, 0);
+    assert.ok(streamed.includes("-stream-end\n"));
+    assert.ok(streamed.includes("[DONE]"));
+    const conversationId = streamed.match(/: mirror-conversation-id ([^\r\n]+)/)?.[1];
+    assert.ok(conversationId, "stream must expose its local continuation id");
+    assert.equal(store.listMessages(conversationId).at(-1).content, largeAnswer);
+
+    const retry = await app.inject({
+      method: "POST",
+      url: "/v1/chat/completions",
+      payload: {
+        model: "auto",
+        messages: [{ role: "user", content: "continue after drain" }],
+        metadata: { conversation_id: conversationId },
+      },
+    });
+    assert.equal(retry.statusCode, 200, retry.body);
+    assert.equal(retry.json().choices[0].message.content, "resumed after drain");
+    assert.equal(store.listMessages(conversationId).at(-1).content, "resumed after drain");
+    assert.equal(sent.filter(item => item.pathname.endsWith("/f/conversation")).length, 2);
+  } finally {
+    response?.destroy();
+    globalThis.fetch = nativeFetch;
+    await app.close();
+  }
+});
 
 test("stream output may append to delivered text but cannot replace or truncate it", () => {
   assert.equal(remainingStreamText("hé🙂 complete", "hé🙂"), " complete");
