@@ -77,7 +77,7 @@
   "apps/server/tests/openai-stream-lifecycle.test.mjs": "8923fa2e72cb58407b56de6f4504b6ad62382aa3cfdaf1186eee3e04b6223a66",
   "apps/server/tests/openapi-fallback.test.mjs": "04758066c703ca3c1a14c16a6af4ecf8d7ddb261a88a351906b8f6bf24ecfc49",
   "apps/server/tests/pngspeak.test.mjs": "239ab851f6bf8bc1eb66fc4cf7bd407807b1fd03aacd7a1c54863795fd09137c",
-  "apps/server/tests/preflight.test.mjs": "37dadfddd8b321f7835ab661d215b3f3e85b53a30824e26a9312548efb2a5b66",
+  "apps/server/tests/preflight.test.mjs": "7725b59feb42289ed5d8dee4871449a4e6648046912703c8c9ccd10e29685b47",
   "apps/server/tests/proxy-http.test.mjs": "8027d2f0548bfbb0f9724fac1ee6da0a4feb9f0d3fedf21d3ad793ee90a0f36b",
   "apps/server/tests/proxy-stream.test.mjs": "4df55b57dc354cdb3d7a70d73951b754d9877778dd5b2faaa7b3cd6b40b3f320",
   "apps/server/tests/proxy-websocket.test.mjs": "3550d17624374f12e92951c0e9b5def51541698ac8c2622a3d5c4d44d8b87a30",
