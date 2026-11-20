@@ -136,7 +136,15 @@ jobs:
           docker run --rm --platform linux/amd64 --network none \
             -e EXPECTED_VERSION -e EXPECTED_REVISION --entrypoint node "$IMAGE_REF" \
             -e 'const assert = require("node:assert/strict"); assert.equal(process.env.MIRROR_VERSION, process.env.EXPECTED_VERSION); assert.equal(process.env.MIRROR_BUILD_REVISION, process.env.EXPECTED_REVISION);'
-          echo "node_version=$(docker run --rm --platform linux/amd64 --network none --entrypoint node "$IMAGE_REF" --version)" >> "$GITHUB_OUTPUT"
+          NODE_VERSION="$(docker run --rm --platform linux/amd64 --network none --entrypoint node "$IMAGE_REF" --version)"
+          echo "node_version=$NODE_VERSION" >> "$GITHUB_OUTPUT"
+          docker pull --platform linux/arm64 "$IMAGE_REF"
+          docker run --rm --platform linux/arm64 --network none --entrypoint node "$IMAGE_REF" scripts/restore-drill.mjs
+          docker run --rm --platform linux/arm64 --network none \
+            -e EXPECTED_VERSION -e EXPECTED_REVISION --entrypoint node "$IMAGE_REF" \
+            -e 'const assert = require("node:assert/strict"); assert.equal(process.env.MIRROR_VERSION, process.env.EXPECTED_VERSION); assert.equal(process.env.MIRROR_BUILD_REVISION, process.env.EXPECTED_REVISION);'
+          ARM64_NODE_VERSION="$(docker run --rm --platform linux/arm64 --network none --entrypoint node "$IMAGE_REF" --version)"
+          test "$ARM64_NODE_VERSION" = "$NODE_VERSION"
 
       - name: Assemble versioned release assets
         env:
