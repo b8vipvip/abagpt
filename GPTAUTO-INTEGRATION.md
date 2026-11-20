@@ -56,6 +56,12 @@ CI 失败时可进入三层 Repair：确定性修复、可选 Copilot CLI、前�
 - 如需使用不同的产品验证工作流名称，可在仓库 Variables 中设置 `GPTAUTO_POST_MERGE_WORKFLOW`；默认识别 `CI` 或 `Build and Test`。
 - GPTAuto 管理的文件位于 `.github/gptauto/`、`.github/actions/upload-gptauto-log/` 和 `.github/workflows/gptauto-*.yml`。后续版本只通过 Consumer Sync 的 CI 门禁 PR 更新。
 
+## 版本边界
+
+首次安装固定使用 GPTAuto 正式版 `v0.15.15`。GPTAuto 的 [PR #93](https://github.com/b8vipvip/GPTAuto/pull/93) 已合并到 canonical `main`，修复了手动同步默认从未发布 `main` 安装的问题；但该修复尚未包含在已发布的 `v0.15.15` 标签中。修复会随下一次 GPTAuto 正式版发布进入消费仓库模板。
+
+因此，首次同步应明确选择 `v0.15.15`。首次同步完成后，在包含 PR #93 的新 GPTAuto 正式版发布之前，不要手工运行旧版 Consumer Sync 更新；应先完成消费仓库注册，后续通过携带精确版本标签的正式 Release dispatch 更新。
+
 ## 当前状态与未完成步骤
 
 - [x] 在 ABAGPT 加入 Consumer Sync 引导工作流，并将手动同步版本固定为显式发布标签。
