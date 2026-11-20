@@ -174,3 +174,4 @@ Mirror 提供本地控制路由、格式转换路由、解码挑战路由，以�
 - [TODO.md](TODO.md)：按 Issue 组织的项目待办事项。
 - [NEXT-STEPS.md](NEXT-STEPS.md)：仓库审计路线图。
 - [CHANGELOG.md](CHANGELOG.md)：面向用户的版本变更记录。
+- [GPTAUTO-INTEGRATION.md](GPTAUTO-INTEGRATION.md)：GPTAuto 工程任务自动化的接入、凭据配置和验收流程。
