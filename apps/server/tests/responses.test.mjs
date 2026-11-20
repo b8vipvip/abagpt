@@ -10,6 +10,7 @@ delete process.env.MIRROR_STORE_KEY;
 const { default: Fastify } = await import("fastify");
 const store = await import("../dist/store.js");
 const { registerOpenAiRoutes } = await import("../dist/openai.js");
+const { createResponseWriter } = await import("../dist/responses.js");
 const app = Fastify();
 await registerOpenAiRoutes(app);
 const address = await app.listen({ host: "127.0.0.1", port: 0 });
@@ -58,6 +59,27 @@ for (const minimal of [true, false]) test(`Responses three turns, mixed transpor
     assert.equal(requests.at(-1).body.parent_message_id, turn === 1 ? "client-created-root" : `assistant-${turn - 1}`);
   }
 });
+test("Responses keeps sequence numbers contiguous after an async downstream write fails", async () => {
+  const seen = [];
+  let failFirst = true;
+  const writer = createResponseWriter({
+    model: "auto", input: "hello", stream: true, store: true, metadata: {},
+  }, async event => {
+    if (failFirst) {
+      failFirst = false;
+      throw new Error("transient writer failure");
+    }
+    seen.push(event);
+  });
+
+  await assert.rejects(writer.start(), /transient writer failure/);
+  await writer.fail("generation failed", "upstream_failure");
+  await writer.delta("after failure");
+
+  assert.deepEqual(seen.map(event => event.type), ["response.failed", "response.output_text.delta"]);
+  assert.deepEqual(seen.map(event => event.sequence_number), [0, 1]);
+});
+
 test("one-shot, instructions and input_text", async () => {
   setup("one-shot");
   const res = await post({ input: [{ role: "user", content: [{ type: "input_text", text: "Hello" }] }], instructions: "Be helpful", store: false, metadata: { conversation_id: "ignored" } });
