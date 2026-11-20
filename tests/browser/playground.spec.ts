@@ -112,7 +112,7 @@ test("API documentation is localized without changing the OpenAPI contract", asy
  };
  collectDocumentationCopy(spec);
  expect(documentationCopy.length).toBeGreaterThan(0);
- for (const copy of documentationCopy) expect(copy).toMatch(/[\\u3400-\\u9fff]/);
+ for (const copy of documentationCopy) expect(copy).toMatch(/[\u3400-\u9fff]/);
  expect(spec.paths["/v1/chat/completions"].post.requestBody).toBeDefined();
  const requestSchema = spec.components.schemas.CompletionRequest;
  expect(requestSchema.properties.max_tokens).toBeDefined();
