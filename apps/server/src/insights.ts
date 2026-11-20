@@ -96,9 +96,9 @@ export async function registerInsightRoutes(app: FastifyInstance) {
     reply.header("content-disposition", `attachment; filename="mirror-conversation.${query.format === "json" ? "json" : "md"}"`);
     if (query.format === "json") return exported;
     return reply.type("text/markdown; charset=utf-8").send([
-      `# ${conversation.title}`, "Transcript archive; importing this file does not create a resumable upstream thread.",
+      `# ${conversation.title}`, "对话转录归档；导入此文件不会创建可续接的上游对话线程。",
       ...[...exported.instructions, ...messages].map(message => `## ${message.role}\n\n${message.content}`),
-      ...(query.attachments === "true" || query.metadata === "true" ? ["## Selected archive details", JSON.stringify(exported, null, 2)] : []),
+      ...(query.attachments === "true" || query.metadata === "true" ? ["## 所选归档详情", JSON.stringify(exported, null, 2)] : []),
     ].join("\n\n"));
   });
 }

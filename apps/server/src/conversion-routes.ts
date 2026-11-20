@@ -706,11 +706,11 @@ export function registerConversionRoutes(app: FastifyInstance) {
     const transport = gzipSync(artifact).toString("base64");
     const filename = opts.filename.replace(/[^a-zA-Z0-9._-]/g, "_") || "payload.bin";
     const prompt =
-      `Mirror file-conversion payload. Format: ${info.label} (${info.blurb})\n` +
-      `The artifact is transported below as base64(gzip(file bytes)) to survive being pasted as plain text.\n` +
-      `First base64-decode and gzip-decompress the transport into a file named "decoded.${info.extension}"; THEN decode the ${info.label} format itself to recover the original bytes.\n` +
-      (opts.note ? `\nNote from the sender: ${opts.note}\n` : "") +
-      `\nOriginal filename hint for the recovered payload: ${filename}\n` +
+      `Mirror 文件转换负载。格式：${info.label}（${info.blurb}）\n` +
+      `下方以 base64(gzip(文件字节)) 形式传输文件，以便作为纯文本粘贴时仍能完整保留。\n` +
+      `首先对传输内容进行 Base64 解码和 gzip 解压，得到名为 "decoded.${info.extension}" 的文件；然后再解码 ${info.label} 格式本身，以恢复原始字节。\n` +
+      (opts.note ? `\n发送者备注：${opts.note}\n` : "") +
+      `\n恢复后载荷的原始文件名提示：${filename}\n` +
       `\nBEGIN_GZIP_BASE64\n${transport}\nEND_GZIP_BASE64`;
     reply.header("cache-control", "no-store");
     return { format: opts.format, filename, artifactBytes: artifact.length, transportBytes: transport.length, prompt };

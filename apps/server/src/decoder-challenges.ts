@@ -6,7 +6,7 @@ import { makeLoaf } from "./loaf.js";
 import { encodePngSpeak } from "./pngspeak.js";
 import { encodeGptgif } from "./gptgif.js";
 import { encodeGptgifV4 } from "./gptgif-v4.js";
-import { decoderGuides, decoderGuidesZh } from "./decoder-challenge-guides.js";
+import { decoderGuidesZh } from "./decoder-challenge-guides.js";
 
 export const ChallengeBody = z.object({
   format: z.enum(["loaf", "pngspeak", "gptgif", "gptgif-v4"]),
@@ -22,7 +22,7 @@ export const ChallengeAnswer = z.object({
 const formats = {
   loaf: { label: "LoaF", extension: "loaf", mime: "text/plain", encode: (bytes: Buffer) => Buffer.from(makeLoaf([{ name: "payload.bin", content: bytes, mtime: new Date(0) }])) },
   pngspeak: { label: "PngSpeak", extension: "pngspk.png", mime: "image/png", encode: (bytes: Buffer) => encodePngSpeak(bytes) },
-  gptgif: { label: "Original gptgif", extension: "gptgif.gif", mime: "image/gif", encode: (bytes: Buffer) => encodeGptgif([bytes]) },
+  gptgif: { label: "gptgif 原版", extension: "gptgif.gif", mime: "image/gif", encode: (bytes: Buffer) => encodeGptgif([bytes]) },
   "gptgif-v4": { label: "gptgif v4", extension: "gptgif-v4.gif", mime: "image/gif", encode: (bytes: Buffer) => encodeGptgifV4([bytes], { fontSeed: randomBytes(4).readUInt32LE(), paletteSeed: randomBytes(4).readUInt32LE() }) },
 };
 
@@ -48,13 +48,13 @@ export function registerDecoderChallengeRoutes(app: FastifyInstance, scope: () =
     const expiresAt = Date.now() + 24 * 60 * 60 * 1000;
     const filename = `decoder-${id}.${format.extension}`;
     const transport = gzipSync(artifact).toString("base64");
-    const prompt = `Mirror decoder challenge ${id}\nFormat: ${format.label}. Task: recover the exact original payload bytes.\n` +
-      `Use code execution if available. Do not guess or claim execution you cannot perform. Explain your method.\n` +
-      `The artifact is transported below as base64(gzip(file bytes)) to preserve it exactly in this text prompt.\n` +
-      `First base64-decode and gzip-decompress the transport into ${filename}; THEN decode the ${format.label} format itself. The transport is not the answer.\n` +
-      (body.guidance === "guided" ? `\nFORMAT GUIDE\n${decoderGuides[body.format]}\n` : `\nNo decoding guide is included. Investigate the named format and the artifact. For LoaF, the target is the content of payload.bin.\n`) +
-      `\nFinish with exactly one line, replacing HEX with the complete recovered bytes as lowercase hex:\nMIRROR_ANSWER_${id}: HEX\n` +
-      `Do not substitute a hash, explanation, or the encoded file. Mirror will check against a server-held answer key.\n\nBEGIN_GZIP_BASE64\n${transport}\nEND_GZIP_BASE64`;
+    const prompt = `Mirror 解码挑战 ${id}\n格式：${format.label}。任务：恢复原始负载的全部字节，必须与原始内容逐字节一致。\n` +
+      `如可用，请使用代码执行。不要猜测，也不要声称执行了实际上无法执行的操作。请说明你的方法。\n` +
+      `下方以 base64(gzip(文件字节)) 形式传输文件，以便在纯文本提示中完整保留内容。\n` +
+      `首先对传输内容进行 Base64 解码和 gzip 解压，得到文件 ${filename}；然后再解码 ${format.label} 格式本身。传输内容不是答案。\n` +
+      (body.guidance === "guided" ? `\n格式指南\n${decoderGuidesZh[body.format]}\n` : `\n此挑战不附带解码指南。请自行研究指定格式和文件内容。对于 LoaF，目标是 payload.bin 文件中的内容。\n`) +
+      `\n最后必须且只能输出一行，将 HEX 替换为完整恢复内容的小写十六进制字节串：\nMIRROR_ANSWER_${id}: HEX\n` +
+      `不要用哈希、解释文字或编码后的文件代替答案。Mirror 会将你的答案与服务端保存的答案密钥进行比对。\n\nBEGIN_GZIP_BASE64\n${transport}\nEND_GZIP_BASE64`;
     challenges.set(id, { scope: owner, expected, artifact, format: body.format, expiresAt, prompt });
     reply.header("cache-control", "no-store");
     return { id, format: body.format, label: format.label, guidance: body.guidance, payload: body.payload, filename, artifactBytes: artifact.length, prompt, expiresAt };

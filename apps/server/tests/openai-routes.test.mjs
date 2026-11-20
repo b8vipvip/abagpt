@@ -453,10 +453,10 @@ test("file inputs decode URL-encoded bytes and use filename MIME for remote URLs
     assert.equal(Buffer.from(remote.data).toString(), "# Remote");
     assert.equal(remote.mimeType, "text/markdown");
   });
-  await assert.rejects(context.resolveFileAttachment(client, { type: "file", file: { file_data: "not-a-data-url" } }, 0), /must be a data: URI/);
+  await assert.rejects(context.resolveFileAttachment(client, { type: "file", file: { file_data: "not-a-data-url" } }, 0), /必须是 data: URI/);
   await assert.rejects(context.resolveFileAttachment(client, { type: "file", file: {
     filename: "too-big.md", file_data: "data:text/markdown;base64," + Buffer.alloc(20 * 1024 * 1024 + 1).toString("base64"),
-  } }, 0), /is too large/);
+  } }, 0), /超出大小限制/);
 });
 
 test("an empty file attachment is rejected", async () => {
@@ -476,7 +476,7 @@ test("an empty file attachment is rejected", async () => {
       },
     });
     assert.equal(res.statusCode, 400, res.body);
-    assert.match(res.json().error.message, /resolved to an empty file/);
+    assert.match(res.json().error.message, /解析得到的文件为空/);
   });
 });
 
@@ -526,7 +526,7 @@ test("an image_url fetch that fails upstream is reported as a 400", async () => 
         },
       });
       assert.equal(res.statusCode, 400, res.body);
-      assert.match(res.json().error.message, /upstream returned 404/);
+      assert.match(res.json().error.message, /上游返回 HTTP 404/);
     },
   );
 });
@@ -542,7 +542,7 @@ test("an image_url that is neither a data: URI nor an http(s) URL is rejected", 
     },
   });
   assert.equal(res.statusCode, 400, res.body);
-  assert.match(res.json().error.message, /must be a data: URI or an http\(s\) URL/);
+  assert.match(res.json().error.message, /必须是 data: URI 或 http(s) URL/);
 });
 
 test("an image_url resolving to a non-image mime type is rejected", async () => {
@@ -556,7 +556,7 @@ test("an image_url resolving to a non-image mime type is rejected", async () => 
     },
   });
   assert.equal(res.statusCode, 400, res.body);
-  assert.match(res.json().error.message, /does not look like an image/);
+  assert.match(res.json().error.message, /不是有效的图片/);
 });
 
 test("an image_url resolving to an empty file is rejected", async () => {
@@ -570,7 +570,7 @@ test("an image_url resolving to an empty file is rejected", async () => {
     },
   });
   assert.equal(res.statusCode, 400, res.body);
-  assert.match(res.json().error.message, /resolved to an empty file/);
+  assert.match(res.json().error.message, /解析得到的文件为空/);
 });
 
 test("an oversized image_url attachment is rejected", async () => {
@@ -585,17 +585,17 @@ test("an oversized image_url attachment is rejected", async () => {
     },
   });
   assert.equal(res.statusCode, 400, res.body);
-  assert.match(res.json().error.message, /too large/);
+  assert.match(res.json().error.message, /超出大小限制/);
 });
 
 test("remote image resolution rejects local hosts and advertised oversized bodies", async () => {
   const client = { uploadFile: async () => assert.fail("must not upload") };
   await assert.rejects(
     context.resolveImageAttachment(client, { type: "image_url", image_url: { url: "http://127.0.0.1/a.png" } }, 0),
-    /host is not permitted/,
+    /主机地址不被允许/,
   );
   await withFetch(async () => new Response(null, { headers: { "content-type": "image/png", "content-length": String(21 * 1024 * 1024) } }),
-    () => assert.rejects(context.resolveImageAttachment(client, { type: "image_url", image_url: { url: "https://example.com/a.png" } }, 1), /too large/));
+    () => assert.rejects(context.resolveImageAttachment(client, { type: "image_url", image_url: { url: "https://example.com/a.png" } }, 1), /超出大小限制/));
 });
 
 test("remote image resolution handles a body without a stream", async () => {
@@ -622,7 +622,7 @@ test("remote image resolution cancels a stream that exceeds the byte limit", asy
   });
   await withFetch(async () => new Response(body, { headers: { "content-type": "image/png" } }), async () => {
     await assert.rejects(context.resolveImageAttachment({ uploadFile: async () => assert.fail("must not upload") },
-      { type: "image_url", image_url: { url: "https://example.com/large.png" } }, 3), /too large/);
+      { type: "image_url", image_url: { url: "https://example.com/large.png" } }, 3), /超出大小限制/);
   });
 });
 
@@ -644,13 +644,13 @@ test("remote image redirects are bounded and each destination is revalidated", a
     assert.equal(uploaded.data.byteLength, 1);
   });
   await withFetch(async () => new Response(null, { status: 302, headers: { location: "http://127.1.2.3/private" } }),
-    () => assert.rejects(context.resolveImageAttachment(client, { type: "image_url", image_url: { url: "https://example.com/start" } }, 5), /host is not permitted/));
+    () => assert.rejects(context.resolveImageAttachment(client, { type: "image_url", image_url: { url: "https://example.com/start" } }, 5), /主机地址不被允许/));
   await withFetch(async () => new Response(null, { status: 302 }),
-    () => assert.rejects(context.resolveImageAttachment(client, { type: "image_url", image_url: { url: "https://example.com/start" } }, 6), /redirect has no location/));
+    () => assert.rejects(context.resolveImageAttachment(client, { type: "image_url", image_url: { url: "https://example.com/start" } }, 6), /重定向响应缺少目标地址/));
   await withFetch(async () => new Response(null, { status: 302, headers: { location: "file:///private" } }),
-    () => assert.rejects(context.resolveImageAttachment(client, { type: "image_url", image_url: { url: "https://example.com/start" } }, 7), /redirect protocol is not permitted/));
+    () => assert.rejects(context.resolveImageAttachment(client, { type: "image_url", image_url: { url: "https://example.com/start" } }, 7), /重定向协议不被允许/));
   await withFetch(async () => new Response(null, { status: 302, headers: { location: "/again" } }),
-    () => assert.rejects(context.resolveImageAttachment(client, { type: "image_url", image_url: { url: "https://example.com/start" } }, 8), /too many redirects/));
+    () => assert.rejects(context.resolveImageAttachment(client, { type: "image_url", image_url: { url: "https://example.com/start" } }, 8), /重定向次数过多/));
 });
 
 test("image DNS lookup returns public addresses and denies private-only results", async () => {
@@ -1451,7 +1451,7 @@ test("an https image_url whose response has no content-type header falls back to
         },
       });
       assert.equal(res.statusCode, 400, res.body);
-      assert.match(res.json().error.message, /does not look like an image/);
+      assert.match(res.json().error.message, /不是有效的图片/);
     },
   );
 });

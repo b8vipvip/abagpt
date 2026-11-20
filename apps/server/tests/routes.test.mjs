@@ -423,6 +423,21 @@ test("POST /api/conversations creates a conversation for the current account, de
   const body = JSON.parse(res.body);
   assert.equal(body.model, "auto");
   assert.equal(body.accountId, "acct-create");
+  assert.equal(body.title, "新对话");
+});
+
+test("GET /api/conversations/:id/export returns a localized Markdown archive", async () => {
+  useSession("acct-export");
+  const conversation = store.createConversation({ model: "auto", title: "归档测试", accountId: "acct-export" });
+  store.addMessage({ conversationId: conversation.id, role: "user", content: "问题内容", status: "done", events: [] });
+  const res = await app.inject({
+    method: "GET",
+    url: `/api/conversations/${conversation.id}/export?format=md&metadata=true`,
+    headers: AUTH,
+  });
+  assert.equal(res.statusCode, 200, res.body);
+  assert.match(res.body, /对话转录归档；导入此文件不会创建可续接的上游对话线程。/);
+  assert.match(res.body, /## 所选归档详情/);
 });
 
 // --- /api/conversations/:id ----------------------------------------------------

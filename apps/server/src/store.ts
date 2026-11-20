@@ -373,7 +373,7 @@ export function createConversation(input: {
     input.accountId ?? "default",
     input.model,
     input.gizmoId ?? null,
-    input.title ?? "New chat",
+    input.title ?? "新对话",
     input.private ? 1 : 0,
     now,
     now,

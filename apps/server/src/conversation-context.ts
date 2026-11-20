@@ -117,7 +117,7 @@ export function makePublicLookup(resolve: AddressResolver = lookup as AddressRes
     if (error) return callback(error, "", 4);
     const permitted = addresses.filter(({ address }) => isPublicImageHost(address));
     if (!permitted.length) {
-      const denied = Object.assign(new Error(`image host resolves to a non-public address: ${hostname}`), { code: "EACCES" });
+      const denied = Object.assign(new Error(`图片主机解析到非公网地址：${hostname}`), { code: "EACCES" });
       return callback(denied, "", 4);
     }
     if (options.all) return callback(null, permitted as never);
@@ -134,7 +134,7 @@ async function fetchPublicResource(url: string, signal: AbortSignal | undefined,
   try {
     for (let redirects = 0; ; redirects += 1) {
       if (!isPublicImageHost(current.hostname))
-        throw new Error(`${label}[${index}] host is not permitted: ${current.hostname}`);
+        throw new Error(`${label}[${index}] 的主机地址不被允许：${current.hostname}`);
       const res = await fetch(current, {
         signal,
         redirect: "manual",
@@ -142,10 +142,10 @@ async function fetchPublicResource(url: string, signal: AbortSignal | undefined,
       } as RequestInit & { dispatcher: Agent });
       if (![301, 302, 303, 307, 308].includes(res.status)) {
         if (!res.ok)
-          throw new Error(`Could not fetch ${label}[${index}]: upstream returned ${res.status}`);
+          throw new Error(`无法获取 ${label}[${index}]：上游返回 HTTP ${res.status}`);
         const cl = res.headers.get("content-length");
         if (cl && Number(cl) > MAX_IMAGE_BYTES)
-          throw new Error(`${label}[${index}] is too large (${cl} bytes, max ${MAX_IMAGE_BYTES})`);
+          throw new Error(`${label}[${index}] 超出大小限制（${cl} 字节，最大 ${MAX_IMAGE_BYTES} 字节）`);
         const mimeType = res.headers.get("content-type")?.split(";")[0] || "application/octet-stream";
         const reader = res.body?.getReader();
         if (!reader) return { data: new Uint8Array(await res.arrayBuffer()), mimeType };
@@ -157,7 +157,7 @@ async function fetchPublicResource(url: string, signal: AbortSignal | undefined,
           total += value.byteLength;
           if (total > MAX_IMAGE_BYTES) {
             await reader.cancel().catch(() => {});
-            throw new Error(`${label}[${index}] is too large (${total} bytes, max ${MAX_IMAGE_BYTES})`);
+            throw new Error(`${label}[${index}] 超出大小限制（${total} 字节，最大 ${MAX_IMAGE_BYTES} 字节）`);
           }
           chunks.push(value);
         }
@@ -170,13 +170,13 @@ async function fetchPublicResource(url: string, signal: AbortSignal | undefined,
         return { data, mimeType };
       }
       if (redirects >= MAX_IMAGE_REDIRECTS)
-        throw new Error(`Could not fetch ${label}[${index}]: too many redirects`);
+        throw new Error(`获取 ${label}[${index}] 时重定向次数过多`);
       const location = res.headers.get("location");
       if (!location)
-        throw new Error(`Could not fetch ${label}[${index}]: redirect has no location`);
+        throw new Error(`获取 ${label}[${index}] 时重定向响应缺少目标地址`);
       current = new URL(location, current);
       if (current.protocol !== "http:" && current.protocol !== "https:")
-        throw new Error(`${label}[${index}] redirect protocol is not permitted`);
+        throw new Error(`${label}[${index}] 的重定向协议不被允许`);
     }
   } finally {
     await agent.close();
@@ -233,16 +233,16 @@ export async function resolveImageAttachment(
     ({ data, mimeType } = await fetchPublicResource(url, signal, index, "image_url"));
   } else {
     throw new Error(
-      `image_url[${index}] must be a data: URI or an http(s) URL`,
+      `image_url[${index}] 必须是 data: URI 或 http(s) URL。`,
     );
   }
   if (!mimeType.startsWith("image/"))
-    throw new Error(`image_url[${index}] does not look like an image (got ${mimeType})`);
+    throw new Error(`image_url[${index}] 不是有效的图片（收到的 MIME 类型：${mimeType}）。`);
   if (data.byteLength === 0)
-    throw new Error(`image_url[${index}] resolved to an empty file`);
+    throw new Error(`image_url[${index}] 解析得到的文件为空。`);
   if (data.byteLength > MAX_IMAGE_BYTES)
     throw new Error(
-      `image_url[${index}] is too large (${data.byteLength} bytes, max ${MAX_IMAGE_BYTES})`,
+      `image_url[${index}] 超出大小限制（${data.byteLength} 字节，最大 ${MAX_IMAGE_BYTES} 字节）。`,
     );
   const extension = mimeType.split("/")[1]?.split("+")[0] || "png";
   return client.uploadFile({
@@ -277,13 +277,13 @@ export async function resolveFileAttachment(
   } else if (/^https?:\/\//i.test(url)) {
     ({ data } = await fetchPublicResource(url, signal, index, "file"));
   } else {
-    throw new Error(`file[${index}] must be a data: URI or an http(s) URL`);
+    throw new Error(`file[${index}] 必须是 data: URI 或 http(s) URL。`);
   }
   if (data.byteLength === 0)
-    throw new Error(`file[${index}] resolved to an empty file`);
+    throw new Error(`file[${index}] 解析得到的文件为空。`);
   if (data.byteLength > MAX_IMAGE_BYTES)
     throw new Error(
-      `file[${index}] is too large (${data.byteLength} bytes, max ${MAX_IMAGE_BYTES})`,
+      `file[${index}] 超出大小限制（${data.byteLength} 字节，最大 ${MAX_IMAGE_BYTES} 字节）。`,
     );
   const fileName = part.file.filename?.trim() || `attachment-${index}`;
   return client.uploadFile({
