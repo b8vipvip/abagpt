@@ -65,11 +65,11 @@ test.describe("server / decoder challenges", () => {
       if (payload === "text") {
         assert.match(answer.toString(), /café, stars ✨/);
         assert.equal(answer.at(-1), 10);
-        assert.ok(challenge.prompt.includes("FORMAT GUIDE"));
+        assert.ok(challenge.prompt.includes("格式指南"));
         assert.ok(!challenge.prompt.includes(answer.toString()));
       } else {
         assert.equal(answer.length, 128);
-        assert.ok(!challenge.prompt.includes("FORMAT GUIDE"));
+        assert.ok(!challenge.prompt.includes("格式指南"));
       }
       assert.ok(challenge.prompt.includes(`MIRROR_ANSWER_${challenge.id}: HEX`));
       const check = await f.verify(challenge.id, answer.toString("hex").toUpperCase());
@@ -146,7 +146,7 @@ test.describe("server / decoder challenges", () => {
       assert.doesNotMatch(guide, /LoaF is one ASCII line|PngSpeak stores bytes|Original gptgif stores|gptgif v4 is a/);
       assert.match(group.find(e => e.name.endsWith("/README.txt")).content.toString(), /请将 prompt\.txt 粘贴到 ChatGPT/);
       assert.match(group.find(e => e.name.endsWith("/README.txt")).content.toString(), /压缩包不包含答案密钥/);
-      assert.ok(!c.prompt.includes("FORMAT GUIDE"));
+      assert.ok(!c.prompt.includes("格式指南"));
     }
     const missing = "00000000-0000-4000-8000-000000000000";
     assert.equal((await f.app.inject({ method: "POST", url: "/api/decoder-challenges/kit", payload: { ids: [missing] } })).statusCode, 404);

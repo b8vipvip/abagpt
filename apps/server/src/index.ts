@@ -195,6 +195,16 @@ app.addHook("onSend", async (req, reply, payload) => {
   return payload;
 });
 
+function localizedZodError(error: ZodError): string {
+  return error.issues.map((issue) => {
+    if (/[㐀-鿿]/.test(issue.message)) return issue.message;
+    const field = issue.path.join(".");
+    return issue.code === "invalid_type"
+      ? `字段 ${field} 的类型不正确。`
+      : `字段 ${field} 的格式无效。`;
+  }).join("；");
+}
+
 app.setErrorHandler((error, _req, reply) => {
   const status =
     error instanceof ZodError
@@ -202,7 +212,7 @@ app.setErrorHandler((error, _req, reply) => {
       : Number((error as { statusCode?: number }).statusCode ?? 500);
   const message =
     error instanceof ZodError
-      ? error.issues.map((issue) => issue.message).join("; ")
+      ? localizedZodError(error)
       : status >= 500
         ? "服务器内部发生错误。"
         : error instanceof Error

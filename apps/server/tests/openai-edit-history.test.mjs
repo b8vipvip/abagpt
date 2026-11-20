@@ -177,6 +177,12 @@ test("assistant history is immutable while user edits rebase and continue", asyn
       },
     });
     assert.equal(edited.statusCode, 200, edited.body);
+    assert.ok(
+      store.listConversations("account-1").some(conversation =>
+        conversation.isBranch && conversation.title.startsWith("编辑前："),
+      ),
+      "the pre-edit branch title is localized",
+    );
     assert.equal(edited.headers["x-mirror-conversation-id"], conversationId);
     assert.equal(
       sent[1].conversation_id,

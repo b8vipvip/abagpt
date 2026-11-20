@@ -35,6 +35,15 @@ test("decoder challenges use the control gate, validate requests, and invalidate
   const create = headers => app.inject({ method: "POST", url: "/api/decoder-challenges", headers, payload: { format: "loaf" } });
   assert.equal((await create({ host: "localhost" })).statusCode, 401);
   assert.equal((await create({ ...AUTH, origin: "https://evil.example" })).statusCode, 403);
+  const invalidFormat = await app.inject({ method: "POST", url: "/api/decoder-challenges", headers: AUTH, payload: { format: "unknown" } });
+  assert.equal(invalidFormat.statusCode, 400);
+  assert.match(invalidFormat.json().error, /字段 format 的格式无效/);
+  const invalidType = await app.inject({ method: "POST", url: "/api/decoder-challenges", headers: AUTH, payload: { format: 42 } });
+  assert.equal(invalidType.statusCode, 400);
+  assert.match(invalidType.json().error, /字段 format 的类型不正确/);
+  const customChinese = await app.inject({ method: "POST", url: "/api/session", headers: AUTH, payload: { sessionToken: "short" } });
+  assert.equal(customChinese.statusCode, 400);
+  assert.equal(customChinese.json().error, "这不像有效的 ChatGPT 会话令牌。");
   const generated = await create(AUTH);
   assert.equal(generated.statusCode, 200);
   const { id } = generated.json();
@@ -423,6 +432,21 @@ test("POST /api/conversations creates a conversation for the current account, de
   const body = JSON.parse(res.body);
   assert.equal(body.model, "auto");
   assert.equal(body.accountId, "acct-create");
+  assert.equal(body.title, "新对话");
+});
+
+test("GET /api/conversations/:id/export returns a localized Markdown archive", async () => {
+  useSession("acct-export");
+  const conversation = store.createConversation({ model: "auto", title: "归档测试", accountId: "acct-export" });
+  store.addMessage({ conversationId: conversation.id, upstreamNodeId: "archive-user-node", role: "user", content: "问题内容", status: "done", events: [] });
+  const res = await app.inject({
+    method: "GET",
+    url: `/api/conversations/${conversation.id}/export?format=markdown&metadata=true`,
+    headers: AUTH,
+  });
+  assert.equal(res.statusCode, 200, res.body);
+  assert.match(res.body, /对话转录归档；导入此文件不会创建可续接的上游对话线程。/);
+  assert.match(res.body, /## 所选归档详情/);
 });
 
 // --- /api/conversations/:id ----------------------------------------------------

@@ -882,7 +882,7 @@ export async function registerOpenAiRoutes(
           const previousLast = previousMessages.at(-1);
           if (previousLast?.upstreamNodeId) {
             branchConversation(explicitConversation!.id, previousLast.upstreamNodeId,
-              "Before edit: " + explicitConversation!.title, previousLast.id);
+              "编辑前：" + explicitConversation!.title, previousLast.id);
           }
           rebaseConversationUpstream(explicitConversation!.id, {
             model: route.model,

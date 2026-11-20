@@ -194,7 +194,7 @@ test.describe("server / conversion routes", () => {
     assert.equal((await post("/api/convert/onion/encode?raw_in=1&chain=loaf,unknown", source, "application/octet-stream")).statusCode, 400);
     const prompt = await post("/api/convert/gpt-prompt", { dataBase64: b64("secret"), format: "loaf", filename: "spaces and !.txt", note: "decode please" });
     assert.match(prompt.json().prompt, /spaces_and__.txt/);
-    assert.match(prompt.json().prompt, /Note from the sender: decode please/);
+    assert.match(prompt.json().prompt, /发送者备注：decode please/);
     const rawPrompt = await post("/api/convert/gpt-prompt?raw_in=1&format=pngspeak", Buffer.from("raw prompt"), "application/octet-stream");
     assert.equal(rawPrompt.json().format, "pngspeak");
     assert.match(rawPrompt.json().prompt, /decoded\.pngspk\.png/);
