@@ -182,14 +182,12 @@ test("verifyCandidateSessionToken localizes a response without an access token",
 test("verifyCandidateSessionToken preserves non-authentication response errors", async () => {
   const originalFetch = globalThis.fetch;
   try {
-    globalThis.fetch = async () => new Response("{", {
+    globalThis.fetch = async () => ({
+      ok: true,
       status: 200,
-      headers: { "content-type": "application/json" },
+      json: async () => { throw new Error("response parsing failed"); },
     });
-    await assert.rejects(auth.verifyCandidateSessionToken("invalid-json-candidate"), (error) => {
-      assert.ok(error instanceof SyntaxError);
-      return true;
-    });
+    await assert.rejects(auth.verifyCandidateSessionToken("response-error-candidate"), /response parsing failed/);
   } finally {
     globalThis.fetch = originalFetch;
   }
