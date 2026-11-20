@@ -1,5 +1,6 @@
 import { needsRichOutput, renderRichOutput, type RichOutput } from "./rich-output.js";
 import { createAssetLinks } from "./asset-content.js";
+import { SseWriter } from "./sse-writer.js";
 import { ResponsesBody, responsesToCompletion, createResponseWriter } from "./responses.js";
 import { abortable, turnDeadline } from "./deadlines.js";
 import { apiError, recordFailure } from "./api-errors.js";
@@ -288,51 +289,6 @@ const CompletionBody = z
   });
 
 
-// Slow-consumer guard. Real backpressure (a client reading slower than we
-// can write) is normal and must be tolerated, not treated as "the client is
-// gone" on the first snapshot over some byte count - ChatGPTBox in particular
-// relays every SSE chunk through a Chrome extension `runtime.Port`, which can
-// legitimately let the outbound buffer climb for a few seconds without the
-// far end actually having disappeared. So this only gives up once the buffer
-// has stayed backed up past SLOW_CONSUMER_STALL_MS *continuously*; a burst
-// that drains again resets the clock and is invisible to the caller. This is
-// still not real drain-event-driven backpressure (pausing production and
-// resuming on a `drain` event) - it's a stall timeout layered on top of a
-// byte-count high-water mark - but it stops a merely-bursty consumer from
-// getting its connection killed mid-turn, which previously meant the
-// in-flight generation's transcript never got persisted and the next request
-// from the same client would fail to match it as a continuation, silently
-// starting a brand-new conversation every turn.
-//
-// Exported (only) so a unit test can drive this directly with a fake
-// `reply.raw` - reproducing real outbound-socket backpressure end-to-end
-// inside a test is impractical/flaky, but the guard is a plain function of
-// `reply.raw.writableLength` plus elapsed time and is fully specified
-// without a real socket. `now` is likewise only for tests to drive the
-// stall clock deterministically; production call sites always omit it.
-const SLOW_CONSUMER_HIGH_WATER_BYTES = 8 * 1024 * 1024;
-const SLOW_CONSUMER_STALL_MS = 15_000;
-const slowConsumerStalledSince = new WeakMap<object, number>();
-
-export function sse(reply: FastifyReply, data: unknown, now: number = Date.now()): void {
-  const raw = reply.raw;
-  if (raw.writableLength > SLOW_CONSUMER_HIGH_WATER_BYTES) {
-    const stalledSince = slowConsumerStalledSince.get(raw);
-    if (stalledSince === undefined) {
-      slowConsumerStalledSince.set(raw, now);
-    } else if (now - stalledSince > SLOW_CONSUMER_STALL_MS) {
-      slowConsumerStalledSince.delete(raw);
-      raw.destroy();
-      throw new Error("响应客户端读取过慢。");
-    }
-  } else if (slowConsumerStalledSince.has(raw)) {
-    slowConsumerStalledSince.delete(raw);
-  }
-  raw.write(
-    `data: ${typeof data === "string" ? data : JSON.stringify(data)}\n\n`,
-  );
-}
-
 /**
  * Serializes overlapping /v1/chat/completions calls that target the same
  * explicit metadata.conversation_id - a double-click, a retry fired before
@@ -436,10 +392,7 @@ export async function registerOpenAiRoutes(
       return reply.code(400).send({ error: { type: "invalid_request_error",
         message: responsesParsed.error.issues.map(issue => issue.message).join("; ") } });
     }
-    const responses = responsesParsed?.success ? createResponseWriter(responsesParsed.data, event => {
-      reply.raw.write(`event: ${event.type}\n`);
-      sse(reply, event);
-    }) : undefined;
+    let responses: ReturnType<typeof createResponseWriter> | undefined;
     const parsed = CompletionBody.safeParse(responsesParsed?.success ? responsesToCompletion(responsesParsed.data) : req.body);
     if (!parsed.success) {
       return reply.code(400).send({
@@ -454,6 +407,9 @@ export async function registerOpenAiRoutes(
     if (!isResponses && (body.tools?.length || body.messages.some(message => "tool_calls" in message))) {
       let bridgeStream = false;
       let bridgeHeartbeat: ReturnType<typeof setInterval> | undefined;
+      let bridgeHeartbeatPending = false;
+      let bridgeController: AbortController | undefined;
+      let bridgeWriter: SseWriter | undefined;
       try {
         const tools = validateToolDefinitions(body.tools ?? []);
         const route = routeModel(body.model, body.metadata);
@@ -471,27 +427,36 @@ export async function registerOpenAiRoutes(
           reply.hijack();
           reply.raw.writeHead(200, { "Content-Type": "text/event-stream; charset=utf-8", "Cache-Control": "no-cache, no-transform", Connection: "keep-alive" });
           bridgeStream = true;
-          sse(reply, { id, object: "chat.completion.chunk", created, model: body.model,
+          bridgeController = new AbortController();
+          bridgeWriter = new SseWriter(reply);
+          reply.raw.once("close", () => {
+            if (!reply.raw.writableEnded) bridgeController?.abort();
+          });
+          await bridgeWriter.write({ id, object: "chat.completion.chunk", created, model: body.model,
             choices: [{ index: 0, delta: { role: "assistant" }, finish_reason: null }] });
           bridgeHeartbeat = setInterval(() => {
-            if (!reply.raw.destroyed && !reply.raw.writableEnded) sse(reply, { id, object: "chat.completion.chunk", created, model: body.model,
-              choices: [{ index: 0, delta: {}, finish_reason: null }] });
+            if (bridgeHeartbeatPending || reply.raw.destroyed || reply.raw.writableEnded) return;
+            bridgeHeartbeatPending = true;
+            void bridgeWriter!.write({ id, object: "chat.completion.chunk", created, model: body.model,
+              choices: [{ index: 0, delta: {}, finish_reason: null }] })
+              .catch(error => bridgeController?.abort(error))
+              .finally(() => { bridgeHeartbeatPending = false; });
           }, 10_000);
         }
         const chat = await runChat({ prompt, model: route.model, gizmoId: route.gizmoId,
-          private: true, ephemeral: true, signal: (req as any).raw?.signal ?? req.signal });
+          private: true, ephemeral: true, signal: bridgeController?.signal ?? ((req as any).raw?.signal ?? req.signal) });
         const answer = parseToolBridgeAnswer(chat.result.text, tools, body.tool_choice);
         if (bridgeHeartbeat) clearInterval(bridgeHeartbeat);
         const finish_reason = answer.toolCalls ? "tool_calls" : "stop";
-        if (body.stream) {
-          sse(reply, { id, object: "chat.completion.chunk", created, model: body.model,
+        if (body.stream && bridgeWriter) {
+          await bridgeWriter.write({ id, object: "chat.completion.chunk", created, model: body.model,
             choices: [{ index: 0, delta: answer.toolCalls
               ? { tool_calls: answer.toolCalls.map((call, index) => ({ index, ...call })) }
               : { content: answer.content }, finish_reason: null }] });
-          sse(reply, { id, object: "chat.completion.chunk", created, model: body.model,
+          await bridgeWriter.write({ id, object: "chat.completion.chunk", created, model: body.model,
             choices: [{ index: 0, delta: {}, finish_reason }] });
-          sse(reply, "[DONE]");
-          reply.raw.end();
+          await bridgeWriter.write("[DONE]");
+          await bridgeWriter.end();
           return;
         }
         return reply.send({ id, object: "chat.completion", created, model: body.model,
@@ -503,8 +468,16 @@ export async function registerOpenAiRoutes(
         const status = Number((error as { statusCode?: number; status?: number }).statusCode ?? (error as { status?: number }).status ?? 502);
         const message = toolBridgeErrorMessage(error);
         const envelope = apiError(status, message, req.id);
-        if (bridgeStream) {
-          if (!reply.raw.destroyed) { sse(reply, envelope); sse(reply, "[DONE]"); reply.raw.end(); }
+        if (bridgeStream && bridgeWriter) {
+          if (!reply.raw.destroyed) {
+            try {
+              await bridgeWriter.write(envelope);
+              await bridgeWriter.write("[DONE]");
+              await bridgeWriter.end();
+            } catch {
+              if (!reply.raw.destroyed && !reply.raw.writableEnded) reply.raw.destroy();
+            }
+          }
           return;
         }
         return reply.code(status).send(envelope);
@@ -613,9 +586,14 @@ export async function registerOpenAiRoutes(
     const completionId = `chatcmpl-${crypto.randomUUID().replaceAll("-", "")}`;
     const created = Math.floor(Date.now() / 1000);
     const controller = new AbortController();
+    const sseWriter = new SseWriter(reply);
+    responses = responsesParsed?.success
+      ? createResponseWriter(responsesParsed.data, event => sseWriter.write(event, String(event.type)))
+      : undefined;
     const deadline = turnDeadline(controller);
     const startedAt = Date.now();
     let heartbeat: ReturnType<typeof setInterval> | undefined;
+    let heartbeatWritePending = false;
     req.raw.once("aborted", () => controller.abort());
     reply.raw.once("close", () => {
       clearInterval(heartbeat);
@@ -646,8 +624,8 @@ export async function registerOpenAiRoutes(
         // setup inside try/finally so a failure after hijack still cleans up.
         if (typeof reply.raw.socket?.setNoDelay === "function")
           reply.raw.socket.setNoDelay(true);
-        if (responses) responses.start();
-        else sse(reply, {
+        if (responses) await responses.start();
+        else await sseWriter.write({
           id: completionId,
           object: "chat.completion.chunk",
           created,
@@ -666,18 +644,19 @@ export async function registerOpenAiRoutes(
         // reasoning. This is transport activity only: never extend deadlines,
         // modify the transcript, or signal that generation has finished.
         heartbeat = setInterval(() => {
-          try {
-            if (responses) responses.delta("");
-            else sse(reply, {
-              id: completionId,
-              object: "chat.completion.chunk",
-              created,
-              model: body.model,
-              choices: [{ index: 0, delta: { content: "" }, finish_reason: null }],
-            });
-          } catch (error) {
-            controller.abort(error);
-          }
+          if (heartbeatWritePending || reply.raw.destroyed || reply.raw.writableEnded) return;
+          heartbeatWritePending = true;
+          const pending = responses
+            ? responses.delta("")
+            : sseWriter.write({
+                id: completionId,
+                object: "chat.completion.chunk",
+                created,
+                model: body.model,
+                choices: [{ index: 0, delta: { content: "" }, finish_reason: null }],
+              });
+          void pending.catch(error => controller.abort(error))
+            .finally(() => { heartbeatWritePending = false; });
         }, 10_000);
       }
 
@@ -917,7 +896,7 @@ export async function registerOpenAiRoutes(
             turnstileToken,
             attachments: resolvedAttachments,
             signal: controller.signal,
-            onEvent: (event) => {
+            onEvent: async (event) => {
               deadline.touch();
               capturedEvents.push(event);
               rich ||= needsRichOutput(event);
@@ -941,8 +920,8 @@ export async function registerOpenAiRoutes(
                 const safe = streamedText.slice(0, reference < 0 ? boundary : Math.min(boundary, reference));
                 const delta = safe.slice(emittedText.length);
                 if (delta) {
-                  if (responses) responses.delta(delta);
-                  else sse(reply, { id: completionId, object: "chat.completion.chunk", created, model: body.model,
+                  if (responses) await responses.delta(delta);
+                  else await sseWriter.write({ id: completionId, object: "chat.completion.chunk", created, model: body.model,
                     choices: [{ index: 0, delta: { content: delta }, finish_reason: null }] });
                   emittedText += delta;
                 }
@@ -978,8 +957,8 @@ export async function registerOpenAiRoutes(
         if (body.stream) {
           const delta = remainingStreamText(responseText, emittedText);
           if (delta) {
-            if (responses) responses.delta(delta);
-            else sse(reply, { id: completionId, object: "chat.completion.chunk", created, model: body.model,
+            if (responses) await responses.delta(delta);
+            else await sseWriter.write({ id: completionId, object: "chat.completion.chunk", created, model: body.model,
               choices: [{ index: 0, delta: { content: delta }, finish_reason: null }] });
           }
         }
@@ -1065,8 +1044,8 @@ export async function registerOpenAiRoutes(
         if (oneShot) delete responseFields.conversation_id;
         if (body.stream) {
           if (responses) {
-            responses.complete(responseText, conversation.model, responseFields);
-            reply.raw.end();
+            await responses.complete(responseText, conversation.model, responseFields);
+            await sseWriter.end();
             return;
           }
           // Not part of the OpenAI chunk schema: an SSE comment line (ignored
@@ -1074,9 +1053,8 @@ export async function registerOpenAiRoutes(
           // id, since HTTP response headers can no longer be set once the
           // stream has started and this may be a brand-new conversation whose
           // id was not known until runChat() returned.
-          if (!oneShot)
-            reply.raw.write(`: mirror-conversation-id ${conversation.id}\n\n`);
-          sse(reply, {
+          if (!oneShot) await sseWriter.comment(`mirror-conversation-id ${conversation.id}`);
+          await sseWriter.write({
             id: completionId,
             object: "chat.completion.chunk",
             created,
@@ -1084,8 +1062,8 @@ export async function registerOpenAiRoutes(
             choices: [{ index: 0, delta: {}, finish_reason: "stop" }],
             ...(responseMetadata ? { metadata: responseMetadata } : {}),
           });
-          sse(reply, "[DONE]");
-          reply.raw.end();
+          await sseWriter.write("[DONE]");
+          await sseWriter.end();
           return;
         }
         if (!oneShot) reply.header("x-mirror-conversation-id", conversation.id);
@@ -1119,9 +1097,13 @@ export async function registerOpenAiRoutes(
       const protocolCategory = classifyProtocolFailure(error).category;
       recordFailure(envelope.error.code, req.id, protocolCategory === "unknown" ? null : protocolCategory);
       if (body.stream) {
-        if (responses) responses.fail(envelope.error.message, envelope.error.code);
-        else sse(reply, envelope);
-        reply.raw.end();
+        try {
+          if (responses) await responses.fail(envelope.error.message, envelope.error.code);
+          else await sseWriter.write(envelope);
+          await sseWriter.end();
+        } catch {
+          if (!reply.raw.destroyed && !reply.raw.writableEnded) reply.raw.destroy();
+        }
         return;
       }
       return reply.code(status).send(envelope);
