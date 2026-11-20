@@ -37,7 +37,13 @@ test("decoder challenges use the control gate, validate requests, and invalidate
   assert.equal((await create({ ...AUTH, origin: "https://evil.example" })).statusCode, 403);
   const invalidFormat = await app.inject({ method: "POST", url: "/api/decoder-challenges", headers: AUTH, payload: { format: "unknown" } });
   assert.equal(invalidFormat.statusCode, 400);
-  assert.match(invalidFormat.json().error, /字段 format 的取值不在允许范围内/);
+  assert.match(invalidFormat.json().error, /字段 format 的格式无效/);
+  const invalidType = await app.inject({ method: "POST", url: "/api/decoder-challenges", headers: AUTH, payload: { format: 42 } });
+  assert.equal(invalidType.statusCode, 400);
+  assert.match(invalidType.json().error, /字段 format 的类型不正确/);
+  const customChinese = await app.inject({ method: "POST", url: "/api/session", headers: AUTH, payload: { sessionToken: "short" } });
+  assert.equal(customChinese.statusCode, 400);
+  assert.equal(customChinese.json().error, "这不像有效的 ChatGPT 会话令牌。");
   const generated = await create(AUTH);
   assert.equal(generated.statusCode, 200);
   const { id } = generated.json();
@@ -435,7 +441,7 @@ test("GET /api/conversations/:id/export returns a localized Markdown archive", a
   store.addMessage({ conversationId: conversation.id, upstreamNodeId: "archive-user-node", role: "user", content: "问题内容", status: "done", events: [] });
   const res = await app.inject({
     method: "GET",
-    url: `/api/conversations/${conversation.id}/export?format=md&metadata=true`,
+    url: `/api/conversations/${conversation.id}/export?format=markdown&metadata=true`,
     headers: AUTH,
   });
   assert.equal(res.statusCode, 200, res.body);

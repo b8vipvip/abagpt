@@ -196,25 +196,13 @@ app.addHook("onSend", async (req, reply, payload) => {
 });
 
 function localizedZodError(error: ZodError): string {
-  const messages = error.issues.map((issue) => {
+  return error.issues.map((issue) => {
     if (/[㐀-鿿]/.test(issue.message)) return issue.message;
-    const field = issue.path.length ? issue.path.join(".") : "请求";
-    switch (issue.code) {
-      case "invalid_type":
-        return `字段 ${field} 的类型不正确。`;
-      case "invalid_enum_value":
-        return `字段 ${field} 的取值不在允许范围内。`;
-      case "too_small":
-        return `字段 ${field} 的值或长度过小。`;
-      case "too_big":
-        return `字段 ${field} 的值或长度过大。`;
-      case "unrecognized_keys":
-        return "请求包含不支持的字段。";
-      default:
-        return `字段 ${field} 的格式无效。`;
-    }
-  });
-  return messages.join("；") || "请求参数无效，请检查请求字段和数据格式。";
+    const field = issue.path.join(".");
+    return issue.code === "invalid_type"
+      ? `字段 ${field} 的类型不正确。`
+      : `字段 ${field} 的格式无效。`;
+  }).join("；");
 }
 
 app.setErrorHandler((error, _req, reply) => {

@@ -542,7 +542,7 @@ test("an image_url that is neither a data: URI nor an http(s) URL is rejected", 
     },
   });
   assert.equal(res.statusCode, 400, res.body);
-  assert.match(res.json().error.message, /必须是 data: URI 或 http\\(s\\) URL/);
+  assert.match(res.json().error.message, /必须是 data: URI 或 http\(s\) URL/);
 });
 
 test("an image_url resolving to a non-image mime type is rejected", async () => {
