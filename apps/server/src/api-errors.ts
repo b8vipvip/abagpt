@@ -16,12 +16,6 @@ const recent: Array<{ at: string; code: string; requestId: string; protocolCateg
 export function localizedZodError(error: ZodError): string {
   return error.issues.map((issue) => {
     if (/[㐀-鿿]/.test(issue.message)) return issue.message;
-    if (issue.code === "invalid_union") {
-      const localized = issue.unionErrors
-        .flatMap((nestedError) => nestedError.issues)
-        .find((nestedIssue) => /[㐀-鿿]/.test(nestedIssue.message));
-      if (localized) return localized.message;
-    }
     const field = issue.path.join(".");
     return issue.code === "invalid_type"
       ? `字段 ${field} 的类型不正确。`
