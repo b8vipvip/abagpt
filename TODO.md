@@ -4,6 +4,8 @@
 
 **同日更新：** 后续工作推进了 MIR-20/21/22（发布／CI 验证）以及 MIR-31/32/34/35（协议韧性和可运维性）；每项都注明实际变更和剩余工作。MIR-23 和 MIR-33 仍然确实开放（前者需要真实账号，后者需要专门的渐进式重构，不能仓促处理）；MIR-24 至 MIR-30（功能构想）则有意暂缓，等待单独讨论实际要开发哪些功能。
 
+**GPTAuto 集成进展（2026-11-20）：** ABAGPT 已合并 [PR #16](https://github.com/b8vipvip/abagpt/pull/16)，加入 GPTAuto v0.15.15 Consumer Sync 引导工作流，并为产品 CI 增加 `workflow_dispatch`，满足 Reconcile 的精确 merge SHA 验收要求。此提交只完成接入入口，尚未安装完整 GPTAuto 运行时，也不能声称自动化已开始运行。仍需配置 `GPTAUTO_GITHUB_TOKEN` Repository Secret、运行 Consumer Sync 并合并首次运行时同步 PR，之后再将 ABAGPT 注册为 GPTAuto canonical 消费仓库。
+
 `apps/server/src`、`apps/web/src` 和 `packages/protocol/src` 中没有任何内联 `TODO`／`FIXME`／`HACK` 标记。代码没有把债务留在注释里，因此本轮审查关注的是设计缺口和未构建功能，而不是代码级清理。
 
 **已确认（Confirmed）** = 当前代码／文档中可以观察到的缺口。
@@ -106,3 +108,13 @@
 剩余开放工作大致按优先级排列：MIR-23（使用真实 ChatGPT 账号完成实时验收）、MIR-33（增量拆分核心模块）、MIR-34（语义化结构日志）、MIR-31（脱敏夹具来源信息）、MIR-19（共享流式／持久化契约）以及 MIR-11（兼容性文档审查）。
 
 之后再决定要让 Mirror 成为哪种产品，并从 P2 的 MIR-24 至 MIR-30 中选择实际要做的功能。
+
+## GPTAuto 仓库自动化集成
+
+- [x] 合并 ABAGPT 的 GPTAuto v0.15.15 Consumer Sync 引导工作流（[#16](https://github.com/b8vipvip/abagpt/pull/16)）。
+- [x] 为 ABAGPT 产品 CI 增加 `workflow_dispatch`，支持 GPTAuto Reconcile 按精确 merge SHA 启动验收。
+- [ ] 在 ABAGPT 仓库配置 `GPTAUTO_GITHUB_TOKEN` Secret（Contents、Pull requests、Workflows、Actions 写权限；Checks 只读；需要创建诊断 Issue 时还需 Issues 写权限）。
+- [ ] 运行 **Actions → GPTAuto Consumer Sync**，选择 `operation=sync`、`version=v0.15.15`，等待同步 PR 的 ABAGPT CI 通过并合并。
+- [ ] 在 GPTAuto canonical 仓库的 `.gptauto/consumers.json` 中将 ABAGPT 注册为 active consumer，启用后续正式版 Release fan-out。
+
+在以上步骤完成前，GPTAuto 处于“引导工作流已合并、完整运行时待安装”状态。
