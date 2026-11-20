@@ -21,9 +21,12 @@ services:
     restart: unless-stopped
 
   mirror:
+    image: ${MIRROR_IMAGE:-ghcr.io/b8vipvip/abagpt:local}
+    pull_policy: missing
     build:
       context: .
       args:
+        MIRROR_VERSION: ${MIRROR_VERSION:-development}
         MIRROR_BUILD_REVISION: ${MIRROR_BUILD_REVISION:-development}
     network_mode: "service:warp"
     depends_on:
