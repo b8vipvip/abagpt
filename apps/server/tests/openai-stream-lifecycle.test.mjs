@@ -212,7 +212,7 @@ test("a paused TCP reader stops SSE production until drain and preserves the con
     response = await new Promise((resolve, reject) => {
       const request = httpRequest(address + "/v1/chat/completions", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: { "content-type": "application/json", connection: "close" },
       }, incoming => {
         incoming.pause();
         resolve(incoming);
@@ -251,7 +251,7 @@ test("a paused TCP reader stops SSE production until drain and preserves the con
 
     assert.ok(drainCount >= 1, "resuming the reader must release the blocked writer");
     assert.equal(writesWhileBlocked, 0);
-    assert.ok(streamed.includes("-stream-end\n"));
+    assert.ok(streamed.includes("-stream-end\\n"));
     assert.ok(streamed.includes("[DONE]"));
     const conversationId = streamed.match(/: mirror-conversation-id ([^\r\n]+)/)?.[1];
     assert.ok(conversationId, "stream must expose its local continuation id");
