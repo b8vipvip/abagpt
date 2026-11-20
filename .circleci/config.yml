@@ -1,12 +1,7 @@
-# CircleCI - a free-for-open-source, third-party CI service, deliberately
-# independent of GitHub Actions billing. Added 2026-09-14 because GitHub
-# Actions on this account is blocked by an unpaid-invoice suspension (that
-# suspension only affects GitHub's own Actions infrastructure, not
-# integrations that just talk to GitHub over the API/webhooks). Cirrus CI
-# was tried first but was unreachable (ERR_CONNECTION_CLOSED) from Jeremy's
-# location, so this uses CircleCI instead - a long-established, widely
-# reachable provider with a generous open-source free tier (400,000 Linux
-# credits/month at last check).
+# CircleCI - an independent secondary CI lane for b8vipvip/abagpt.
+# It mirrors the GitHub Actions typecheck, 100% coverage, build, isolated
+# restore, Playwright, manifest, release-asset, and container checks so the
+# project retains a second provider's signal for environment-specific issues.
 #
 # This remains an independent secondary CI lane alongside .github/workflows/ci.yml.
 # Both workflows run the same verification and container checks:
