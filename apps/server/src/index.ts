@@ -3,7 +3,7 @@ import { registerDecoderChallengeRoutes } from "./decoder-challenges.js";
 import { registerConversionRoutes } from "./conversion-routes.js";
 import { uploadMimeType } from "./upload-mime.js";
 import { registerAssetContentRoute } from "./asset-content.js";
-import { apiError, recordFailure } from "./api-errors.js";
+import { apiError, localizedZodError, recordFailure } from "./api-errors.js";
 import { formatStartupFailure } from "./preflight.js";
 import { syncConversationPage, hasRemoteHistory } from "./conversation-sync.js";
 import { fileURLToPath } from "node:url";
@@ -194,16 +194,6 @@ app.addHook("onSend", async (req, reply, payload) => {
   }
   return payload;
 });
-
-function localizedZodError(error: ZodError): string {
-  return error.issues.map((issue) => {
-    if (/[㐀-鿿]/.test(issue.message)) return issue.message;
-    const field = issue.path.join(".");
-    return issue.code === "invalid_type"
-      ? `字段 ${field} 的类型不正确。`
-      : `字段 ${field} 的格式无效。`;
-  }).join("；");
-}
 
 app.setErrorHandler((error, _req, reply) => {
   const status =

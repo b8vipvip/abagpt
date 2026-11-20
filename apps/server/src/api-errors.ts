@@ -1,3 +1,5 @@
+import type { ZodError } from "zod";
+
 /** Public errors and diagnostics contain no upstream payloads or exception text. */
 const categories: Record<number, [string, string, string]> = {
   400: ["invalid_request_error", "invalid_request", "请求无效，请检查支持的字段和消息历史。"],
@@ -10,6 +12,16 @@ const categories: Record<number, [string, string, string]> = {
   504: ["timeout_error", "deadline_exceeded", "生成请求超时。请在重试前重新加载历史记录；上游是否已完成尚不确定。"],
 };
 const recent: Array<{ at: string; code: string; requestId: string; protocolCategory: string | null }> = [];
+
+export function localizedZodError(error: ZodError): string {
+  return error.issues.map((issue) => {
+    if (/[㐀-鿿]/.test(issue.message)) return issue.message;
+    const field = issue.path.join(".");
+    return issue.code === "invalid_type"
+      ? `字段 ${field} 的类型不正确。`
+      : `字段 ${field} 的格式无效。`;
+  }).join("；");
+}
 export function apiError(status: number, message: string, requestId: string) {
   const [type, code, fallback] = categories[status] ?? ["server_error", "upstream_failure", "生成失败。请检查 WARP 连接和会话状态，然后重新加载历史记录并重试。"];
   return { error: { type, code, message: status === 400 ? message : fallback, request_id: requestId } };
