@@ -164,4 +164,28 @@ test("verifyCandidateSessionToken localizes a rejected session token", async () 
     globalThis.fetch = originalFetch;
   }
 });
+
+test("verifyCandidateSessionToken localizes a response without an access token", async () => {
+  const originalFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = async () => Response.json({});
+    await assert.rejects(auth.verifyCandidateSessionToken("expired-candidate"), (error) => {
+      assert.equal(error.statusCode, 401);
+      assert.match(error.message, /无效或已过期/);
+      return true;
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("verifyCandidateSessionToken preserves non-authentication network errors", async () => {
+  const originalFetch = globalThis.fetch;
+  try {
+    globalThis.fetch = async () => { throw new Error("network unavailable"); };
+    await assert.rejects(auth.verifyCandidateSessionToken("network-candidate"), /network unavailable/);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
 });
