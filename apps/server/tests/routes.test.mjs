@@ -56,7 +56,7 @@ test("diagnostics reports the injected release version and development fallback"
     delete process.env.MIRROR_VERSION;
     const development = await app.inject({ url: "/api/diagnostics", headers: AUTH });
     assert.equal(development.statusCode, 200);
-    assert.equal(development.json().build.version, "0.1.0");
+    assert.equal(development.json().build.version, "development");
 
     process.env.MIRROR_VERSION = "0.2.0";
     const release = await app.inject({ url: "/api/diagnostics", headers: AUTH });
