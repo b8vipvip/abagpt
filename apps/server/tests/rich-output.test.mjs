@@ -223,20 +223,21 @@ test("filenames, preview and download URLs survive ChatGPTBox Markdown parsing",
 
 test("reference links and sandbox aliases use a full escaped destination and filename", async () => {
   const pointer = "sandbox:/mnt/data/report(1).csv";
-  const value = `Download file: [Download now][report]\n\n[report]: <${pointer}>`;
+  const value = `Here is the file: Download file: [Download now][report]\n\n[report]: <${pointer}>`;
   const calls = [];
   const result = await renderRichOutput([text(value), message({ metadata: { references: [{ file_id: "file-1", path: pointer }] } })], "", async p => { calls.push(p); return "https://files.oaiusercontent.com/file(1)?a=1&b=2"; });
   assert.deepEqual(calls, ["file-service://file-1"]);
-  assert.match(result.text, /^Download file: \[report\(1\).csv\]\(<https:/);
+  assert.match(result.text, /^Here is the file: 下载文件：\[report\(1\).csv\]\(<https:/);
   assert.doesNotMatch(result.text, /(?:Download file:|下载文件：)\s*(?:Download file:|下载文件：)|sandbox:/);
 });
 
-test("Chinese download prefixes are not duplicated and legacy English prefixes remain compatible", async () => {
+test("Chinese download prefixes are not duplicated and legacy English prefixes are normalized", async () => {
   const pointer = "sandbox:/mnt/data/报告.csv";
   const chinese = await renderRichOutput([text(`下载文件：[点击下载](<${pointer}>)`)], "", async () => url);
   assert.equal(chinese.text, `下载文件：[报告.csv](<${url}>)`);
   const english = await renderRichOutput([text(`Download file: [Download now](<${pointer}>)`)], "", async () => url);
-  assert.equal(english.text, `Download file: [报告.csv](<${url}>)`);
+  assert.equal(english.text, `下载文件：[报告.csv](<${url}>)`);
+  assert.doesNotMatch(english.text, /Download file:/);
 });
 
 test("embedded previews and literal percent filenames preserve safe Markdown", async () => {

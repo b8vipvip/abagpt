@@ -71,6 +71,8 @@ test("credentials are encrypted and conversation continuity persists", async () 
       "Branch",
     );
     assert.equal(branch.isBranch, true);
+    const defaultBranch = store.branchConversation(conversation.id, "assistant-node-2");
+    assert.equal(defaultBranch.title, "分支对话");
     store.syncRemoteConversations(
       [
         {

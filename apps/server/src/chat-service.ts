@@ -81,7 +81,7 @@ export async function runChat(
   const conversation = transient ? {
     id: randomUUID(), accountId: getSession()?.accountId ?? "default", model: opts.model ?? "auto",
     conversationId: null, currentNodeId: "client-created-root", gizmoId: opts.gizmoId,
-    private: true, initialized: false, isBranch: false, title: "One-shot",
+    private: true, initialized: false, isBranch: false, title: "单次请求",
     createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), init: null,
   } as StoredConversation : opts.conversationId
     ? getConversation(opts.conversationId)
