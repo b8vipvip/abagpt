@@ -55,8 +55,10 @@ assert.equal(checkedOutRevision, sourceRevision, "Release checkout does not matc
 
 const imageName = process.env.IMAGE_NAME ?? "";
 const imageDigest = process.env.IMAGE_DIGEST ?? "";
+const containerNodeVersion = process.env.CONTAINER_NODE_VERSION ?? "";
 assert.match(imageName, /^ghcr\.io\/[a-z0-9._-]+\/[a-z0-9._-]+$/, "IMAGE_NAME must be a lowercase GHCR image");
 assert.match(imageDigest, /^sha256:[a-f0-9]{64}$/, "IMAGE_DIGEST must be a registry sha256 digest");
+assert.match(containerNodeVersion, /^v24\./, "CONTAINER_NODE_VERSION must identify the tested Node 24 runtime image");
 
 const dockerfile = readFileSync(path.join(root, "Dockerfile"), "utf8");
 const baseImage = dockerfile.match(/^ARG NODE_IMAGE=(.+)$/m)?.[1]?.trim();
@@ -121,6 +123,7 @@ const metadata = {
     digest: imageDigest,
     immutableReference: imageName + "@" + imageDigest,
     platforms: ["linux/amd64", "linux/arm64"],
+    nodeVersion: containerNodeVersion,
     baseImage,
     dockerfileSha256: hashFile("Dockerfile"),
   },
