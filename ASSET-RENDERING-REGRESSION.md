@@ -1,39 +1,39 @@
-# Generated asset rendering and downloads
+# 生成文件渲染与下载
 
-Validated locally on 2026-09-10 against ChatGPTBox commit `d47f875aaeb5bf8e7464fcf60c404fef759dee73` from https://github.com/ChatGPTBox-dev/chatGPTBox.
+已于 2026-09-10 在本地针对 ChatGPTBox 提交 `d47f875aaeb5bf8e7464fcf60c404fef759dee73` 完成验证，来源：https://github.com/ChatGPTBox-dev/chatGPTBox。
 
-## Cause and behavior
+## 原因与行为
 
-The previous output linked directly to signed ChatGPT Estuary URLs. A fresh URL returned HTTP 403 without authentication and HTTP 200 with the saved upstream session. ChatGPTBox's special handling of `chatgpt.com` links also uses a clickable span instead of a normal anchor. A first replacement with loopback image URLs failed Chromium's Local Network Access restriction on the controlled HTTPS search-page fixture.
+此前的输出会直接链接到带签名的 ChatGPT Estuary URL。新生成的 URL 在未认证时返回 HTTP 403，使用已保存的上游会话时返回 HTTP 200。ChatGPTBox 对 `chatgpt.com` 链接的特殊处理还会使用可点击的 span，而不是普通 anchor。第一次尝试替换为 loopback 图片 URL 时，在受控 HTTPS 搜索页面测试夹具中触发了 Chromium 的 Local Network Access 限制。
 
-Mirror now obtains preview bytes server-side and embeds standard Markdown image data URIs. Generated files use `Download file: [actual filename](<Mirror file URL>)`. The file URL carries an encrypted, session-bound, seven-day capability for that single asset. It refreshes upstream metadata and streams the original bytes with an attachment disposition and UTF-8 filename. API keys and upstream credentials are not put in those links. Disconnecting or reconnecting the session invalidates the capabilities.
+Mirror 现在会在服务端获取预览字节，并嵌入标准 Markdown 图片 data URI。生成文件使用 `下载文件：[实际文件名](<Mirror 文件 URL>)`。文件 URL 携带一个加密、绑定会话、有效期七天且只对应单个资源的 capability。服务端会刷新上游元数据，并以附件方式传输原始字节，同时保留 UTF-8 文件名。链接中不会放入 API Key 或上游凭证。断开或重新连接会话都会使 capability 失效。
 
-The Markdown transformation parses destinations and reference links, escapes filenames, and preserves surrounding text. Unavailable previews retain the downloadable file when its metadata is available. Unresolvable files have an explicit unavailable label. Existing replies stored by ChatGPTBox are not retroactively changed.
+Markdown 转换会解析普通目标地址和引用链接，转义文件名，并保留周围文本。预览不可用时，只要文件元数据可用，仍会保留下载入口；无法解析的文件会明确标记为不可用。ChatGPTBox 已经保存的旧回复不会被追溯修改。
 
-## Evidence
+## 验证证据
 
-- The complete automated suite passes. The required coverage gate reports 100% lines, statements, functions, and branches for every included file.
-- Production build succeeds. Chat/Responses JSON and SSE regression cases retain three-turn continuation with the exact returned assistant text.
-- The optional `scripts/check-chatgptbox-assets.mjs` bundles the checkout's actual Markdown and Hyperlink components. Chromium runs with normal browser security on a controlled `https://www.google.com/search` fixture, using a fresh profile.
-- Both renderer variants, with and without KaTeX, decode the synthetic preview and download `report.csv`; the downloaded filename and all 17 bytes match the fixture.
-- After updating the local Docker Mirror service, a normal live ChatGPT turn generated `mirror-preview-qa.png` (96 × 64, 442 bytes) and `mirror-download-qa.csv` (17 bytes). The PNG preview was embedded; anonymous capability requests downloaded both original files with HTTP 200 and attachment headers. The CSV was exactly `name,value\nQA,42\n`.
-- Both actual ChatGPTBox renderer variants also passed with that live response: image decoded, filename anchor opened through normal browser behavior, and the CSV download matched byte-for-byte.
-- The running service reports healthy SQLite storage and required, verified WARP egress. The WARP container and persisted data were retained. The prior image is tagged `mirror-app-mirror:before-asset-fix-20260910` for rollback.
+- 完整自动化测试套件通过。要求的覆盖率门禁对每个纳入的文件均报告 100% lines、statements、functions 和 branches。
+- 生产构建成功。Chat／Responses JSON 和 SSE 回归用例均保持三轮对话续接，并使用精确返回的 assistant 文本。
+- 可选脚本 `scripts/check-chatgptbox-assets.mjs` 会打包当前检出版本中的真实 Markdown 和 Hyperlink 组件。Chromium 在正常浏览器安全策略下运行，使用全新 profile 和受控的 `https://www.google.com/search` 测试页面。
+- 两种渲染器变体（启用和不启用 KaTeX）都能解码合成预览并下载 `report.csv`；下载文件名和全部 17 个字节都与测试夹具一致。
+- 更新本地 Docker Mirror 服务后，一次正常的实时 ChatGPT 对话生成了 `mirror-preview-qa.png`（96 × 64，442 字节）和 `mirror-download-qa.csv`（17 字节）。PNG 预览被嵌入回复；匿名 capability 请求以 HTTP 200 和附件响应头下载了两个原始文件。CSV 内容精确为 `name,value\nQA,42\n`。
+- 两种真实 ChatGPTBox 渲染器变体也通过了这条实时响应验证：图片成功解码，文件名链接按正常浏览器行为打开，CSV 下载内容逐字节一致。
+- 运行中的服务报告 SQLite 存储健康，且必需的 WARP 出站验证通过。WARP 容器和持久化数据均予以保留。此前镜像已标记为 `mirror-app-mirror:before-asset-fix-20260910`，可用于回滚。
 
-## Boundaries
+## 适用边界
 
-This is source-renderer integration plus real upstream and browser download evidence. It is not a claim that the user's installed extension or a real Google results page was exercised. Extension versions and page policies can differ.
+这里提供的是源码渲染器集成，以及真实上游和浏览器下载证据；不能据此声称实际测试了用户安装的扩展，或真实 Google 搜索结果页面。扩展版本和页面策略可能不同。
 
-A separate live `store:false` temporary-chat probe generated files, but ChatGPT's interpreter download endpoint returned HTTP 404 for both final and tool message IDs. Mirror correctly reports those files unavailable. This upstream temporary-chat retrieval case remains unsupported; the passing live workflow uses normal stored chat semantics, which ChatGPTBox sends by default. The fix does not change the user's storage/privacy choice to work around that restriction.
+另有一次实时 `store:false` 临时对话探测成功生成了文件，但 ChatGPT 的解释器下载端点对最终消息 ID 和工具消息 ID 均返回 HTTP 404。Mirror 会正确报告这些文件不可用。这个上游临时对话文件取回场景仍不受支持；通过验证的实时流程使用普通持久化对话语义，这也是 ChatGPTBox 默认发送的方式。该修复不会为了绕过限制而更改用户的存储／隐私选择。
 
-Preview reads are bounded to 25 MiB per image; original-file downloads do not have that preview limit. Embedded previews increase the size of returned text and saved client history. Upstream file availability can expire independently of the seven-day Mirror link.
+图片预览读取限制为每张最多 25 MiB；原始文件下载不受此预览限制。嵌入式预览会增加返回文本和客户端保存历史的体积。上游文件可能在 Mirror 七天链接到期前独立过期。
 
-## Reproduce
+## 复现步骤
 
-Run `npm run coverage`, `npm run build`, and then:
+先运行 `npm run coverage`、`npm run build`，然后执行：
 
 ```sh
 CHATGPTBOX_SOURCE=/path/to/chatGPTBox node scripts/check-chatgptbox-assets.mjs
 ```
 
-The checkout needs its own npm dependencies installed. To replay the specific live QA response, set `MIRROR_ASSET_RESPONSE` to a private JSON file containing `{ "markdown": "..." }` from the QA turn that generated `mirror-preview-qa.png` and `mirror-download-qa.csv`. Do not commit capability-bearing response files.
+检出目录需要先安装自身的 npm 依赖。若要回放生成 `mirror-preview-qa.png` 和 `mirror-download-qa.csv` 的特定实时 QA 响应，可将 `MIRROR_ASSET_RESPONSE` 设置为一个私有 JSON 文件路径，文件内容应包含 `{ "markdown": "..." }`。不要提交包含 capability 的响应文件。

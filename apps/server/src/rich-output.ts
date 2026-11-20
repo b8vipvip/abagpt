@@ -310,7 +310,13 @@ export async function renderRichOutput(
       : node.type === "linkReference" || node.type === "imageReference" ? definitions.get(node.identifier) : undefined;
     if (destination && internal(destination)) {
       const pointer = alias(destination);
-      const prefixed = /(?:Download file:|下载文件：)\s*$/i.test(text.slice(0, node.position!.start.offset));
+      const before = text.slice(0, node.position!.start.offset);
+      const englishPrefix = /Download file:(\s*)$/i.exec(before);
+      const prefixed = /(?:Download file:|下载文件：)\s*$/i.test(before);
+      if (englishPrefix) {
+        const end = node.position!.start.offset!;
+        edits.push({ start: end - englishPrefix[0].length, end, value: `下载文件：${englishPrefix[1]}` });
+      }
       edit(node as RootContent, link(pointer, pointers.get(pointer)!.title, node.type === "image" || node.type === "imageReference", prefixed));
       return;
     }
