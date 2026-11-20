@@ -23,6 +23,19 @@ Mirror 是一个自托管的 ChatGPT 客户端和 OpenAI 兼容 API。它的 Web
 
 Mirror 会在本地服务器上加密保存凭证，并使用它获取短期有效的访问令牌。控制台还会显示连接状态和 WARP 状态，并提供 API 测试台、API 文档和解码挑战的入口。
 
+### 使用已发布的固定版本镜像
+
+每个稳定版 `vX.Y.Z` 标签都会触发发布流水线：重新执行完整测试、发布 Linux amd64/arm64 镜像、生成 SBOM 和构建来源证明，并在 GitHub Release 附上 OpenAPI、SHA-256 清单、依赖锁文件及 `release-metadata.json`。
+
+要部署固定发布版本，请从对应 Release 的 `release-metadata.json` 复制 `container.immutableReference`，写入 `.env`：
+
+```sh
+MIRROR_IMAGE=ghcr.io/b8vipvip/abagpt@sha256:<release-digest>
+docker compose up -d
+```
+
+使用镜像摘要部署时不要添加 `--build`；这会拉取并运行指定的不可变镜像。源码开发仍使用默认的 `:local` 镜像并执行 `docker compose up --build`。首次发布后，如需匿名公开拉取 GHCR 镜像，请在 GitHub Packages 中将该容器包的可见性设为 Public。
+
 ### 网络要求
 
 所有出站流量都必须经过内置的 Cloudflare WARP 隧道。Mirror 会在开始处理请求前检查隧道，并在运行期间定期复查；不会回退到直连模式。这样可以确保出站流量经过已验证的网络出口，并避免 Cloudflare 本地代理模式的 10 秒请求时限。WARP 不提供固定 IP，也不能解除账号限制。
@@ -159,3 +172,4 @@ Mirror 提供本地控制路由、格式转换路由、解码挑战路由，以�
 - [COMPATIBILITY.md](COMPATIBILITY.md)：OpenAI API 兼容性详情。
 - [TODO.md](TODO.md)：按 Issue 组织的项目待办事项。
 - [NEXT-STEPS.md](NEXT-STEPS.md)：仓库审计路线图。
+- [CHANGELOG.md](CHANGELOG.md)：面向用户的版本变更记录。
