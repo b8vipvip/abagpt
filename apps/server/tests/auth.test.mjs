@@ -95,7 +95,7 @@ test("getValidCredentials marks a rejected session token as a 401", async () => 
   try {
     // Force a re-mint: no cached token this time.
     store.saveVerifiedSession("session-token-long-enough-value-2", "account-1", "device-3");
-    globalThis.fetch = async () => new Response("unauthorized", { status: 401 });
+    globalThis.fetch = async () => Response.json({ error: "unauthorized" }, { status: 401 });
     await assert.rejects(auth.getValidCredentials(), (error) => {
       assert.equal(error.statusCode, 401);
       assert.match(error.message, /ChatGPT 会话令牌验证失败/);
@@ -154,7 +154,7 @@ test("verifyCandidateSessionToken returns a newly supplied pending challenge tok
 test("verifyCandidateSessionToken localizes a rejected session token", async () => {
   const originalFetch = globalThis.fetch;
   try {
-    globalThis.fetch = async () => new Response("unauthorized", { status: 401 });
+    globalThis.fetch = async () => Response.json({ error: "unauthorized" }, { status: 401 });
     await assert.rejects(auth.verifyCandidateSessionToken("bad-candidate"), (error) => {
       assert.equal(error.statusCode, 401);
       assert.match(error.message, /ChatGPT 会话令牌验证失败（HTTP 401）/);
