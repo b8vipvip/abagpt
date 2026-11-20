@@ -180,7 +180,29 @@ test("an unparsable body is rejected with 400 and the schema's own message", asy
     payload: { model: "auto", messages: [] },
   });
   assert.equal(res.statusCode, 400);
-  assert.match(res.json().error.message, /at least 1 element/i);
+  assert.equal(res.json().error.message, "至少需要一条消息。");
+});
+
+test("Responses API validation errors are localized", async () => {
+  useSession("account-responses-validate");
+  const res = await app.inject({
+    method: "POST",
+    url: "/v1/responses",
+    payload: { input: [] },
+  });
+  assert.equal(res.statusCode, 400);
+  assert.equal(res.json().error.message, "至少需要一条输入消息。");
+});
+
+test("OpenAI validation errors localize default Zod type messages", async () => {
+  useSession("account-validation-type");
+  const res = await app.inject({
+    method: "POST",
+    url: "/v1/chat/completions",
+    payload: { model: 42, messages: [{ role: "user", content: "hi" }] },
+  });
+  assert.equal(res.statusCode, 400);
+  assert.equal(res.json().error.message, "字段 model 的类型不正确。");
 });
 
 test("a Work Mode (-wm) model is rejected before any upstream call", async () => {
