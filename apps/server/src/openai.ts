@@ -2,7 +2,7 @@ import { needsRichOutput, renderRichOutput, type RichOutput } from "./rich-outpu
 import { createAssetLinks } from "./asset-content.js";
 import { ResponsesBody, responsesToCompletion, createResponseWriter } from "./responses.js";
 import { abortable, turnDeadline } from "./deadlines.js";
-import { apiError, recordFailure } from "./api-errors.js";
+import { apiError, localizedZodError, recordFailure } from "./api-errors.js";
 import "./zod-openapi-init.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
@@ -146,7 +146,7 @@ const CompletionBody = z
       description: "ChatGPT 模型标识，或通过 GET /v1/models 获取的自定义 GPT／项目 ID。",
       example: "gpt-4o",
     }),
-    messages: z.array(OpenAiMessage).min(1),
+    messages: z.array(OpenAiMessage).min(1, "至少需要一条消息。"),
     stream: z.boolean().default(false),
     stream_options: z.object({ include_usage: z.boolean().optional() }).strict().optional(),
     reasoning_effort: z.enum(["none", "minimal", "low", "medium", "high", "xhigh"]).optional(),
@@ -434,7 +434,7 @@ export async function registerOpenAiRoutes(
     const responsesParsed = isResponses ? ResponsesBody.safeParse(req.body) : undefined;
     if (responsesParsed && !responsesParsed.success) {
       return reply.code(400).send({ error: { type: "invalid_request_error",
-        message: responsesParsed.error.issues.map(issue => issue.message).join("; ") } });
+        message: localizedZodError(responsesParsed.error) } });
     }
     const responses = responsesParsed?.success ? createResponseWriter(responsesParsed.data, event => {
       reply.raw.write(`event: ${event.type}\n`);
@@ -444,7 +444,7 @@ export async function registerOpenAiRoutes(
     if (!parsed.success) {
       return reply.code(400).send({
         error: {
-          message: parsed.error.issues.map((issue) => issue.message).join("; "),
+          message: localizedZodError(parsed.error),
           type: "invalid_request_error",
         },
       });
