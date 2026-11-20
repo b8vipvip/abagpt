@@ -183,9 +183,9 @@ test("a paused TCP reader stops SSE production until drain and preserves the con
         pull(controller) {
           upstreamPulls += 1;
           if (frameIndex === 0) {
-            controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify(firstFrame)}\\n\\n`));
+            controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify(firstFrame)}\n\n`));
           } else if (frameIndex === 1) {
-            controller.enqueue(new TextEncoder().encode("data: [DONE]\\n\\n"));
+            controller.enqueue(new TextEncoder().encode("data: [DONE]\n\n"));
             controller.close();
           }
           frameIndex += 1;
