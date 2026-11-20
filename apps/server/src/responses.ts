@@ -8,7 +8,7 @@ const InputMessage = z.object({
     type: z.enum(["input_text", "output_text"]), text: z.string(),
     annotations: z.array(z.unknown()).optional(),
     logprobs: z.array(z.unknown()).optional(),
-  }).strict()).min(1)]),
+  }).strict()).min(1, "至少需要一个内容片段。")]),
   id: z.string().optional(),
   status: z.enum(["in_progress", "completed", "incomplete"]).optional(),
 }).strict();
@@ -16,7 +16,7 @@ const InputMessage = z.object({
 /** Deliberately explicit subset: never silently drop tools or state fields. */
 export const ResponsesBody = z.object({
   model: z.string().default("auto"),
-  input: z.union([z.string(), z.array(InputMessage).min(1)]),
+  input: z.union([z.string(), z.array(InputMessage).min(1, "至少需要一条输入消息。")]),
   instructions: z.string().optional(),
   stream: z.boolean().default(false),
   store: z.boolean().default(true),
