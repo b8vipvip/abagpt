@@ -32,14 +32,14 @@ export class SseWriter {
     });
   }
 
-  write(data: unknown, eventType?: string): Promise<void> {
+  write(data: unknown, eventType?: string, signal?: AbortSignal): Promise<void> {
     const eventLine = eventType ? "event: " + eventType + "\n" : "";
     const dataLine = "data: " + (typeof data === "string" ? data : JSON.stringify(data)) + "\n\n";
-    return this.enqueue(eventLine + dataLine);
+    return this.enqueue(eventLine + dataLine, signal);
   }
 
-  comment(value: string): Promise<void> {
-    return this.enqueue(": " + value + "\n\n");
+  comment(value: string, signal?: AbortSignal): Promise<void> {
+    return this.enqueue(": " + value + "\n\n", signal);
   }
 
   flush(): Promise<void> {
@@ -53,18 +53,19 @@ export class SseWriter {
     }
   }
 
-  private enqueue(frame: string): Promise<void> {
+  private enqueue(frame: string, signal?: AbortSignal): Promise<void> {
     // A transient write error must not poison the queue: the route may still
     // be able to send a sanitized terminal error frame. A destroyed/closed
     // socket is rejected by writeFrame before another write is attempted.
-    const next = this.tail.catch(() => undefined).then(() => this.writeFrame(frame));
+    const next = this.tail.catch(() => undefined).then(() => this.writeFrame(frame, signal));
     this.tail = next;
     return next;
   }
 
-  private async writeFrame(frame: string): Promise<void> {
+  private async writeFrame(frame: string, signal?: AbortSignal): Promise<void> {
     const raw = this.reply.raw;
     this.closeController.signal.throwIfAborted();
+    signal?.throwIfAborted();
     if (raw.destroyed || raw.writableEnded) {
       throw new DOMException("SSE response is already closed", "AbortError");
     }
@@ -72,17 +73,20 @@ export class SseWriter {
     if (raw.write(frame)) return;
 
     const timeoutSignal = AbortSignal.timeout(this.stallTimeoutMs);
-    const waitSignal = AbortSignal.any([this.closeController.signal, timeoutSignal]);
+    const signals = [this.closeController.signal, timeoutSignal];
+    if (signal) signals.push(signal);
+    const waitSignal = AbortSignal.any(signals);
     try {
       await once(raw, "drain", { signal: waitSignal });
     } catch (error) {
-      if (timeoutSignal.aborted && !this.closeController.signal.aborted) {
+      if (timeoutSignal.aborted && !this.closeController.signal.aborted && !signal?.aborted) {
         raw.destroy();
         throw new Error("响应客户端读取过慢。", { cause: error });
       }
       throw error;
     }
     this.closeController.signal.throwIfAborted();
+    signal?.throwIfAborted();
     if (raw.destroyed || raw.writableEnded) {
       throw new DOMException("SSE response closed before drain", "AbortError");
     }
