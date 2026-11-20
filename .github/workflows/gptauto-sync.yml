@@ -1,0 +1,291 @@
+name: GPTAuto Consumer Sync
+on:
+  repository_dispatch:
+    types: [gptauto_release_published]
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: Install/update GPTAuto or prepare a clean uninstall PR
+        required: true
+        default: sync
+        type: choice
+        options:
+          - sync
+          - uninstall
+      version:
+        description: Published GPTAuto release tag to install (for example v0.15.15)
+        required: true
+        default: v0.15.15
+permissions:
+  contents: write
+  pull-requests: write
+  actions: read
+  issues: write
+concurrency:
+  group: gptauto-consumer-sync
+  cancel-in-progress: true
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GPTAUTO_GITHUB_TOKEN || secrets.GPTAUTO_SYNC_TOKEN || secrets.GPTAUTO_EXECUTOR_TOKEN || github.token }}
+      - name: Manage canonical GPTAuto runtime
+        env:
+          GH_TOKEN: ${{ secrets.GPTAUTO_GITHUB_TOKEN || secrets.GPTAUTO_SYNC_TOKEN || secrets.GPTAUTO_EXECUTOR_TOKEN || github.token }}
+          HAS_GPTAUTO_WRITE_TOKEN: ${{ secrets.GPTAUTO_GITHUB_TOKEN != '' || secrets.GPTAUTO_SYNC_TOKEN != '' || secrets.GPTAUTO_EXECUTOR_TOKEN != '' }}
+          OPERATION: ${{ github.event_name == 'workflow_dispatch' && inputs.operation || 'sync' }}
+          REQUESTED_VERSION: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.version || inputs.version || '' }}
+          SOURCE_REPOSITORY: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.source_repository || '' }}
+          SOURCE_SHA: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.source_sha || '' }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          if [[ "$GITHUB_EVENT_NAME" == "repository_dispatch" ]]; then
+            [[ "$SOURCE_REPOSITORY" == "b8vipvip/GPTAuto" ]] || { echo "::error::Rejected non-canonical GPTAuto release source: $SOURCE_REPOSITORY"; exit 1; }
+            [[ "$REQUESTED_VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::Invalid dispatched GPTAuto version: $REQUESTED_VERSION"; exit 1; }
+            echo "Release dispatch accepted: source=$SOURCE_REPOSITORY sha=$SOURCE_SHA version=$REQUESTED_VERSION"
+          fi
+          if [[ -n "$REQUESTED_VERSION" ]]; then
+            [[ "$REQUESTED_VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::Invalid GPTAuto release version: $REQUESTED_VERSION"; exit 1; }
+          fi
+
+          managed_paths=(
+            .github/GPTAUTO_SMART_UPDATE.md
+            .github/gptauto
+            .github/actions/upload-gptauto-log
+            .github/workflows/gptauto-sync.yml
+            .github/workflows/gptauto-observer.yml
+            .github/workflows/gptauto-executor.yml
+            .github/workflows/gptauto-repair.yml
+            .github/workflows/gptauto-reconcile.yml
+          )
+
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+
+          if [[ "$OPERATION" == "uninstall" ]]; then
+            if [[ "$HAS_GPTAUTO_WRITE_TOKEN" != "true" ]]; then
+              marker="<!-- gptauto-uninstall-workflow-permission -->"
+              title="GPTAuto uninstall blocked: Workflows write permission required"
+              body="$marker
+          GPTAuto uninstall removes its managed files under `.github/workflows/`, so the default GitHub Actions token is intentionally not used for this operation.
+
+          Configure repository secret `GPTAUTO_GITHUB_TOKEN` with a fine-grained token that has **Contents: Read and write**, **Pull requests: Read and write**, and **Workflows: Read and write**, then run **GPTAuto Consumer Sync** again with operation **uninstall**. Legacy `GPTAUTO_SYNC_TOKEN` is still accepted during migration.
+
+          GPTAuto task/audit data outside the managed `.github` paths and repository secrets are preserved intentionally."
+              issue="$(gh issue list --state open --search "$marker in:body" --json number --jq '.[0].number // empty' 2>/dev/null || true)"
+              if [[ -n "$issue" ]]; then
+                gh issue edit "$issue" --title "$title" --body "$body" >/dev/null || true
+              else
+                gh issue create --title "$title" --body "$body" >/dev/null || true
+              fi
+              echo "::warning::GPTAuto uninstall requires GPTAUTO_GITHUB_TOKEN with Workflows write (legacy GPTAUTO_SYNC_TOKEN is also accepted); no files were changed."
+              exit 0
+            fi
+
+            rm -rf -- "${managed_paths[@]}"
+            if git diff --quiet -- "${managed_paths[@]}"; then
+              echo "GPTAuto managed files are already absent."
+              exit 0
+            fi
+
+            branch="chore/gptauto-uninstall"
+            git checkout -B "$branch"
+            git add -A -- "${managed_paths[@]}"
+            git commit -m "chore: uninstall GPTAuto"
+
+            remote_sha="$(git ls-remote --heads origin "refs/heads/$branch" | awk '{print $1}')"
+            if [[ -n "$remote_sha" ]]; then
+              git push --force-with-lease="refs/heads/$branch:$remote_sha" -u origin "$branch"
+            else
+              git push -u origin "$branch"
+            fi
+
+            pr="$(gh pr list --head "$branch" --state open --json number --jq '.[0].number // empty')"
+            if [[ -z "$pr" ]]; then
+              gh pr create \
+                --title "chore: uninstall GPTAuto" \
+                --body "Removes only GPTAuto-managed runtime/action/workflow files. Existing product code, GPTAuto task/audit data, and repository secrets are intentionally preserved. After merge, delete GPTAUTO_GITHUB_TOKEN / GPTAUTO_COPILOT_TOKEN manually if they are no longer used. Deprecated GPTAUTO_SYNC_TOKEN / GPTAUTO_EXECUTOR_TOKEN secrets can also be removed after migration." \
+                --base "${{ github.event.repository.default_branch }}" --head "$branch"
+              pr="$(gh pr list --head "$branch" --state open --json number --jq '.[0].number')"
+            fi
+            echo "::notice::GPTAuto uninstall PR #$pr requires manual approval after successful product CI. Automatic uninstall merge is disabled."
+            {
+              echo "## GPTAuto uninstall prepared"
+              echo "- PR: #$pr"
+              echo "- Managed `.github` runtime/action/workflow files will be removed after merge."
+              echo "- Product code and `.gptauto` task/audit data are preserved."
+              echo "- Repository secrets are not deleted automatically."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          tmp="$(mktemp -d)"
+          if [[ -n "$REQUESTED_VERSION" ]]; then
+            git clone --depth 1 --branch "$REQUESTED_VERSION" https://github.com/b8vipvip/GPTAuto.git "$tmp/GPTAuto"
+          else
+            git clone --depth 1 https://github.com/b8vipvip/GPTAuto.git "$tmp/GPTAuto"
+          fi
+          mkdir -p .github/gptauto .github/actions/upload-gptauto-log .github/workflows
+          cp "$tmp"/GPTAuto/gptauto/*.py .github/gptauto/
+          cp "$tmp"/GPTAuto/docs/SMART_UPDATE.md .github/GPTAUTO_SMART_UPDATE.md
+          cp "$tmp"/GPTAuto/.github/actions/upload-gptauto-log/action.yml .github/actions/upload-gptauto-log/action.yml
+          cp "$tmp"/GPTAuto/consumer-template/gptauto-sync.yml .github/workflows/gptauto-sync.yml
+          cp "$tmp"/GPTAuto/consumer-template/gptauto-observer.yml .github/workflows/gptauto-observer.yml
+          cp "$tmp"/GPTAuto/consumer-template/gptauto-executor.yml .github/workflows/gptauto-executor.yml
+          cp "$tmp"/GPTAuto/consumer-template/gptauto-repair.yml .github/workflows/gptauto-repair.yml
+          cp "$tmp"/GPTAuto/consumer-template/gptauto-reconcile.yml .github/workflows/gptauto-reconcile.yml
+          ver="$(grep '^version = ' "$tmp/GPTAuto/pyproject.toml" | head -1 | cut -d'"' -f2)"
+          printf '%s\n' "$ver" > .github/gptauto/VERSION
+
+          if [[ -n "$REQUESTED_VERSION" && "v$ver" != "$REQUESTED_VERSION" ]]; then
+            echo "::error::Dispatched version $REQUESTED_VERSION resolved to v$ver"
+            exit 1
+          fi
+
+          workflow_paths=(
+            .github/workflows/gptauto-sync.yml
+            .github/workflows/gptauto-observer.yml
+            .github/workflows/gptauto-executor.yml
+            .github/workflows/gptauto-repair.yml
+            .github/workflows/gptauto-reconcile.yml
+          )
+          workflow_drift=false
+          if ! git diff --quiet -- "${workflow_paths[@]}"; then
+            workflow_drift=true
+          fi
+
+          # GitHub's repository GITHUB_TOKEN is a GitHub App token and cannot
+          # create/update workflow files unless the credential has Workflows write.
+          # Do not discover this only after git push: publish a durable, deduplicated
+          # repository issue and leave the consumer untouched/atomic.
+          if [[ "$workflow_drift" == "true" && "$HAS_GPTAUTO_WRITE_TOKEN" != "true" ]]; then
+            marker="<!-- gptauto-sync-workflow-permission -->"
+            title="GPTAuto sync blocked: Workflows write permission required"
+            printf -v body '%s
+            GPTAuto detected canonical workflow changes while syncing to v%s, but this repository has no `GPTAUTO_GITHUB_TOKEN` (or legacy `GPTAUTO_SYNC_TOKEN`).
+
+            The default GitHub Actions token cannot push updates under `.github/workflows/` in this repository. The consumer was intentionally left unchanged so its VERSION never claims a partially installed GPTAuto release.
+
+            Configure repository secret `GPTAUTO_GITHUB_TOKEN` with a fine-grained token that has **Contents: Read and write**, **Pull requests: Read and write**, and **Workflows: Read and write** for this repository. Legacy `GPTAUTO_SYNC_TOKEN` remains accepted during migration. A future GPTAuto release dispatch or an explicit manual sync will retry.' "$marker" "$ver"
+            issue="$(gh issue list --state open --search "$marker in:body" --json number --jq '.[0].number // empty' 2>/dev/null || true)"
+            if [[ -n "$issue" ]]; then
+              gh issue edit "$issue" --title "$title" --body "$body" >/dev/null || true
+            else
+              gh issue create --title "$title" --body "$body" >/dev/null || true
+            fi
+            {
+              echo "## GPTAuto sync blocked before push"
+              printf -- '- Target version: `%s`\n' "$ver"
+              printf -- '- Workflow drift: `true`\n'
+              printf -- '- GPTAuto write token configured: `false`\n'
+              echo "- Consumer left unchanged (atomic sync)."
+              echo "- Required token permissions: Contents write, Pull requests write, Workflows write."
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::GPTAuto v$ver contains workflow changes. Configure GPTAUTO_GITHUB_TOKEN with Workflows write (legacy GPTAUTO_SYNC_TOKEN is also accepted); no partial update was pushed."
+            exit 1
+          fi
+
+          if git diff --quiet -- "${managed_paths[@]}"; then
+            echo "GPTAuto runtime already current."
+            exit 0
+          fi
+
+          branch="chore/gptauto-sync-v$ver"
+          git checkout -B "$branch"
+          git add .github/GPTAUTO_SMART_UPDATE.md .github/gptauto .github/actions/upload-gptauto-log .github/workflows/gptauto-sync.yml .github/workflows/gptauto-observer.yml .github/workflows/gptauto-executor.yml .github/workflows/gptauto-repair.yml .github/workflows/gptauto-reconcile.yml
+          git commit -m "chore: sync GPTAuto v$ver"
+
+          remote_sha="$(git ls-remote --heads origin "refs/heads/$branch" | awk '{print $1}')"
+          push_log="$(mktemp)"
+          if [[ -n "$remote_sha" ]]; then
+            if ! git push --force-with-lease="refs/heads/$branch:$remote_sha" -u origin "$branch" 2> >(tee "$push_log" >&2); then
+              if grep -qiE 'workflow.*permission|refusing to allow .* workflow' "$push_log"; then
+                echo "::error::The configured GPTAuto write token lacks Workflows write permission. Grant Contents, Pull requests, and Workflows write to GPTAUTO_GITHUB_TOKEN (or legacy GPTAUTO_SYNC_TOKEN), then rerun Consumer Sync."
+              fi
+              exit 1
+            fi
+          else
+            if ! git push -u origin "$branch" 2> >(tee "$push_log" >&2); then
+              if grep -qiE 'workflow.*permission|refusing to allow .* workflow' "$push_log"; then
+                echo "::error::The configured GPTAuto write token lacks Workflows write permission. Grant Contents, Pull requests, and Workflows write to GPTAUTO_GITHUB_TOKEN (or legacy GPTAUTO_SYNC_TOKEN), then rerun Consumer Sync."
+              fi
+              exit 1
+            fi
+          fi
+
+          pr="$(gh pr list --head "$branch" --state open --json number --jq '.[0].number // empty')"
+          if [[ -z "$pr" ]]; then
+            if ! create_output="$(gh pr create \
+              --title "chore: sync GPTAuto v$ver" \
+              --body "Automated sync from canonical b8vipvip/GPTAuto. Repository CI remains the safety gate." \
+              --base "${{ github.event.repository.default_branch }}" --head "$branch" 2>&1)"; then
+              {
+                echo "## GPTAuto sync branch prepared"
+                echo "- Branch: \`$branch\`"
+                echo "- Version: \`$ver\`"
+                echo "- PR creation was blocked by repository GitHub Actions policy."
+                echo "- Enable **Allow GitHub Actions to create and approve pull requests**, or configure repository secret \`GPTAUTO_GITHUB_TOKEN\` using a fine-grained token with Contents, Pull requests, and Workflows write permission (legacy \`GPTAUTO_SYNC_TOKEN\` is also accepted)."
+                echo "- GPTAuto write token configured: \`$HAS_GPTAUTO_WRITE_TOKEN\`"
+              } >> "$GITHUB_STEP_SUMMARY"
+              echo "::error::PR creation blocked after branch sync: $create_output"
+              exit 1
+            fi
+            pr="$(gh pr list --head "$branch" --state open --json number --jq '.[0].number')"
+          fi
+
+          # GitHub --auto merges IMMEDIATELY when branch protection has no
+          # required checks. Never use it as a CI gate; verify actual successful
+          # PR-workflow runs at the immutable HEAD SHA before any merge.
+          expected_head="$(git rev-parse HEAD)"
+          [[ "$expected_head" =~ ^[a-f0-9]{40}$ ]] || { echo "::error::Invalid candidate SHA"; exit 1; }
+          [[ "$expected_head" == "$(gh pr view "$pr" --json headRefOid --jq .headRefOid)" ]] || {
+            echo "::error::Sync PR changed after upload; merge rejected"
+            exit 1
+          }
+          if [[ ! -f .github/gptauto/consumer_sync_ci_gate.py ]]; then
+            echo "::error::Canonical CI merge gate is missing; leaving PR open"
+            exit 1
+          fi
+
+          gate_passed=false
+          for attempt in $(seq 1 90); do
+            # If GitHub is temporarily unavailable, fail closed; never allow
+            # missing checks, push-only checks or stale checks to authorize merge.
+            if ! runs="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$expected_head&per_page=100")"; then
+              echo "::error::Cannot read product CI evidence. Sync PR remains open."
+              exit 1
+            fi
+            decision="$(printf '%s\n' "$runs" |
+              PYTHONPATH=.github python3 -m gptauto.consumer_sync_ci_gate \
+                --repository "$GITHUB_REPOSITORY" --sha "$expected_head")" && verdict_status=passed || verdict_status=$?
+            if [[ "$verdict_status" == "passed" ]]; then
+              gate_passed=true
+              echo "Exact-SHA product PR CI gates passed: $decision"
+              break
+            fi
+            if [[ "$verdict_status" != "1" ]]; then
+              echo "::error::Consumer CI failed or is invalid: $decision"
+              exit 1
+            fi
+            if (( attempt % 6 == 0 )); then
+              echo "Waiting for required product PR CI at $expected_head ($attempt/90): $decision"
+            fi
+            sleep 10
+          done
+          if [[ "$gate_passed" != true ]]; then
+            echo "::error::Required PR CI did not finish successfully; refusing to merge $pr"
+            exit 1
+          fi
+          [[ "$expected_head" == "$(gh pr view "$pr" --json headRefOid --jq .headRefOid)" ]] || {
+            echo "::error::PR head moved during CI verification; refusing merge"
+            exit 1
+          }
+          # This is intentionally NOT --auto: that option can bypass CI when
+          # GitHub branch protection is not enabled on consumer repositories.
+          gh pr merge "$pr" --squash --match-head-commit "$expected_head" ||
+            { echo "::error::CI passed but guarded merge failed; PR remains open"; exit 1; }

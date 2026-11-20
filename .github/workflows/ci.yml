@@ -12,7 +12,7 @@
 # ubuntu-latest - no paid Docker Hub/registry, no larger/custom runners,
 # no macOS or Windows runners, which are the ones that actually cost).
 name: CI
-on: [push, pull_request]
+on: [push, pull_request, workflow_dispatch]
 permissions:
   contents: read
 jobs:
