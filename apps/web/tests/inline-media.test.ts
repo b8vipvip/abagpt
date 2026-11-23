@@ -22,9 +22,9 @@ test.describe("web / inline media", () => {
     ].join("\n"));
     assert.deepEqual(result, [
       { url: "https://cdn.test/cover.PNG?size=small", label: "cover", kind: "image" },
+      { url: "https://cdn.test/report.pdf#page=2", label: "report", kind: "file" },
       { url: "data:image/png;base64,AAAA", label: "data", kind: "image" },
       { url: "data:image/gif;base64,CCCC", label: "图片", kind: "image" },
-      { url: "https://cdn.test/report.pdf#page=2", label: "report", kind: "file" },
       { url: "data:application/octet-stream;base64,AQID", label: "文件", kind: "file" },
       { url: "data:image/jpeg;base64,BBBB", label: "图片", kind: "image" },
       { url: "https://cdn.test/archive.tar.gz", label: "archive.tar.gz", kind: "file" },
