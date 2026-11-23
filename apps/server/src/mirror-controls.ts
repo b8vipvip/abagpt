@@ -146,7 +146,9 @@ function translateUpstreamTextElement(el){
   var walker=document.createTreeWalker(el,NodeFilter.SHOW_TEXT),node,nodes=[];
   while((node=walker.nextNode()))nodes.push(node);
   if(!nodes.length)return;
-  var leading=(nodes[0].nodeValue.match(/^\s*/)||[''])[0],trailing=(nodes[nodes.length-1].nodeValue.match(/\s*$/)||[''])[0];
+  // Preserve whitespace from the complete label rather than the last text node:
+  // nested icon/visually-hidden nodes can contain trailing fallback text.
+  var leading=(original.match(/^\s*/)||[''])[0],trailing=(original.match(/\s*$/)||[''])[0];
   nodes[0].nodeValue=leading+translated+trailing;
   for(var i=1;i<nodes.length;i++)nodes[i].nodeValue='';
   if(el.matches('button,[role="button"]')){
