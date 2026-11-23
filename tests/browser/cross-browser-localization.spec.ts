@@ -79,7 +79,7 @@ test.describe("browser / cross-engine Chinese localization", () => {
     await expect(page.locator("#fixture-message button")).toHaveText("New chat");
     await expect(page.locator("#fixture-nav [role=alert]")).toHaveText("文件上传失败，请重试。");
     await expect(page.locator("#fixture-nav")).toBeVisible();
-    await expect(page.locator("[data-testid=conversation-turn] .markdown")).toHaveText("新建聊天复制");
+    await expect(page.locator("[data-testid=conversation-turn] .markdown")).toHaveText("New chat复制");
     await expect(page.locator("[data-testid=conversation-turn] button")).toHaveText("复制");
     await expect(page.locator("[data-testid=conversation-turn] button")).toHaveAttribute("aria-label", "好评");
     await expect(page.locator("[data-testid=conversation-turn] button")).toHaveAttribute("title", "重新生成");
