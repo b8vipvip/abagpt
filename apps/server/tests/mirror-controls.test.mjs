@@ -25,6 +25,7 @@ test.describe("server / Mirror control localization", () => {
     assert.equal(localizeMirrorErrorMessage(""), fallback);
     assert.equal(localizeMirrorErrorMessage("unknown failure"), fallback);
     assert.equal(localizeMirrorErrorMessage({ detail: "failed" }), fallback);
+    assert.equal(localizeMirrorErrorMessage({ message: null }), fallback);
     assert.equal(localizeMirrorErrorMessage(null), fallback);
   });
 
