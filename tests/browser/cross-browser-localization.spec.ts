@@ -47,7 +47,13 @@ test.describe("browser / cross-engine Chinese localization", () => {
       const fileSizeError = document.createElement("div");
       fileSizeError.setAttribute("role", "status");
       fileSizeError.textContent = "This file is too large";
-      nav.append(uploadError, fileSizeError);
+      const uploadToast = document.createElement("div");
+      uploadToast.setAttribute("data-testid", "toast-error");
+      uploadToast.textContent = "Couldn't upload your image: screenshot.png";
+      const networkToast = document.createElement("div");
+      networkToast.setAttribute("data-testid", "toast-network");
+      networkToast.textContent = "Connection lost. Trying to reconnect...";
+      nav.append(uploadError, fileSizeError, uploadToast, networkToast);
       document.body.append(aside, nav, composer, protectedContent, expired);
     });
     await page.addStyleTag({ content: injectionCss });
@@ -59,6 +65,8 @@ test.describe("browser / cross-engine Chinese localization", () => {
     await expect(page.locator("#fixture-message button")).toHaveText("New chat");
     await expect(page.locator("#fixture-nav [role=alert]")).toHaveText("文件上传失败，请重试。");
     await expect(page.locator("#fixture-nav [role=status]")).toHaveText("文件过大，请缩小文件后重试。");
+    await expect(page.locator("#fixture-nav [data-testid=toast-error]")).toHaveText("文件上传失败，请重试。");
+    await expect(page.locator("#fixture-nav [data-testid=toast-network]")).toHaveText("网络连接中断，请检查网络后重试。");
     await expect(page.locator("#mirror-session-expired-notice")).toContainText("ChatGPT 会话已失效");
     await expect(page.locator("#modal-expired-session")).toBeHidden();
 
