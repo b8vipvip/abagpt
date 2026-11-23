@@ -47,7 +47,7 @@
   "apps/server/src/index.ts": "d68eb9c9ba8e08f8f23719d25dfb1c967d8e47423538bf5e4afc6d376c5023a1",
   "apps/server/src/insights.ts": "13a96c266924539ec28e28f39674896e4fc208501e0abb676ae4140381a5a7ca",
   "apps/server/src/loaf.ts": "dbb1a148c8bcfe6609f479ebd101c22e692676e4d8425294ac7131718375b2a8",
-  "apps/server/src/mirror-controls.ts": "d1c0c3b0678ab43af99e4b8176ce2c6b4521b6c5c56faf52794832d48cc0ab44",
+  "apps/server/src/mirror-controls.ts": "f59997fb40c5a1ee5eee389cd800210adc490b58bd1ff6ce08568d31bf745d3e",
   "apps/server/src/openai.ts": "611721c30fbfc0821c6bbdfc42c6e5476a9aa9707d7d93554c85ace5acc94d6d",
   "apps/server/src/openapi-document.ts": "209eb5bebc3107261f157782d0a99eff4ead356f8321f3532f3d402968d91190",
   "apps/server/src/pngspeak.ts": "35071f8f85ee383906b9c117830ef376c94ad587fe0f25a2e954d5f9609c285d",
