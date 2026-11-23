@@ -118,7 +118,7 @@ async function verify(hex){
 }
 function visible(el){return !!el&&el.getClientRects().length>0;}
 function composer(){
-  return Array.from(document.querySelectorAll('#prompt-textarea,[data-testid="prompt-textarea"],textarea[placeholder*="Message"]')).find(function(el){return visible(el)&&(el.tagName==='TEXTAREA'||el.isContentEditable);});
+  return Array.from(document.querySelectorAll('#prompt-textarea,[data-testid="prompt-textarea"],textarea[placeholder*="Message"],textarea[placeholder*="消息"]')).find(function(el){return visible(el)&&(el.tagName==='TEXTAREA'||el.isContentEditable);});
 }
 function insertPrompt(){
   var el=composer();
@@ -220,7 +220,7 @@ window.addEventListener('mirror:decoder-open',function(){
   if(!dialog.open)dialog.showModal();
 });
 function findComposerAnchor(){
-  var candidates=Array.from(document.querySelectorAll('#prompt-textarea,[data-testid="prompt-textarea"],textarea[placeholder*="Message"],textarea[placeholder*="Send"]'));
+  var candidates=Array.from(document.querySelectorAll('#prompt-textarea,[data-testid="prompt-textarea"],textarea[placeholder*="Message"],textarea[placeholder*="消息"],textarea[placeholder*="Send"],textarea[placeholder*="发送"]'));
   return candidates.find(function(el){return el.getClientRects().length>0;});
 }
 function mountFormatLauncher(){

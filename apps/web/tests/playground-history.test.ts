@@ -44,8 +44,11 @@ test("editing to the same value is a no-op", () => {
   assert.equal(result.invalidatesConversation, false);
 });
 
-test("editing an out-of-bounds index throws", () => {
-  assert.throws(() => editPlaygroundMessage(trackedHistory, 99, "content", "x", true), RangeError);
+test("editing an out-of-bounds index throws a localized range error", () => {
+  assert.throws(
+    () => editPlaygroundMessage(trackedHistory, 99, "content", "x", true),
+    { name: "RangeError", message: "消息索引 99 超出有效范围。" },
+  );
 });
 
 test("editing a committed user message preserves the conversation and drops dependent turns", () => {

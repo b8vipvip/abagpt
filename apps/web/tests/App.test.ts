@@ -1739,7 +1739,7 @@ test("empty file selections are ignored and unnamed files get a usable label", a
   fireEvent.change(lastAttachInput(), { target: { files: [] } });
   assert.ok(screen.getByText("就绪"));
   fireEvent.change(lastAttachInput(), { target: { files: [new window.File(["bytes"], "")] } });
-  await screen.findByText("attachment");
+  await screen.findByText("未命名附件");
 });
 
 test("a queued attachment removal cannot change the submitted message", async () => {

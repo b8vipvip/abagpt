@@ -471,7 +471,7 @@ export default function App() {
       // Commit the entire selection together. Separate async updates based on
       // the captured messages array overwrite each other's files.
       const attachments: PlaygroundAttachment[] = await Promise.all(files.map(async file => ({
-        name: file.name || "attachment",
+        name: file.name || "未命名附件",
         mimeType: file.type || "application/octet-stream",
         dataUrl: await readFileAsDataUrl(file),
       })));

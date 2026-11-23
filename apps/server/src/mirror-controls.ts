@@ -42,19 +42,52 @@ export const injectionCss = decoderChallengeCss + `
  * Also forces the sidebar open once per page load (leaving the user's
  * normal manual collapse/expand alone afterward).
  */
+export function localizeMirrorErrorMessage(error: unknown): string {
+  const fallback = "操作失败，请检查会话令牌和服务器连接后重试。";
+  const generic = "服务器请求失败，请稍后重试。";
+  const message = error && typeof error === "object" && "message" in error
+    ? String(error.message ?? "")
+    : String(error ?? "");
+  const normalized = message.trim();
+  if (!normalized) return fallback;
+
+  const networkError = /failed to fetch|networkerror|network request failed|load failed|fetch failed|offline|econnrefused|econnreset|err_network|err_name_not_resolved|err_cert_[a-z_]+|err_connection_[a-z_]+|err_internet_disconnected/i;
+  if (networkError.test(normalized)) {
+    return "网络连接失败，请检查服务器地址和网络后重试。";
+  }
+
+  const status = normalized.match(/(?:HTTP\s*)?([45]\d{2})\b/i)?.[1];
+  const labels: Record<string, string> = {
+    "400": "请求参数无效，请检查输入内容。",
+    "401": "身份验证失败，请重新连接 ChatGPT 会话。",
+    "403": "当前账号没有执行此操作的权限。",
+    "404": "请求的资源不存在或已过期。",
+    "409": "会话状态已变化，请刷新后重试。",
+    "413": "请求内容过大，请缩小输入后重试。",
+    "415": "不支持此内容类型，请检查请求格式。",
+    "421": "请求主机名未获信任，请检查服务器地址。",
+    "422": "输入内容无法处理，请检查参数。",
+    "428": "ChatGPT 要求完成交互式验证，请先完成验证后重试。",
+    "431": "请求标头过大，请检查客户端配置后重试。",
+    "429": "请求过于频繁，请稍后再试。",
+    "500": "服务器内部发生错误，请稍后重试。",
+    "502": "上游服务暂时不可用，请检查网络或 WARP 连接。",
+    "503": "服务暂时不可用，请稍后重试。",
+    "504": "请求处理超时，请稍后重试。",
+  };
+  const untranslatedError = /\b(?:upstream|unauthorized|forbidden|not found|bad request|internal server error|service unavailable|temporarily unavailable|rate limit(?: exceeded)?|invalid|failed|failure|error|denied|expired|unsupported|timed out|timeout)\b/i;
+  if (untranslatedError.test(normalized)) {
+    return status ? labels[status] ?? generic : fallback;
+  }
+  if (/[\u3400-\u9fff]/.test(normalized)) return normalized;
+  if (status) return labels[status] ?? generic;
+  return fallback;
+}
+const localizeMirrorErrorSource = localizeMirrorErrorMessage.toString();
+
 export const injectionJs = decoderChallengeJs + `\n(()=>{
 var widgetRoot=null;
-function localizeMirrorError(error){
-  var message=error&&error.message?String(error.message):String(error||'');
-  if(/[\u3400-\u9fff]/.test(message))return message;
-  if(/failed to fetch|networkerror|network request failed|load failed|offline|econnrefused|econnreset|err_network/i.test(message))return '网络连接失败，请检查服务器地址和网络后重试。';
-  var match=message.match(/(?:HTTP\\s*)?([45]\\d{2})\\b/i);
-  if(match){
-    var labels={'400':'请求参数无效，请检查输入内容。','401':'身份验证失败，请重新连接 ChatGPT 会话。','403':'当前账号没有执行此操作的权限。','404':'请求的资源不存在或已过期。','409':'会话状态已变化，请刷新后重试。','413':'请求内容过大，请缩小输入后重试。','415':'不支持此内容类型，请检查请求格式。','421':'请求主机名未获信任，请检查服务器地址。','422':'输入内容无法处理，请检查参数。','428':'ChatGPT 要求完成交互式验证，请先完成验证后重试。','431':'请求标头过大，请检查客户端配置后重试。','429':'请求过于频繁，请稍后再试。','500':'服务器内部发生错误，请稍后重试。','502':'上游服务暂时不可用，请检查网络或 WARP 连接。','503':'服务暂时不可用，请稍后重试。','504':'请求处理超时，请稍后重试。'};
-    return labels[match[1]]||'服务器请求失败，请稍后重试。';
-  }
-  return '操作失败，请检查会话令牌和服务器连接后重试。';
-}
+var localizeMirrorError = (${localizeMirrorErrorSource});
 function buildWidget(){
   var root=document.createElement('div');
   root.id='mirror-launcher';
@@ -142,25 +175,23 @@ function isLoginButton(button){
   return label==='Log in'||label==='登录';
 }
 function localizeLoginButtons(){
-  var buttons=document.querySelectorAll('button');
-  for(var i=0;i<buttons.length;i++){
-    var button=buttons[i];
-    if((button.textContent||'').trim()!=='Log in')continue;
-    var walker=document.createTreeWalker(button,NodeFilter.SHOW_TEXT),node,nodes=[],combined='';
-    while((node=walker.nextNode())){
-      nodes.push(node);
-      combined+=node.nodeValue||'';
-    }
-    if(combined.trim()==='Log in'&&nodes.length){
+  var elements=document.querySelectorAll('button,a');
+  var labels={'Log in':'登录','Sign up':'注册','Sign up for free':'免费注册','Create account':'创建账号'};
+  for(var i=0;i<elements.length;i++){
+    var button=elements[i],original=(button.textContent||'').trim(),translated=labels[original];
+    if(!translated)continue;
+    var walker=document.createTreeWalker(button,NodeFilter.SHOW_TEXT),node,nodes=[];
+    while((node=walker.nextNode()))nodes.push(node);
+    if(nodes.length){
       var leading=(nodes[0].nodeValue.match(/^\s*/)||[''])[0];
       var trailing=(nodes[nodes.length-1].nodeValue.match(/\s*$/)||[''])[0];
-      nodes[0].nodeValue=leading+'登录'+trailing;
+      nodes[0].nodeValue=leading+translated+trailing;
       for(var j=1;j<nodes.length;j++)nodes[j].nodeValue='';
     }
-    if((button.textContent||'').trim()==='登录'){
-      button.setAttribute('aria-label','登录');
-      button.setAttribute('title','登录');
-      button.dataset.mirrorLoginLocalized='1';
+    if((button.textContent||'').trim()===translated){
+      button.setAttribute('aria-label',translated);
+      button.setAttribute('title',translated);
+      button.dataset.mirrorAuthLocalized='1';
     }
   }
 }
