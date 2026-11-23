@@ -37,6 +37,11 @@ test.describe("server / Mirror control localization", () => {
     assert.equal(translateUpstreamUiText("  Search  "), "搜索");
     assert.equal(translateUpstreamUiText("Message ChatGPT"), "发送消息给 ChatGPT");
     assert.equal(translateUpstreamUiText("Upload failed"), "上传失败");
+    assert.equal(translateUpstreamUiText("Failed to upload image"), "文件上传失败，请重试。");
+    assert.equal(translateUpstreamUiText("Failed to upload image: photo.png"), "文件上传失败，请重试。");
+    assert.equal(translateUpstreamUiText("Image upload failed. Please try again."), "文件上传失败，请重试。");
+    assert.equal(translateUpstreamUiText("This file is too large"), "文件过大，请缩小文件后重试。");
+    assert.equal(translateUpstreamUiText("Unsupported image type"), "不支持此文件类型，请选择其他文件。");
     assert.equal(translateUpstreamUiText("User-authored sentence"), undefined);
     assert.equal(translateUpstreamUiText("   "), undefined);
   });
@@ -47,6 +52,9 @@ test.describe("server / Mirror control localization", () => {
     assert.match(injectionJs, /aria-label/);
     assert.match(injectionJs, /placeholder/);
     assert.match(injectionJs, /mirror-session-expired-notice/);
+    assert.match(injectionJs, /findExpiredSessionDialog/);
+    assert.match(injectionJs, /hasVisibleExpiredText/);
+    assert.match(injectionJs, /translateUpstreamUiText/);
     assert.match(injectionJs, /更新会话令牌/);
   });
 
