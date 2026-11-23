@@ -63,6 +63,18 @@ test.describe("browser / cross-engine Chinese localization", () => {
     await expect(dynamicButton).toHaveAttribute("aria-label", "更多选项");
     await expect(dynamicButton).toHaveAttribute("title", "设置");
 
+    // Upstream controls can split labels across nested spans and icon fallbacks.
+    await page.evaluate(() => {
+      const button = document.createElement("button");
+      const label = document.createElement("span");
+      label.textContent = "Set";
+      const suffix = document.createElement("span");
+      suffix.textContent = "tings";
+      button.append(label, suffix);
+      document.querySelector("#fixture-nav")?.append(button);
+    });
+    await expect(page.locator("#fixture-nav button").nth(2)).toHaveText("设置");
+
     await page.evaluate(() => {
       const menu = document.createElement("div");
       menu.setAttribute("role", "menu");
