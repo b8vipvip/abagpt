@@ -15,6 +15,7 @@ test.describe("web / inline media", () => {
       "[report](https://cdn.test/report.pdf#page=2)",
       "![data](data:image/png;base64,AAAA)",
       "data:application/octet-stream;base64,AQID",
+      "data:image/jpeg;base64,BBBB",
       "https://cdn.test/report.pdf#page=2",
       "https://cdn.test/archive.tar.gz",
     ].join("\n"));
@@ -22,7 +23,8 @@ test.describe("web / inline media", () => {
       { url: "https://cdn.test/cover.PNG?size=small", label: "cover", kind: "image" },
       { url: "data:image/png;base64,AAAA", label: "data", kind: "image" },
       { url: "https://cdn.test/report.pdf#page=2", label: "report", kind: "file" },
-      { url: "data:application/octet-stream;base64,AQID", label: "data", kind: "file" },
+      { url: "data:application/octet-stream;base64,AQID", label: "文件", kind: "file" },
+      { url: "data:image/jpeg;base64,BBBB", label: "图片", kind: "image" },
       { url: "https://cdn.test/archive.tar.gz", label: "archive.tar.gz", kind: "file" },
     ]);
   });
@@ -30,12 +32,12 @@ test.describe("web / inline media", () => {
   test("uses URL or fallback labels for empty markdown captions and ignores unrelated links", () => {
     assert.deepEqual(detectInlineMedia("![](https://cdn.test/path/photo.webp) [plain](https://example.test/page) ![](relative)"), [
       { url: "https://cdn.test/path/photo.webp", label: "photo.webp", kind: "image" },
-      { url: "relative", label: "image", kind: "image" },
+      { url: "relative", label: "图片", kind: "image" },
     ]);
     assert.deepEqual(detectInlineMedia(""), []);
     assert.deepEqual(detectInlineMedia("just text and https://example.test/without-extension"), []);
     assert.deepEqual(detectInlineMedia("![](https://cdn.test/) [](https://cdn.test/picture.png) [](https://cdn.test/readme.txt)"), [
-      { url: "https://cdn.test/", label: "image", kind: "image" },
+      { url: "https://cdn.test/", label: "图片", kind: "image" },
       { url: "https://cdn.test/picture.png", label: "picture.png", kind: "image" },
       { url: "https://cdn.test/readme.txt", label: "readme.txt", kind: "file" },
     ]);
