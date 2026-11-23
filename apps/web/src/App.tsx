@@ -162,6 +162,7 @@ export default function App() {
   const [path, setPath] = useState("/v1/chat/completions");
   const [apiKey, setApiKey] = useState("");
   const [models, setModels] = useState<ApiModel[]>([]);
+  const [modelsLoadError, setModelsLoadError] = useState("");
   const [model, setModel] = useState(() => loadSnapshot()?.model ?? "auto");
   const [modelFreeform, setModelFreeform] = useState(false);
   const [pickedModel, setPickedModel] = useState(() => loadSnapshot()?.pickedModel ?? "");
@@ -234,6 +235,7 @@ export default function App() {
     useState(false);
   const [conversationsOffset, setConversationsOffset] = useState(0);
   const [conversationsHasMore, setConversationsHasMore] = useState(false);
+  const [conversationsError, setConversationsError] = useState("");
   const [output, setOutput] = useState("");
   const [raw, setRaw] = useState("");
   // "convert" is a third tab, not a response variant -- it hosts the
@@ -291,11 +293,19 @@ export default function App() {
 
   useEffect(() => {
     fetch(`${domain.replace(/\/$/, "")}/v1/models`, { headers: apiKey ? { authorization: `Bearer ${apiKey}` } : {} })
-      .then(async (res) => { if (!res.ok) throw new Error(`模型列表获取失败： ${res.status}`); return res.json(); })
-      .then((body) => {
-        if (Array.isArray(body.data)) setModels(body.data);
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
       })
-      .catch(() => undefined);
+      .then((body) => {
+        if (Array.isArray(body.data)) {
+          setModels(body.data);
+          setModelsLoadError("");
+        } else {
+          setModelsLoadError("模型列表接口返回了不受支持的数据格式。");
+        }
+      })
+      .catch((error) => setModelsLoadError(localizeUiError(error, "模型列表加载失败，请检查服务器地址和 API 密钥后重试。")));
   }, [domain, apiKey]);
 
   // sync is always sent - the server only pulls however many more upstream
@@ -312,6 +322,7 @@ export default function App() {
       resync: String(resync),
     });
     const res = await fetch(`${location.origin}/api/conversations?${params}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const body = await res.json();
     return {
       items: Array.isArray(body.items) ? (body.items as ConversationSummary[]) : [],
@@ -323,13 +334,14 @@ export default function App() {
   // see the button below).
   async function refreshConversations(resync = false) {
     setConversationsLoading(true);
+    setConversationsError("");
     try {
       const { items, hasMore } = await fetchConversationsPage(0, resync);
       setConversationsList(items);
       setConversationsOffset(items.length);
       setConversationsHasMore(hasMore);
-    } catch {
-      /* best-effort - the picker just stays empty/stale */
+    } catch (error) {
+      setConversationsError(localizeUiError(error, "会话列表加载失败，请点击刷新重试。"));
     } finally {
       setConversationsLoading(false);
     }
@@ -339,6 +351,7 @@ export default function App() {
     if (loadingMoreRef.current || !conversationsHasMore) return;
     loadingMoreRef.current = true;
     setConversationsLoadingMore(true);
+    setConversationsError("");
     try {
       const { items, hasMore } = await fetchConversationsPage(
         conversationsOffset,
@@ -347,8 +360,8 @@ export default function App() {
       setConversationsList((current) => [...current, ...items]);
       setConversationsOffset((current) => current + items.length);
       setConversationsHasMore(hasMore);
-    } catch {
-      /* best-effort - scrolling again will just retry */
+    } catch (error) {
+      setConversationsError(localizeUiError(error, "加载更多会话失败，请稍后重试。"));
     } finally {
       loadingMoreRef.current = false;
       setConversationsLoadingMore(false);
@@ -927,6 +940,7 @@ export default function App() {
                 </button>
               </div>
             </label>
+            {modelsLoadError && <p className="field-hint" role="status">{modelsLoadError}</p>}
             {isGizmoModel && (
               <label>
                 <span>此 GPT／项目使用的模型</span>
@@ -1032,6 +1046,7 @@ export default function App() {
                   }
                 }}
               >
+                {conversationsError && <div className="conversation-list-error" role="alert">{conversationsError}</div>}
                 {conversationsList.length === 0 ? (
                   <div className="conversation-list-empty">
                     {conversationsLoading

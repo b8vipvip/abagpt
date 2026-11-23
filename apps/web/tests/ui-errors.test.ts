@@ -36,6 +36,19 @@ test("localizeUiError sanitizes mixed Chinese and English transport/upstream err
   assert.equal(localizeUiError("ChatGPT 会话已过期，请重新登录。", "操作失败"), "ChatGPT 会话已过期，请重新登录。");
 });
 
+test("localizeUiError maps timeout, expired-resource, and additional HTTP statuses", () => {
+  assert.equal(localizeUiError(new Error("HTTP 408 Request Timeout"), "操作失败"), "请求处理超时，请检查网络后重试。");
+  assert.equal(localizeUiError(new Error("HTTP 410 Gone"), "操作失败"), "请求的资源已失效，请刷新后重试。");
+  assert.equal(localizeUiError(new Error("HTTP 414 URI Too Long"), "操作失败"), "请求地址过长，请缩短请求内容后重试。");
+  assert.equal(localizeUiError(new Error("HTTP 451 Unavailable For Legal Reasons"), "操作失败"), "该资源因法律限制无法提供。");
+  assert.equal(localizeUiError(new Error("HTTP 507 Insufficient Storage"), "操作失败"), "服务器存储空间不足，请联系管理员。");
+});
+
+test("localizeUiError recognizes browser transport errors after server restarts", () => {
+  assert.equal(localizeUiError(new Error("net::ERR_HTTP2_PROTOCOL_ERROR"), "操作失败"), "网络连接失败，请检查服务器地址和网络后重试。");
+  assert.equal(localizeUiError(new Error("socket hang up"), "操作失败"), "网络连接失败，请检查服务器地址和网络后重试。");
+});
+
 test("localizeUiError maps additional HTTP statuses and connection failures", () => {
   assert.equal(localizeUiError(new Error("HTTP 413 payload too large"), "操作失败"), "上传内容过大，请缩小文件或减少附件后重试。");
   assert.equal(localizeUiError(new Error("HTTP 421 Misdirected Request"), "操作失败"), "请求主机名未获信任，请检查服务器地址。");

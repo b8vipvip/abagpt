@@ -18,7 +18,7 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     env:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:
@@ -44,7 +44,8 @@ jobs:
       - run: npm run build
       - name: Verify isolated backup and restore in both key modes
         run: npm run storage:drill
-      - run: npx playwright install --with-deps chromium
+      - name: Install Playwright browsers for cross-engine UI checks
+        run: npx playwright install --with-deps chromium firefox webkit
       - run: npm run test:e2e
       - run: npm run manifest -- --check
       - name: Validate release asset assembly without publishing

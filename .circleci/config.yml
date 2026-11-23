@@ -25,8 +25,8 @@ jobs:
       - run: npm run build
       - run: npm run storage:drill
       - run:
-          name: Install Playwright's Chromium and OS dependencies
-          command: npx playwright install --with-deps chromium
+          name: Install Playwright browser engines and OS dependencies
+          command: npx playwright install --with-deps chromium firefox webkit
       - run: npm run test:e2e
       - run: npm run manifest -- --check
       - run:
