@@ -159,6 +159,63 @@ test("Swagger authorization and live API error states stay localized", async ({ 
  await expect(modelsBlock.getByRole("button", { name: "接口详情：GET /v1/models" })).toBeVisible();
 });
 
+test("Swagger dynamic labels and less common HTTP errors stay localized", async ({ page }) => {
+ await page.goto(`${serverBase}/mirror/playground`);
+ await page.goto(`${serverBase}/mirror/api-docs`);
+ await expect(page.locator(".swagger-ui.swagger-container")).toBeVisible();
+ const probes: Array<[string, string]> = [
+  ["Error: Conflict", "错误：请求冲突"],
+  ["Error: Request Timeout", "错误：请求超时"],
+  ["Error: Gone", "错误：资源已失效"],
+  ["Error: Request Entity Too Large", "错误：请求实体过大"],
+  ["Error: Payload Too Large", "错误：请求内容过大"],
+  ["Error: Unsupported Media Type", "错误：不支持的媒体类型"],
+  ["Error: Misdirected Request", "错误：请求主机名未获信任"],
+  ["Error: Unprocessable Entity", "错误：输入内容无法处理"],
+  ["Error: Precondition Required", "错误：需要完成前置验证"],
+  ["Error: Too Many Requests", "错误：请求过于频繁"],
+  ["Error: Request Header Fields Too Large", "错误：请求标头过大"],
+  ["Request Method", "请求方法"],
+  ["Request Headers", "请求标头"],
+  ["Status Code", "状态码"],
+  ["Allowed values", "可选值"],
+  ["Enum", "枚举"],
+  ["Enum values", "枚举值"],
+  ["Read Only", "只读"],
+  ["Write Only", "仅写"],
+  ["Nullable", "可为空"],
+  ["No request body", "没有请求体"],
+  ["No response body", "没有响应内容"],
+  ["No properties", "没有属性"],
+  ["Properties", "属性"],
+  ["Property", "属性"],
+ ];
+ await page.evaluate((items) => {
+  const root = document.querySelector(".swagger-ui");
+  if (!root) throw new Error("Swagger UI root missing");
+  for (const [source] of items) {
+   const node = document.createElement("div");
+   node.className = "localization-probe";
+   node.textContent = source;
+   root.appendChild(node);
+  }
+  const input = document.createElement("input");
+  input.className = "localization-attribute-probe";
+  input.setAttribute("placeholder", "Enter API key");
+  input.setAttribute("aria-label", "Request Method");
+  input.setAttribute("title", "Status Code");
+  root.appendChild(input);
+ }, probes);
+ const nodes = page.locator(".swagger-ui .localization-probe");
+ await expect(nodes).toHaveCount(probes.length);
+ for (let i = 0; i < probes.length; i++) {
+  await expect(nodes.nth(i)).toHaveText(probes[i][1]);
+ }
+ const input = page.locator(".swagger-ui .localization-attribute-probe");
+ await expect(input).toHaveAttribute("placeholder", "输入 API 密钥");
+ await expect(input).toHaveAttribute("aria-label", "请求方法");
+ await expect(input).toHaveAttribute("title", "状态码");
+});
 test("command palette keeps dynamic empty and network-error states localized", async ({ page }) => {
  await page.route("**/v1/models", route => route.fulfill({ json: { data: [] } }));
  await page.route("**/api/conversations?*", route => route.fulfill({ json: { items: [], hasMore: false } }));
