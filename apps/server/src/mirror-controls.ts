@@ -133,7 +133,7 @@ function openPanel(root){
   var area=root.querySelector('textarea');
   if(area)area.focus();
 }
-var upstreamChromeSelector='nav,aside,header,[role="navigation"],[role="dialog"],[role="menu"],[role="listbox"],[role="alert"],[role="status"],[data-testid*="sidebar"],[data-testid*="page-header"],[data-testid*="composer"],[data-testid*="popover"],[data-testid*="menu"],[data-testid*="toast"]';
+var upstreamChromeSelector='nav,aside,header,[role="navigation"],[role="dialog"],[role="menu"],[role="listbox"],[role="alert"],[role="status"],[data-testid*="sidebar"],[data-testid*="page-header"],[data-testid*="composer"],[data-testid*="popover"],[data-testid*="menu"],[data-testid*="toast"],[data-testid*="upload"],[data-testid*="error"]';
 var upstreamProtectedSelector='[data-testid*="conversation-turn"],[data-message-author-role],.markdown,.prose,pre,code';
 function isUpstreamChromeElement(el){
   return !!(el&&el.closest&&el.closest(upstreamChromeSelector))
@@ -141,7 +141,7 @@ function isUpstreamChromeElement(el){
 }
 function translateUpstreamTextElement(el){
   if(!el||!isUpstreamChromeElement(el)
-    ||!el.matches('button,a,[role="button"],[role="menuitem"],[role="menuitemcheckbox"],[role="menuitemradio"],[role="option"],[role="tab"],label,summary,[role="alert"],[role="status"]'))return;
+    ||!el.matches('button,a,[role="button"],[role="menuitem"],[role="menuitemcheckbox"],[role="menuitemradio"],[role="option"],[role="tab"],label,summary,[role="alert"],[role="status"],[data-testid*="toast"],[data-testid*="upload"],[data-testid*="error"]'))return;
   var original=(el.textContent||'').trim(),translated=translateUpstreamUiText(original,upstreamUiTranslations);
   if(!translated||translated===original)return;
   var walker=document.createTreeWalker(el,NodeFilter.SHOW_TEXT),node,nodes=[];
@@ -172,7 +172,7 @@ function localizeUpstreamChrome(root){
   if(!root)return;
   if(root.nodeType===1)translateUpstreamChromeElement(root);
   if(!root.querySelectorAll)return;
-  var nodes=root.querySelectorAll('button,a,[role="button"],[role="menuitem"],[role="menuitemcheckbox"],[role="menuitemradio"],[role="option"],[role="tab"],label,summary,input,textarea,[aria-label],[placeholder],[title],[role="alert"],[role="status"]');
+  var nodes=root.querySelectorAll('button,a,[role="button"],[role="menuitem"],[role="menuitemcheckbox"],[role="menuitemradio"],[role="option"],[role="tab"],label,summary,input,textarea,[aria-label],[placeholder],[title],[role="alert"],[role="status"],[data-testid*="toast"],[data-testid*="upload"],[data-testid*="error"]');
   for(var i=0;i<nodes.length;i++)translateUpstreamChromeElement(nodes[i]);
 }
 function startUpstreamUiLocalization(){
