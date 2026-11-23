@@ -56,7 +56,7 @@ export function localizeMirrorErrorMessage(error: unknown): string {
     return "网络连接失败，请检查服务器地址和网络后重试。";
   }
 
-  const status = normalized.match(/(?:HTTP\\s*)?([45]\\d{2})\\b/i)?.[1];
+  const status = normalized.match(/(?:HTTP\s*)?([45]\d{2})\b/i)?.[1];
   const labels: Record<string, string> = {
     "400": "请求参数无效，请检查输入内容。",
     "401": "身份验证失败，请重新连接 ChatGPT 会话。",
@@ -75,11 +75,11 @@ export function localizeMirrorErrorMessage(error: unknown): string {
     "503": "服务暂时不可用，请稍后重试。",
     "504": "请求处理超时，请稍后重试。",
   };
-  const untranslatedError = /\\b(?:upstream|unauthorized|forbidden|not found|bad request|internal server error|service unavailable|temporarily unavailable|rate limit(?: exceeded)?|invalid|failed|failure|error|denied|expired|unsupported|timed out|timeout)\\b/i;
+  const untranslatedError = /\b(?:upstream|unauthorized|forbidden|not found|bad request|internal server error|service unavailable|temporarily unavailable|rate limit(?: exceeded)?|invalid|failed|failure|error|denied|expired|unsupported|timed out|timeout)\b/i;
   if (untranslatedError.test(normalized)) {
     return status ? labels[status] ?? generic : fallback;
   }
-  if (/[\\u3400-\\u9fff]/.test(normalized)) return normalized;
+  if (/[\u3400-\u9fff]/.test(normalized)) return normalized;
   if (status) return labels[status] ?? generic;
   return fallback;
 }
@@ -183,8 +183,8 @@ function localizeLoginButtons(){
     var walker=document.createTreeWalker(button,NodeFilter.SHOW_TEXT),node,nodes=[];
     while((node=walker.nextNode()))nodes.push(node);
     if(nodes.length){
-      var leading=(nodes[0].nodeValue.match(/^\\s*/)||[''])[0];
-      var trailing=(nodes[nodes.length-1].nodeValue.match(/\\s*$/)||[''])[0];
+      var leading=(nodes[0].nodeValue.match(/^\s*/)||[''])[0];
+      var trailing=(nodes[nodes.length-1].nodeValue.match(/\s*$/)||[''])[0];
       nodes[0].nodeValue=leading+translated+trailing;
       for(var j=1;j<nodes.length;j++)nodes[j].nodeValue='';
     }
