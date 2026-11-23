@@ -148,7 +148,7 @@ function translateUpstreamTextElement(el){
   if(!nodes.length)return;
   // Preserve whitespace from the complete label rather than the last text node:
   // nested icon/visually-hidden nodes can contain trailing fallback text.
-  var leading=(original.match(/^\s*/)||[''])[0],trailing=(original.match(/\s*$/)||[''])[0];
+  var leading=(original.match(/^\\s*/)||[''])[0],trailing=(original.match(/\\s*$/)||[''])[0];
   nodes[0].nodeValue=leading+translated+trailing;
   for(var i=1;i<nodes.length;i++)nodes[i].nodeValue='';
   if(el.matches('button,[role="button"]')){
