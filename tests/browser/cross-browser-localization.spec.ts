@@ -36,6 +36,20 @@ test.describe("browser / cross-engine Chinese localization", () => {
       turn.append(protectedButton);
       protectedContent.append(turn);
 
+      const actionTurn = document.createElement("div");
+      actionTurn.setAttribute("data-testid", "conversation-turn");
+      const actionMessage = document.createElement("div");
+      actionMessage.setAttribute("data-message-author-role", "assistant");
+      actionMessage.className = "markdown";
+      actionMessage.textContent = "New chat";
+      const copyAction = document.createElement("button");
+      copyAction.textContent = "Copy";
+      copyAction.setAttribute("aria-label", "Good response");
+      copyAction.setAttribute("title", "Regenerate");
+      actionMessage.append(copyAction);
+      actionTurn.append(actionMessage);
+      protectedContent.append(actionTurn);
+
       const expired = document.createElement("div");
       expired.id = "modal-expired-session";
       expired.setAttribute("data-testid", "modal-expired-session");
@@ -64,6 +78,11 @@ test.describe("browser / cross-engine Chinese localization", () => {
     await expect(page.locator("#fixture-composer textarea")).toHaveAttribute("placeholder", "发送消息给 ChatGPT");
     await expect(page.locator("#fixture-message button")).toHaveText("New chat");
     await expect(page.locator("#fixture-nav [role=alert]")).toHaveText("文件上传失败，请重试。");
+    await expect(page.locator("#fixture-nav")).toBeVisible();
+    await expect(page.locator("[data-testid=conversation-turn] .markdown")).toHaveText("New chat复制");
+    await expect(page.locator("[data-testid=conversation-turn] button")).toHaveText("复制");
+    await expect(page.locator("[data-testid=conversation-turn] button")).toHaveAttribute("aria-label", "好评");
+    await expect(page.locator("[data-testid=conversation-turn] button")).toHaveAttribute("title", "重新生成");
     await expect(page.locator("#fixture-nav [role=status]")).toHaveText("文件过大，请缩小文件后重试。");
     await expect(page.locator("#fixture-nav [data-testid=toast-error]")).toHaveText("文件上传失败，请重试。");
     await expect(page.locator("#fixture-nav [data-testid=toast-network]")).toHaveText("网络连接中断，请检查网络后重试。");
@@ -117,6 +136,23 @@ test.describe("browser / cross-engine Chinese localization", () => {
     const mutatedButton = page.locator("#fixture-nav button").nth(3);
     await expect(mutatedButton).toHaveAttribute("aria-label", "设置");
     await expect(mutatedButton).toHaveAttribute("title", "更多选项");
+
+    // React-style characterData updates can change an existing nested label
+    // without inserting a new button; the observer must resolve the control.
+    await page.evaluate(() => {
+      const button = document.createElement("button");
+      button.id = "fixture-changing-label";
+      const label = document.createElement("span");
+      label.textContent = "New chat";
+      button.append(label);
+      document.querySelector("#fixture-nav")?.append(button);
+    });
+    await expect(page.locator("#fixture-changing-label")).toHaveText("新建聊天");
+    await page.evaluate(() => {
+      const label = document.querySelector("#fixture-changing-label span");
+      if (label) label.textContent = "Delete";
+    });
+    await expect(page.locator("#fixture-changing-label")).toHaveText("删除");
 
     await page.getByRole("button", { name: "更新会话令牌" }).click();
     await expect(page.locator("#mirror-launcher .mirror-panel")).toHaveClass(/open/);

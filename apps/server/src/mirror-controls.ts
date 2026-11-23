@@ -133,15 +133,21 @@ function openPanel(root){
   var area=root.querySelector('textarea');
   if(area)area.focus();
 }
-var upstreamChromeSelector='nav,aside,header,[role="navigation"],[role="dialog"],[role="menu"],[role="listbox"],[role="alert"],[role="status"],[data-testid*="sidebar"],[data-testid*="page-header"],[data-testid*="composer"],[data-testid*="popover"],[data-testid*="menu"],[data-testid*="toast"],[data-testid*="upload"],[data-testid*="error"]';
-var upstreamProtectedSelector='[data-testid*="conversation-turn"],[data-message-author-role],.markdown,.prose,pre,code';
+var upstreamChromeSelector='nav,aside,header,[role="navigation"],[role="dialog"],[role="menu"],[role="listbox"],[role="alert"],[role="status"],[data-testid*="sidebar"],[data-testid*="page-header"],[data-testid*="composer"],[data-testid*="popover"],[data-testid*="menu"],[data-testid*="toast"],[data-testid*="upload"],[data-testid*="error"],[data-testid*="conversation-turn"]';
+var upstreamProtectedSelector='[data-message-author-role],.markdown,.prose,pre,code';
+var upstreamTextControlSelector='button,a,[role="button"],[role="menuitem"],[role="menuitemcheckbox"],[role="menuitemradio"],[role="option"],[role="tab"],label,summary,[role="alert"],[role="status"],[data-testid*="toast"],[data-testid*="upload"],[data-testid*="error"]';
 function isUpstreamChromeElement(el){
-  return !!(el&&el.closest&&el.closest(upstreamChromeSelector))
-    &&!(el.closest&&el.closest(upstreamProtectedSelector));
+  if(!el||!el.closest||!el.closest(upstreamChromeSelector))return false;
+  var protectedContent=el.closest(upstreamProtectedSelector);
+  if(!protectedContent)return true;
+  // Message bodies must stay byte-for-byte intact, but action controls belong
+  // to the app chrome even when upstream nests them inside a protected turn.
+  var messageAction=el.matches('button,[role="button"],[role="menuitem"],[role="menuitemcheckbox"],[role="menuitemradio"],[role="option"],[role="tab"]')
+    &&!!el.closest('[data-testid*="conversation-turn"]');
+  return messageAction;
 }
 function translateUpstreamTextElement(el){
-  if(!el||!isUpstreamChromeElement(el)
-    ||!el.matches('button,a,[role="button"],[role="menuitem"],[role="menuitemcheckbox"],[role="menuitemradio"],[role="option"],[role="tab"],label,summary,[role="alert"],[role="status"],[data-testid*="toast"],[data-testid*="upload"],[data-testid*="error"]'))return;
+  if(!el||!isUpstreamChromeElement(el)||!el.matches(upstreamTextControlSelector))return;
   var original=(el.textContent||'').trim(),translated=translateUpstreamUiText(original,upstreamUiTranslations);
   if(!translated||translated===original)return;
   var walker=document.createTreeWalker(el,NodeFilter.SHOW_TEXT),node,nodes=[];
@@ -156,6 +162,10 @@ function translateUpstreamTextElement(el){
     if(!el.getAttribute('aria-label'))el.setAttribute('aria-label',translated);
     if(!el.getAttribute('title'))el.setAttribute('title',translated);
   }
+}
+function translateUpstreamTextFromNode(el){
+  var control=el&&el.closest?el.closest(upstreamTextControlSelector):null;
+  translateUpstreamTextElement(control||el);
 }
 function translateUpstreamChromeElement(el){
   if(!el||!isUpstreamChromeElement(el))return;
@@ -187,10 +197,10 @@ function startUpstreamUiLocalization(){
     for(var i=0;i<records.length;i++){
       var record=records[i];
       if(record.type==='attributes')translateUpstreamChromeElement(record.target);
-      else if(record.type==='characterData')translateUpstreamTextElement(record.target.parentElement);
+      else if(record.type==='characterData')translateUpstreamTextFromNode(record.target.parentElement);
       else for(var j=0;j<record.addedNodes.length;j++){
         var added=record.addedNodes[j];
-        if(added.nodeType===3)translateUpstreamTextElement(added.parentElement);
+        if(added.nodeType===3)translateUpstreamTextFromNode(added.parentElement);
         else localizeUpstreamChrome(added);
       }
     }
