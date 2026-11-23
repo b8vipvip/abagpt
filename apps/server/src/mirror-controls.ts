@@ -1,5 +1,5 @@
 import { decoderChallengeCss, decoderChallengeJs } from "./decoder-challenge-ui.js";
-import { UPSTREAM_UI_TRANSLATIONS } from "./upstream-ui-localization.js";
+import { UPSTREAM_UI_TRANSLATIONS, translateUpstreamUiText } from "./upstream-ui-localization.js";
 
 export const injectionCss = decoderChallengeCss + `
 #mirror-launcher{font:13px/1.4 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#ececec;width:100%;position:relative;z-index:2147483647;pointer-events:auto}
@@ -108,6 +108,7 @@ export const injectionJs = decoderChallengeJs + `\n(()=>{
 var widgetRoot=null;
 var localizeMirrorError = (${localizeMirrorErrorSource});
 var upstreamUiTranslations = ${JSON.stringify(UPSTREAM_UI_TRANSLATIONS)};
+var translateUpstreamUiText = (${translateUpstreamUiText.toString()});
 function buildWidget(){
   var root=document.createElement('div');
   root.id='mirror-launcher';
@@ -141,7 +142,7 @@ function isUpstreamChromeElement(el){
 function translateUpstreamTextElement(el){
   if(!el||!isUpstreamChromeElement(el)
     ||!el.matches('button,a,[role="button"],[role="menuitem"],[role="menuitemcheckbox"],[role="menuitemradio"],[role="option"],[role="tab"],label,summary,[role="alert"],[role="status"]'))return;
-  var original=(el.textContent||'').trim(),translated=upstreamUiTranslations[original];
+  var original=(el.textContent||'').trim(),translated=translateUpstreamUiText(original,upstreamUiTranslations);
   if(!translated||translated===original)return;
   var walker=document.createTreeWalker(el,NodeFilter.SHOW_TEXT),node,nodes=[];
   while((node=walker.nextNode()))nodes.push(node);
@@ -162,7 +163,7 @@ function translateUpstreamChromeElement(el){
   for(var i=0;i<names.length;i++){
     var value=el.getAttribute(names[i]);
     if(!value)continue;
-    var translated=upstreamUiTranslations[value.trim()];
+    var translated=translateUpstreamUiText(value,upstreamUiTranslations);
     if(translated&&translated!==value)el.setAttribute(names[i],translated);
   }
   translateUpstreamTextElement(el);
@@ -429,45 +430,45 @@ function hideEl(el){
     el.setAttribute('inert','');
   }catch(e){}
 }
+function findExpiredSessionDialog(){
+  var expiredPattern=/(?:your\\s+)?session\\s+(?:has\\s+)?expired|会话已过期/i;
+  var known=document.getElementById('modal-expired-session')
+    ||document.querySelector('[data-testid="modal-expired-session"]');
+  if(known&&expiredPattern.test((known.innerText||known.textContent||'')))return known;
+
+  // Never scan the entire document text for this phrase: users can discuss
+  // expired sessions in normal conversation messages. Only accept explicit
+  // dialog/modal containers or a dialog ancestor of a matching text node.
+  var selector='[role="dialog"],[role="alertdialog"],[aria-modal="true"],[data-radix-portal],[data-testid*="modal"],[id*="modal"]';
+  var dialogs=document.querySelectorAll(selector);
+  for(var i=0;i<dialogs.length;i++){
+    var dialog=dialogs[i];
+    if(expiredPattern.test((dialog.innerText||dialog.textContent||''))){
+      return dialog.closest('[data-radix-portal]')||dialog;
+    }
+  }
+
+  var leaves=document.body.querySelectorAll('*');
+  for(var j=0;j<leaves.length;j++){
+    var leaf=leaves[j];
+    if(leaf.children.length!==0||!expiredPattern.test(leaf.textContent||''))continue;
+    var ancestor=leaf;
+    for(var depth=0;depth<20&&ancestor&&ancestor!==document.body;depth++){
+      if(ancestor.matches&&ancestor.matches(selector)){
+        return ancestor.closest('[data-radix-portal]')||ancestor;
+      }
+      ancestor=ancestor.parentElement;
+    }
+  }
+  return null;
+}
 function removeExpiredSessionModal(){
-  var bodyText=document.body&&document.body.innerText;
-  var sawExpired=!!bodyText&&bodyText.toLowerCase().indexOf("session has expired")!==-1;
+  var expiredDialog=findExpiredSessionDialog();
+  var sawExpired=!!expiredDialog;
   if(sawExpired){
     showExpiredSessionNotice();
-    // The real upstream markup for this dialog is a plain
-    // <div id="modal-expired-session" data-testid="modal-expired-session">
-    // -- not role="dialog"/"alertdialog" and not inside a data-radix-portal
-    // wrapper, so neither of those (reasonable-looking, but wrong for this
-    // specific dialog) signals ever matched it. That mismatch is why the
-    // previous version only ever hid a small inner text node instead of the
-    // actual full-viewport clickable container, leaving the real thing live
-    // and still swallowing every click/keystroke on the page. Prefer this
-    // exact, stable identifier; keep the generic role/portal walk-up only as
-    // a fallback in case a future upstream build changes the markup.
-    var known=document.getElementById('modal-expired-session')
-      ||document.querySelector('[data-testid="modal-expired-session"]');
-    if(known){
-      hideEl(known);
-      window.__mirrorExpiredModalSeen=Date.now();
-    }else{
-      var leaves=document.body.querySelectorAll('*'),target=null;
-      for(var i=0;i<leaves.length;i++){
-        var el=leaves[i];
-        if(el.children.length===0&&el.textContent&&el.textContent.toLowerCase().indexOf("session has expired")!==-1){target=el;break;}
-      }
-      if(target){
-        var n=target,dialog=null;
-        for(var j=0;j<20&&n&&n!==document.body;j++){
-          var role=n.getAttribute&&n.getAttribute('role');
-          if(role==='dialog'||role==='alertdialog'||(n.hasAttribute&&n.hasAttribute('data-radix-portal'))){dialog=n;break;}
-          n=n.parentElement;
-        }
-        if(!dialog)dialog=target;
-        var portalRoot=dialog.closest?dialog.closest('[data-radix-portal]')||dialog:dialog;
-        hideEl(portalRoot);
-        window.__mirrorExpiredModalSeen=Date.now();
-      }
-    }
+    hideEl(expiredDialog);
+    window.__mirrorExpiredModalSeen=Date.now();
   }
   // Radix (and similar) dialog libraries render the dimmed backdrop as a
   // sibling overlay element, not inside the dialog itself, so it survives
