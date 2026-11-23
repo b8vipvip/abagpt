@@ -432,9 +432,19 @@ function hideEl(el){
 }
 function findExpiredSessionDialog(){
   var expiredPattern=/(?:your\\s+)?session\\s+(?:has\\s+)?expired|会话已过期/i;
+  function hasVisibleExpiredText(el){
+    if(!el)return false;
+    var current=el;
+    while(current&&current!==document.body){
+      var style=getComputedStyle(current);
+      if(style.display==='none'||style.visibility==='hidden')return false;
+      current=current.parentElement;
+    }
+    return expiredPattern.test(el.innerText||el.textContent||'');
+  }
   var known=document.getElementById('modal-expired-session')
     ||document.querySelector('[data-testid="modal-expired-session"]');
-  if(known&&expiredPattern.test((known.innerText||known.textContent||'')))return known;
+  if(known&&hasVisibleExpiredText(known))return known;
 
   // Never scan the entire document text for this phrase: users can discuss
   // expired sessions in normal conversation messages. Only accept explicit
@@ -443,7 +453,7 @@ function findExpiredSessionDialog(){
   var dialogs=document.querySelectorAll(selector);
   for(var i=0;i<dialogs.length;i++){
     var dialog=dialogs[i];
-    if(expiredPattern.test((dialog.innerText||dialog.textContent||''))){
+    if(hasVisibleExpiredText(dialog)){
       return dialog.closest('[data-radix-portal]')||dialog;
     }
   }
@@ -451,7 +461,7 @@ function findExpiredSessionDialog(){
   var leaves=document.body.querySelectorAll('*');
   for(var j=0;j<leaves.length;j++){
     var leaf=leaves[j];
-    if(leaf.children.length!==0||!expiredPattern.test(leaf.textContent||''))continue;
+    if(leaf.children.length!==0||!hasVisibleExpiredText(leaf))continue;
     var ancestor=leaf;
     for(var depth=0;depth<20&&ancestor&&ancestor!==document.body;depth++){
       if(ancestor.matches&&ancestor.matches(selector)){
