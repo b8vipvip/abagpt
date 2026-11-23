@@ -251,7 +251,11 @@ export function ConversionTools({
             const file = event.target.files?.[0];
             event.target.value = "";
             if (!file) return;
-            void encode(await readFileAsBase64(file));
+            try {
+              await encode(await readFileAsBase64(file));
+            } catch (error) {
+              setStatus(localizeUiError(error, "读取文件失败，请检查文件后重试。"));
+            }
           }}
         />
       </label>

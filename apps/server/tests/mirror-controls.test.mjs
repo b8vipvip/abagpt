@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { injectionJs, localizeMirrorErrorMessage } from "../dist/mirror-controls.js";
 import { decoderChallengeJs } from "../dist/decoder-challenge-ui.js";
+import { translateUpstreamUiText } from "../dist/upstream-ui-localization.js";
 
 const fallback = "操作失败，请检查会话令牌和服务器连接后重试。";
 const network = "网络连接失败，请检查服务器地址和网络后重试。";
@@ -17,6 +18,8 @@ test.describe("server / Mirror control localization", () => {
     assert.equal(localizeMirrorErrorMessage(new Error("ERR_NAME_NOT_RESOLVED")), network);
     assert.equal(localizeMirrorErrorMessage("connect ECONNRESET"), network);
     assert.equal(localizeMirrorErrorMessage("HTTP 401 Unauthorized"), "身份验证失败，请重新连接 ChatGPT 会话。");
+    assert.equal(localizeMirrorErrorMessage("HTTP 408 Request Timeout"), "请求处理超时，请检查网络后重试。");
+    assert.equal(localizeMirrorErrorMessage("HTTP 410 Gone"), "请求的资源已失效，请刷新后重试。");
     assert.equal(localizeMirrorErrorMessage("HTTP 418"), "服务器请求失败，请稍后重试。");
     assert.equal(localizeMirrorErrorMessage("HTTP 418 upstream unavailable"), "服务器请求失败，请稍后重试。");
   });
@@ -27,6 +30,24 @@ test.describe("server / Mirror control localization", () => {
     assert.equal(localizeMirrorErrorMessage({ detail: "failed" }), fallback);
     assert.equal(localizeMirrorErrorMessage({ message: null }), fallback);
     assert.equal(localizeMirrorErrorMessage(null), fallback);
+  });
+
+  test("translates common upstream UI labels while leaving unknown and blank text untouched", () => {
+    assert.equal(translateUpstreamUiText("New chat"), "新建聊天");
+    assert.equal(translateUpstreamUiText("  Search  "), "搜索");
+    assert.equal(translateUpstreamUiText("Message ChatGPT"), "发送消息给 ChatGPT");
+    assert.equal(translateUpstreamUiText("Upload failed"), "上传失败");
+    assert.equal(translateUpstreamUiText("User-authored sentence"), undefined);
+    assert.equal(translateUpstreamUiText("   "), undefined);
+  });
+
+  test("injects a mutation-aware chrome-only localizer and a session-expiry recovery action", () => {
+    assert.match(injectionJs, /MutationObserver/);
+    assert.match(injectionJs, /upstreamProtectedSelector/);
+    assert.match(injectionJs, /aria-label/);
+    assert.match(injectionJs, /placeholder/);
+    assert.match(injectionJs, /mirror-session-expired-notice/);
+    assert.match(injectionJs, /更新会话令牌/);
   });
 
   test("localizes signup actions and recognizes Chinese composer placeholders", () => {

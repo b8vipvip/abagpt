@@ -86,13 +86,25 @@ test("Markdown and text files selected together keep their exact contents and th
 
 test.describe("browser / localized interface", () => {
 test("mobile navigation remains available without horizontal page overflow", async ({ page }) => {
- await page.setViewportSize({ width: 390, height: 844 });
  await page.goto("/mirror/playground");
  await expect(page.getByRole("link", { name: "API 文档" })).toBeVisible();
  await expect(page.getByRole("link", { name: "OpenAPI 规范" })).toBeVisible();
- const hasHorizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
- expect(hasHorizontalOverflow).toBe(false);
+ for (const width of [320, 360, 390, 768]) {
+  await page.setViewportSize({ width, height: 844 });
+  const hasHorizontalOverflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
+  expect(hasHorizontalOverflow, `unexpected horizontal overflow at ${width}px`).toBe(false);
+ }
 });
+test("Playground controls keep Chinese accessible names across browser engines", async ({ page }) => {
+ await page.goto("/mirror/playground");
+ await expect(page.getByRole("heading", { name: "对话" })).toBeVisible();
+ await expect(page.getByLabel("服务器地址")).toBeVisible();
+ await expect(page.getByLabel("接口路径")).toBeVisible();
+ await expect(page.getByLabel("API 密钥（Bearer）")).toBeVisible();
+ await expect(page.getByRole("button", { name: /^运行请求/ })).toBeVisible();
+ await expect(page.getByLabel("第 1 条消息的角色")).toBeVisible();
+});
+
 test("API documentation is localized without changing the OpenAPI contract", async ({ page }) => {
  await page.goto(`${serverBase}/mirror/playground`);
  const specResponse = await page.request.get(`${serverBase}/mirror/openapi`);

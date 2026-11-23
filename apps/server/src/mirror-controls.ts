@@ -1,4 +1,5 @@
 import { decoderChallengeCss, decoderChallengeJs } from "./decoder-challenge-ui.js";
+import { UPSTREAM_UI_TRANSLATIONS } from "./upstream-ui-localization.js";
 
 export const injectionCss = decoderChallengeCss + `
 #mirror-launcher{font:13px/1.4 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#ececec;width:100%;position:relative;z-index:2147483647;pointer-events:auto}
@@ -23,6 +24,11 @@ export const injectionCss = decoderChallengeCss + `
 #mirror-launcher .mirror-play,#mirror-launcher .mirror-docs{background:#343434;color:#eee}
 #mirror-launcher .mirror-status{min-height:16px;margin-top:6px;color:#9adfce;font-size:11px}
 #mirror-launcher .mirror-egress{margin-top:8px;color:#aaa;font-size:11px}
+#mirror-session-expired-notice{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:2147483647;display:flex;align-items:center;gap:10px;max-width:calc(100vw - 24px);padding:10px 12px;border:1px solid #d6a84c;border-radius:10px;background:#fff7e6;color:#503b16;font:13px/1.4 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;box-shadow:0 8px 30px #0004}
+#mirror-session-expired-notice span{flex:1;min-width:180px}
+#mirror-session-expired-notice button{border:0;border-radius:7px;padding:7px 10px;background:#5d471d;color:#fff;font:inherit;cursor:pointer;white-space:nowrap}
+#mirror-session-expired-notice .mirror-expired-close{padding:3px 7px;background:transparent;color:#503b16;font-size:18px}
+@media(max-width:560px){#mirror-session-expired-notice{left:12px;right:12px;top:8px;transform:none;max-width:none;align-items:flex-start;flex-wrap:wrap}#mirror-session-expired-notice span{flex-basis:100%}}
 `;
 
 /**
@@ -51,7 +57,7 @@ export function localizeMirrorErrorMessage(error: unknown): string {
   const normalized = message.trim();
   if (!normalized) return fallback;
 
-  const networkError = /failed to fetch|networkerror|network request failed|load failed|fetch failed|offline|econnrefused|econnreset|err_network|err_name_not_resolved|err_cert_[a-z_]+|err_connection_[a-z_]+|err_internet_disconnected/i;
+  const networkError = /failed to fetch|networkerror|network request failed|load failed|fetch failed|offline|socket hang up|connection closed|connection reset|connection refused|econnrefused|econnreset|econnaborted|err_network|err_name_not_resolved|err_cert_[a-z_]+|err_connection_[a-z_]+|err_http2_protocol_error|err_empty_response|err_socket_not_connected|err_address_unreachable|err_network_changed|err_timed_out|err_internet_disconnected/i;
   if (networkError.test(normalized)) {
     return "网络连接失败，请检查服务器地址和网络后重试。";
   }
@@ -62,7 +68,16 @@ export function localizeMirrorErrorMessage(error: unknown): string {
     "401": "身份验证失败，请重新连接 ChatGPT 会话。",
     "403": "当前账号没有执行此操作的权限。",
     "404": "请求的资源不存在或已过期。",
+    "408": "请求处理超时，请检查网络后重试。",
     "409": "会话状态已变化，请刷新后重试。",
+    "410": "请求的资源已失效，请刷新后重试。",
+    "411": "请求缺少必要的内容长度信息。",
+    "412": "请求前置条件未满足，请刷新后重试。",
+    "414": "请求地址过长，请缩短请求内容后重试。",
+    "416": "请求的文件范围无效，请重新选择文件。",
+    "417": "服务器无法满足请求预期。",
+    "425": "请求暂时无法处理，请稍后重试。",
+    "426": "服务器要求升级连接协议，请检查代理配置。",
     "413": "请求内容过大，请缩小输入后重试。",
     "415": "不支持此内容类型，请检查请求格式。",
     "421": "请求主机名未获信任，请检查服务器地址。",
@@ -74,6 +89,10 @@ export function localizeMirrorErrorMessage(error: unknown): string {
     "502": "上游服务暂时不可用，请检查网络或 WARP 连接。",
     "503": "服务暂时不可用，请稍后重试。",
     "504": "请求处理超时，请稍后重试。",
+    "451": "该资源因法律限制无法提供。",
+    "507": "服务器存储空间不足，请联系管理员。",
+    "508": "服务器检测到循环请求，请检查代理配置。",
+    "511": "网络需要身份验证，请检查网络代理设置。",
   };
   const untranslatedError = /\b(?:upstream|unauthorized|forbidden|not found|bad request|internal server error|service unavailable|temporarily unavailable|rate limit(?: exceeded)?|invalid|failed|failure|error|denied|expired|unsupported|timed out|timeout)\b/i;
   if (untranslatedError.test(normalized)) {
@@ -88,6 +107,7 @@ const localizeMirrorErrorSource = localizeMirrorErrorMessage.toString();
 export const injectionJs = decoderChallengeJs + `\n(()=>{
 var widgetRoot=null;
 var localizeMirrorError = (${localizeMirrorErrorSource});
+var upstreamUiTranslations = ${JSON.stringify(UPSTREAM_UI_TRANSLATIONS)};
 function buildWidget(){
   var root=document.createElement('div');
   root.id='mirror-launcher';
@@ -111,6 +131,85 @@ function openPanel(root){
   panel.classList.add('open');
   var area=root.querySelector('textarea');
   if(area)area.focus();
+}
+var upstreamChromeSelector='nav,aside,header,[role="navigation"],[role="dialog"],[role="menu"],[role="listbox"],[role="alert"],[role="status"],[data-testid*="sidebar"],[data-testid*="page-header"],[data-testid*="composer"],[data-testid*="popover"],[data-testid*="menu"],[data-testid*="toast"]';
+var upstreamProtectedSelector='[data-testid*="conversation-turn"],[data-message-author-role],.markdown,.prose,pre,code';
+function isUpstreamChromeElement(el){
+  return !!(el&&el.closest&&el.closest(upstreamChromeSelector))
+    &&!(el.closest&&el.closest(upstreamProtectedSelector));
+}
+function translateUpstreamTextElement(el){
+  if(!el||!isUpstreamChromeElement(el)
+    ||!el.matches('button,a,[role="button"],label,summary,[role="alert"],[role="status"]'))return;
+  var original=(el.textContent||'').trim(),translated=upstreamUiTranslations[original];
+  if(!translated||translated===original)return;
+  var walker=document.createTreeWalker(el,NodeFilter.SHOW_TEXT),node,nodes=[];
+  while((node=walker.nextNode()))nodes.push(node);
+  if(!nodes.length)return;
+  var leading=(nodes[0].nodeValue.match(/^\s*/)||[''])[0],trailing=(nodes[nodes.length-1].nodeValue.match(/\s*$/)||[''])[0];
+  nodes[0].nodeValue=leading+translated+trailing;
+  for(var i=1;i<nodes.length;i++)nodes[i].nodeValue='';
+}
+function translateUpstreamChromeElement(el){
+  if(!el||!isUpstreamChromeElement(el))return;
+  var names=['aria-label','placeholder','title'];
+  for(var i=0;i<names.length;i++){
+    var value=el.getAttribute(names[i]);
+    if(!value)continue;
+    var translated=upstreamUiTranslations[value.trim()];
+    if(translated&&translated!==value)el.setAttribute(names[i],translated);
+  }
+  translateUpstreamTextElement(el);
+}
+function localizeUpstreamChrome(root){
+  if(!root)return;
+  if(root.nodeType===1)translateUpstreamChromeElement(root);
+  if(!root.querySelectorAll)return;
+  var nodes=root.querySelectorAll('button,a,[role="button"],label,summary,input,textarea,[aria-label],[placeholder],[title],[role="alert"],[role="status"]');
+  for(var i=0;i<nodes.length;i++)translateUpstreamChromeElement(nodes[i]);
+}
+function startUpstreamUiLocalization(){
+  if(window.__mirrorUiLocalizationInstalled)return;
+  if(!document.body){
+    document.addEventListener('DOMContentLoaded',startUpstreamUiLocalization,{once:true});
+    return;
+  }
+  window.__mirrorUiLocalizationInstalled=true;
+  localizeUpstreamChrome(document.body);
+  var observer=new MutationObserver(function(records){
+    for(var i=0;i<records.length;i++){
+      var record=records[i];
+      if(record.type==='attributes')translateUpstreamChromeElement(record.target);
+      else if(record.type==='characterData')translateUpstreamTextElement(record.target.parentElement);
+      else for(var j=0;j<record.addedNodes.length;j++){
+        var added=record.addedNodes[j];
+        if(added.nodeType===3)translateUpstreamTextElement(added.parentElement);
+        else localizeUpstreamChrome(added);
+      }
+    }
+  });
+  observer.observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['aria-label','placeholder','title']});
+  window.__mirrorUiLocalizationObserver=observer;
+}
+function showExpiredSessionNotice(){
+  if(window.__mirrorSessionExpiredDismissed||document.getElementById('mirror-session-expired-notice'))return;
+  var notice=document.createElement('div');
+  notice.id='mirror-session-expired-notice';
+  notice.setAttribute('role','alert');
+  notice.innerHTML='<span>ChatGPT 会话已失效，API 请求可能无法继续。请更新 Mirror 会话令牌。</span>'
+    +'<button type="button" class="mirror-expired-update">更新会话令牌</button>'
+    +'<button type="button" class="mirror-expired-close" aria-label="关闭提示">×</button>';
+  notice.querySelector('.mirror-expired-update').onclick=function(){
+    tryMount();
+    var root=getWidget();
+    if(root.isConnected)openPanel(root);
+    else notice.querySelector('span').textContent='请在 ChatGPT 侧边栏中打开 Mirror 控制台并更新会话令牌。';
+  };
+  notice.querySelector('.mirror-expired-close').onclick=function(){
+    window.__mirrorSessionExpiredDismissed=true;
+    notice.remove();
+  };
+  document.body.appendChild(notice);
 }
 function wireWidget(root){
   if(root.dataset.wired)return;
@@ -263,6 +362,7 @@ function hideWidget(){
   widgetRoot.remove();
 }
 function tryMount(){if(!mountInSidebar())hideWidget();}
+startUpstreamUiLocalization();
 tryMount();
 setInterval(tryMount,1000);
 
@@ -327,6 +427,7 @@ function removeExpiredSessionModal(){
   var bodyText=document.body&&document.body.innerText;
   var sawExpired=!!bodyText&&bodyText.toLowerCase().indexOf("session has expired")!==-1;
   if(sawExpired){
+    showExpiredSessionNotice();
     // The real upstream markup for this dialog is a plain
     // <div id="modal-expired-session" data-testid="modal-expired-session">
     // -- not role="dialog"/"alertdialog" and not inside a data-radix-portal

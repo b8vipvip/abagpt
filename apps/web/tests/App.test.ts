@@ -342,23 +342,26 @@ test("populates the model dropdown from /v1/models, labelling gizmos/projects an
   assert.equal(unsupportedOption.disabled, true);
 });
 
-test("a failed model-discovery fetch is swallowed silently, leaving only the auto option", async () => {
+test("a failed model-discovery fetch shows a localized network error and keeps the auto option", async () => {
   await renderApp([[/^\/v1\/models$/, () => { throw new Error("network down"); }]]);
   const select = screen.getByLabelText("模型") as HTMLSelectElement;
   assert.equal(select.options.length, 1);
   assert.equal(select.options[0].value, "auto");
+  assert.ok(screen.getByText("网络连接失败，请检查服务器地址和网络后重试。"));
 });
 
-test("a non-ok model-discovery response is swallowed silently", async () => {
+test("a non-ok model-discovery response shows a localized HTTP error", async () => {
   await renderApp([[/^\/v1\/models$/, () => jsonResponse({ error: "nope" }, { status: 500 })]]);
   const select = screen.getByLabelText("模型") as HTMLSelectElement;
   assert.equal(select.options.length, 1);
+  assert.ok(screen.getByText("服务器内部发生错误，请稍后重试。"));
 });
 
-test("a model-discovery response whose data isn't an array is ignored", async () => {
+test("a model-discovery response whose data isn't an array shows a localized format error", async () => {
   await renderApp([[/^\/v1\/models$/, () => jsonResponse({ data: "not-an-array" })]]);
   const select = screen.getByLabelText("模型") as HTMLSelectElement;
   assert.equal(select.options.length, 1);
+  assert.ok(screen.getByText("模型列表接口返回了不受支持的数据格式。"));
 });
 
 test("the bearer credential is sent as an authorization header on model discovery", async () => {
@@ -461,9 +464,15 @@ test("the Refresh button re-syncs the conversation list from the top with resync
   await waitFor(() => assert.ok(sawResync));
 });
 
-test("a failed conversations fetch is swallowed and the list just stays empty", async () => {
+test("a failed conversations fetch shows a localized error instead of looking like an empty history", async () => {
   await renderApp([[/^\/api\/conversations$/, () => { throw new Error("boom"); }]]);
   assert.ok(screen.getByText("暂无会话"));
+  assert.equal(screen.getByRole("alert").textContent, "会话列表加载失败，请点击刷新重试。");
+});
+
+test("a non-ok conversations response localizes an expired session", async () => {
+  await renderApp([[/^\/api\/conversations$/, () => jsonResponse({ error: "expired" }, { status: 401 })]]);
+  assert.equal(screen.getByRole("alert").textContent, "身份验证失败，请检查 API 密钥和 ChatGPT 会话。");
 });
 
 // ---------------------------------------------------------------------------
@@ -1061,7 +1070,7 @@ test("a throwing localStorage.getItem during initial mount falls back to remembe
   }
 });
 
-test("a failed load-more request is swallowed, leaving the list as-is for a retry", async () => {
+test("a failed load-more request shows a localized error and keeps the loaded page available for retry", async () => {
   await renderApp([
     [
       /^\/api\/conversations$/,
@@ -1086,6 +1095,7 @@ test("a failed load-more request is swallowed, leaving the list as-is for a retr
   });
   assert.ok(screen.getByText("Page one"));
   assert.equal(screen.queryByText("正在加载更多…"), null);
+  assert.equal(screen.getByRole("alert").textContent, "加载更多会话失败，请稍后重试。");
 });
 
 test("loading a conversation whose stored messages field isn't an array tolerates it as empty", async () => {

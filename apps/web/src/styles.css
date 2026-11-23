@@ -571,6 +571,13 @@ a {
   color: #999;
   text-align: center;
 }
+.conversation-list-error {
+  padding: 9px;
+  color: #a33;
+  font-size: 11px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
 
 /* Keyboard focus and utilities remain usable on narrow screens and long output. */
 :focus-visible { outline: 3px solid #097c69; outline-offset: 3px; }

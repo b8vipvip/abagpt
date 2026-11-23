@@ -81,6 +81,17 @@ test.describe("web / ConversionTools", () => {
   });
 
 
+  test("localizes a file read failure instead of leaving an unhandled rejection", async () => {
+    mount();
+    const file = new File(["cannot read"], "blocked.txt", { type: "text/plain" });
+    Object.defineProperty(file, "arrayBuffer", {
+      configurable: true,
+      value: () => Promise.reject(new Error("permission denied")),
+    });
+    fireEvent.change(screen.getByLabelText(/选择文件进行编码/), { target: { files: [file] } });
+    await screen.findByText("读取文件失败，请检查文件后重试。");
+  });
+
   test("localizes object-shaped API errors using their HTTP status", async () => {
     mount({ fetcher: (async () => json({ error: { message: "The requested resource was not found." } }, 404)) as typeof fetch });
     click("编码");
