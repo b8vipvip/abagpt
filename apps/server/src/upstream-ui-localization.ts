@@ -43,8 +43,38 @@ export const UPSTREAM_UI_TRANSLATIONS: Readonly<Record<string, string>> = Object
   "Show reasoning": "显示推理过程", "Hide reasoning": "隐藏推理过程", "Sources": "来源", "Citations": "引用"
 });
 
-export function translateUpstreamUiText(value: string): string | undefined {
-  const normalized = value.trim();
+export function translateUpstreamUiText(
+  value: string,
+  translations: Readonly<Record<string, string>> = UPSTREAM_UI_TRANSLATIONS,
+): string | undefined {
+  const normalized = value.trim().replace(/\s+/g, " ");
   if (!normalized) return undefined;
-  return UPSTREAM_UI_TRANSLATIONS[normalized];
+
+  if (Object.prototype.hasOwnProperty.call(translations, normalized)) {
+    return translations[normalized];
+  }
+
+  // Upstream upload toasts may include a file name, so exact dictionary
+  // entries alone are insufficient. Keep these patterns deliberately narrow
+  // and only translate known upload failure/size/type messages.
+  if (/^(?:failed to upload|couldn['’]t upload|could not upload|unable to upload|we couldn['’]t upload|we could not upload)(?: the| your)? (?:file|image)(?:\s*[:：-]\s*.+)?(?:[.!])?$/i.test(normalized)
+    || /^(?:upload failed|file upload failed|image upload failed)(?:[.!]?\s*(?:please )?try again[.!]?)?$/i.test(normalized)
+    || /^(?:something went wrong|there was (?:a|an) (?:problem|error)) (?:while|when) uploading(?: the| your)? (?:file|image)(?:\s*[:：-]\s*.+)?(?:[.!])?$/i.test(normalized)) {
+    return "文件上传失败，请重试。";
+  }
+
+  if (/^(?:this )?(?:file|image) is too large(?:[.!]?\s*(?:please )?try again[.!]?)?$/i.test(normalized)) {
+    return "文件过大，请缩小文件后重试。";
+  }
+
+  if (/^(?:unsupported|不支持的) (?:file|image) type(?:[.!]?\s*(?:please )?try again[.!]?)?$/i.test(normalized)
+    || /^this file type is not supported[.!]?$/i.test(normalized)) {
+    return "不支持此文件类型，请选择其他文件。";
+  }
+
+  if (/^(?:failed to fetch|network error|network connection (?:lost|failed)|connection (?:lost|interrupted|error)|unable to connect to chatgpt|we couldn['’]t connect to chatgpt)(?:[.!]?\s*(?:reconnecting|trying to reconnect|please try again later)?[.!…]*)?$/i.test(normalized)) {
+    return "网络连接中断，请检查网络后重试。";
+  }
+
+  return undefined;
 }
