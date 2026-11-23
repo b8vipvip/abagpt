@@ -137,6 +137,23 @@ test.describe("browser / cross-engine Chinese localization", () => {
     await expect(mutatedButton).toHaveAttribute("aria-label", "设置");
     await expect(mutatedButton).toHaveAttribute("title", "更多选项");
 
+    // React-style characterData updates can change an existing nested label
+    // without inserting a new button; the observer must resolve the control.
+    await page.evaluate(() => {
+      const button = document.createElement("button");
+      button.id = "fixture-changing-label";
+      const label = document.createElement("span");
+      label.textContent = "New chat";
+      button.append(label);
+      document.querySelector("#fixture-nav")?.append(button);
+    });
+    await expect(page.locator("#fixture-changing-label")).toHaveText("新建聊天");
+    await page.evaluate(() => {
+      const label = document.querySelector("#fixture-changing-label span");
+      if (label) label.textContent = "Delete";
+    });
+    await expect(page.locator("#fixture-changing-label")).toHaveText("删除");
+
     await page.getByRole("button", { name: "更新会话令牌" }).click();
     await expect(page.locator("#mirror-launcher .mirror-panel")).toHaveClass(/open/);
   });
