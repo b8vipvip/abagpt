@@ -19,7 +19,7 @@ export default defineConfig({
   ],
   projects: [
     { name: "chromium", use: { browserName: "chromium" } },
-    { name: "firefox", use: { browserName: "firefox" } },
-    { name: "webkit", use: { browserName: "webkit" } },
+    { name: "firefox", testMatch: "**/cross-browser-localization.spec.ts", use: { browserName: "firefox" } },
+    { name: "webkit", testMatch: "**/cross-browser-localization.spec.ts", use: { browserName: "webkit" } },
   ],
 });

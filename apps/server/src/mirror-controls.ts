@@ -149,6 +149,10 @@ function translateUpstreamTextElement(el){
   var leading=(nodes[0].nodeValue.match(/^\s*/)||[''])[0],trailing=(nodes[nodes.length-1].nodeValue.match(/\s*$/)||[''])[0];
   nodes[0].nodeValue=leading+translated+trailing;
   for(var i=1;i<nodes.length;i++)nodes[i].nodeValue='';
+  if(el.matches('button,[role="button"]')){
+    if(!el.getAttribute('aria-label'))el.setAttribute('aria-label',translated);
+    if(!el.getAttribute('title'))el.setAttribute('title',translated);
+  }
 }
 function translateUpstreamChromeElement(el){
   if(!el||!isUpstreamChromeElement(el))return;
