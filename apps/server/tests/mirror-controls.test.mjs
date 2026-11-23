@@ -42,6 +42,8 @@ test.describe("server / Mirror control localization", () => {
     assert.equal(translateUpstreamUiText("Image upload failed. Please try again."), "文件上传失败，请重试。");
     assert.equal(translateUpstreamUiText("This file is too large"), "文件过大，请缩小文件后重试。");
     assert.equal(translateUpstreamUiText("Unsupported image type"), "不支持此文件类型，请选择其他文件。");
+    assert.equal(translateUpstreamUiText("Connection lost. Trying to reconnect..."), "网络连接中断，请检查网络后重试。");
+    assert.equal(translateUpstreamUiText("Failed to fetch"), "网络连接中断，请检查网络后重试。");
     assert.equal(translateUpstreamUiText("User-authored sentence"), undefined);
     assert.equal(translateUpstreamUiText("   "), undefined);
   });
