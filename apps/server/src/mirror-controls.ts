@@ -433,11 +433,10 @@ function hideEl(el){
 function findExpiredSessionDialog(){
   var expiredPattern=/(?:your\\s+)?session\\s+(?:has\\s+)?expired|会话已过期/i;
   function hasVisibleExpiredText(el){
-    if(!el)return false;
+    if(!el||getComputedStyle(el).visibility==='hidden')return false;
     var current=el;
     while(current&&current!==document.body){
-      var style=getComputedStyle(current);
-      if(style.display==='none'||style.visibility==='hidden')return false;
+      if(getComputedStyle(current).display==='none')return false;
       current=current.parentElement;
     }
     return expiredPattern.test(el.innerText||el.textContent||'');
