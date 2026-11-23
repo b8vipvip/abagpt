@@ -343,11 +343,11 @@ test("populates the model dropdown from /v1/models, labelling gizmos/projects an
 });
 
 test("a failed model-discovery fetch shows a localized network error and keeps the auto option", async () => {
-  await renderApp([[/^\/v1\/models$/, () => { throw new Error("network down"); }]]);
+  await renderApp([[/^\/v1\/models$/, () => { throw new TypeError("Failed to fetch"); }]]);
   const select = screen.getByLabelText("模型") as HTMLSelectElement;
   assert.equal(select.options.length, 1);
   assert.equal(select.options[0].value, "auto");
-  assert.ok(screen.getByText("网络连接失败，请检查服务器地址和网络后重试。"));
+  assert.equal((await screen.findByText("网络连接失败，请检查服务器地址和网络后重试。")).textContent, "网络连接失败，请检查服务器地址和网络后重试。");
 });
 
 test("a non-ok model-discovery response shows a localized HTTP error", async () => {
