@@ -133,7 +133,7 @@
   "apps/web/tests/hotkeys.test.ts": "a69fd930df4de878b9a48dadd772a7ffa37964688eba6a2f68c5e18a7a7ae657",
   "apps/web/tests/inline-media.test.ts": "56908eceba8566d95833679ba06e57ab9c077e85fc20e6350bcd2df533ce1a84",
   "apps/web/tests/main.test.ts": "c1188bdfa191c5b5701ba111f0b28b662a942cbdb5645aa5eebfc7ba2474dc39",
-  "apps/web/tests/playground-history.test.ts": "442cb61e738800c0c74ee3d4a68e70da242f6f9124a9b078d1cef29c62fdfa12",
+  "apps/web/tests/playground-history.test.ts": "56f12bede28464b54717e829e989689190b6c82bd467a343446addd1600b3d2a",
   "apps/web/tests/responses-stream.test.ts": "2b94b04f11f331713d4024006615c15c14b34cef5d9142ac0f10e806bfd39501",
   "apps/web/tests/ui-errors.test.ts": "e7475ccd82c389ada7c82662274ac16aa52a1cee7dcfe555e2d38fabb99af8e2",
   "apps/web/tsconfig.json": "a72e6e366a504b410142981538816763d0f4d248f3b8160e86a69c96f4f1c954",
