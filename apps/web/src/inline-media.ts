@@ -45,7 +45,7 @@ export function detectInlineMedia(text: string): DetectedMedia[] {
   };
 
   for (const match of text.matchAll(MARKDOWN_IMAGE)) {
-    add(match[2], match[1] || filenameFromUrl(match[2], "image"), "image");
+    add(match[2], match[1] || filenameFromUrl(match[2], "图片"), "image");
   }
   // A fresh, non-global copy for this .test() call: BARE_FILE_URL is `g`-flagged
   // and reused below in a `matchAll` over the same string, so testing against
@@ -55,14 +55,14 @@ export function detectInlineMedia(text: string): DetectedMedia[] {
   for (const match of text.matchAll(MARKDOWN_LINK)) {
     const url = match[2];
     if (url.startsWith("data:") || fileUrlPattern.test(url) || IMAGE_EXTENSIONS.test(url)) {
-      add(url, match[1] || filenameFromUrl(url, "file"), isImageUrl(url) ? "image" : "file");
+      add(url, match[1] || filenameFromUrl(url, "文件"), isImageUrl(url) ? "image" : "file");
     }
   }
   for (const match of text.matchAll(BARE_DATA_URI)) {
-    add(match[0], filenameFromUrl(match[0], "data"), isImageUrl(match[0]) ? "image" : "file");
+    add(match[0], filenameFromUrl(match[0], isImageUrl(match[0]) ? "图片" : "文件"), isImageUrl(match[0]) ? "image" : "file");
   }
   for (const match of text.matchAll(BARE_FILE_URL)) {
-    add(match[0], filenameFromUrl(match[0], "file"), isImageUrl(match[0]) ? "image" : "file");
+    add(match[0], filenameFromUrl(match[0], "文件"), isImageUrl(match[0]) ? "image" : "file");
   }
   return results;
 }
