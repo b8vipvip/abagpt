@@ -55,7 +55,7 @@ export function detectInlineMedia(text: string): DetectedMedia[] {
   for (const match of text.matchAll(MARKDOWN_LINK)) {
     const url = match[2];
     if (url.startsWith("data:") || fileUrlPattern.test(url) || IMAGE_EXTENSIONS.test(url)) {
-      add(url, match[1] || filenameFromUrl(url, "文件"), isImageUrl(url) ? "image" : "file");
+      add(url, match[1] || filenameFromUrl(url, isImageUrl(url) ? "图片" : "文件"), isImageUrl(url) ? "image" : "file");
     }
   }
   for (const match of text.matchAll(BARE_DATA_URI)) {
