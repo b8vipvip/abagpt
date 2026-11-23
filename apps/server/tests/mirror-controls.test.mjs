@@ -31,7 +31,7 @@ test.describe("server / Mirror control localization", () => {
     assert.match(injectionJs, /Sign up/);
     assert.match(injectionJs, /免费注册/);
     assert.match(injectionJs, /注册/);
-    assert.match(decoderChallengeJs, /textarea\\[placeholder\\*="消息"\\]/);
-    assert.match(decoderChallengeJs, /textarea\\[placeholder\\*="发送"\\]/);
+    assert.match(decoderChallengeJs, /textarea\[placeholder\*="消息"\]/);
+    assert.match(decoderChallengeJs, /textarea\[placeholder\*="发送"\]/);
   });
 });
