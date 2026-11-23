@@ -160,6 +160,7 @@ test("Swagger authorization and live API error states stay localized", async ({ 
 });
 
 test("Swagger dynamic labels and less common HTTP errors stay localized", async ({ page }) => {
+ await page.goto(`${serverBase}/mirror/playground`);
  await page.goto(`${serverBase}/mirror/api-docs`);
  await expect(page.locator(".swagger-ui.swagger-container")).toBeVisible();
  const probes: Array<[string, string]> = [
