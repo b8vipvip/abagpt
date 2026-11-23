@@ -76,7 +76,7 @@
   "apps/server/tests/gptgif.test.mjs": "da0233e52cc97cbe433486d505a1bb69ea27f82b60bd595f27d3ab216a340dbd",
   "apps/server/tests/helpers/backend.mjs": "c77ab2309ee68c8f84a378d45b0da99d996567c03f204b8f6d0eae9cbbe13c25",
   "apps/server/tests/loaf.test.mjs": "c8c1ea83264dde742ee8590d149819240e4667068cc6e55b8b6cf1f78b91b2d5",
-  "apps/server/tests/mirror-controls.test.mjs": "c8dedec264f69d4805d70958f3ba27e35bc9f8f773875f977901112dd0737423",
+  "apps/server/tests/mirror-controls.test.mjs": "758d16f5e7359f6c30ae16e61168bde3c7c1566bfe81b73c2d7ad709be760fbc",
   "apps/server/tests/openai-edit-history.test.mjs": "b342183be733b520dc9d9537447e81c9772757ae8f968ce70d68173c73b8c5c4",
   "apps/server/tests/openai-routes.test.mjs": "766e10e0583edc6c3ffe58860f8ef484990499aa65942856139e07b8b918ff6f",
   "apps/server/tests/openai-stream-lifecycle.test.mjs": "a8d6f2c7e4f8f44bb02c755e3db21eb7bfbf070453eb9ffe93b3b8179122e3e5",
