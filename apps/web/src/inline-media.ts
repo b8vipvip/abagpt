@@ -38,6 +38,7 @@ export function detectInlineMedia(text: string): DetectedMedia[] {
   if (!text) return [];
   const seen = new Set<string>();
   const results: DetectedMedia[] = [];
+  const candidates: Array<{ index: number; url: string; label: string; kind: "image" | "file" }> = [];
   const add = (url: string, label: string, kind: "image" | "file") => {
     if (seen.has(url)) return;
     seen.add(url);
@@ -45,8 +46,14 @@ export function detectInlineMedia(text: string): DetectedMedia[] {
   };
 
   for (const match of text.matchAll(MARKDOWN_IMAGE)) {
-    add(match[2], match[1] || filenameFromUrl(match[2], "图片"), "image");
+    candidates.push({
+      index: match.index,
+      url: match[2],
+      label: match[1] || filenameFromUrl(match[2], "图片"),
+      kind: "image",
+    });
   }
+
   // A fresh, non-global copy for this .test() call: BARE_FILE_URL is `g`-flagged
   // and reused below in a `matchAll` over the same string, so testing against
   // the shared instance would leave its `lastIndex` non-zero and silently skip
@@ -55,14 +62,37 @@ export function detectInlineMedia(text: string): DetectedMedia[] {
   for (const match of text.matchAll(MARKDOWN_LINK)) {
     const url = match[2];
     if (url.startsWith("data:") || fileUrlPattern.test(url) || IMAGE_EXTENSIONS.test(url)) {
-      add(url, match[1] || filenameFromUrl(url, isImageUrl(url) ? "图片" : "文件"), isImageUrl(url) ? "image" : "file");
+      const kind = isImageUrl(url) ? "image" : "file";
+      candidates.push({
+        index: match.index,
+        url,
+        label: match[1] || filenameFromUrl(url, kind === "image" ? "图片" : "文件"),
+        kind,
+      });
     }
   }
+
   for (const match of text.matchAll(BARE_DATA_URI)) {
-    add(match[0], filenameFromUrl(match[0], isImageUrl(match[0]) ? "图片" : "文件"), isImageUrl(match[0]) ? "image" : "file");
+    const kind = isImageUrl(match[0]) ? "image" : "file";
+    candidates.push({
+      index: match.index,
+      url: match[0],
+      label: filenameFromUrl(match[0], kind === "image" ? "图片" : "文件"),
+      kind,
+    });
   }
+
   for (const match of text.matchAll(BARE_FILE_URL)) {
-    add(match[0], filenameFromUrl(match[0], "文件"), isImageUrl(match[0]) ? "image" : "file");
+    const kind = isImageUrl(match[0]) ? "image" : "file";
+    candidates.push({
+      index: match.index,
+      url: match[0],
+      label: filenameFromUrl(match[0], kind === "image" ? "图片" : "文件"),
+      kind,
+    });
   }
+
+  candidates.sort((left, right) => left.index - right.index);
+  for (const candidate of candidates) add(candidate.url, candidate.label, candidate.kind);
   return results;
 }
