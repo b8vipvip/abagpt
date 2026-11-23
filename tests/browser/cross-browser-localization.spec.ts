@@ -47,7 +47,8 @@ test.describe("browser / cross-engine Chinese localization", () => {
       const fileSizeError = document.createElement("div");
       fileSizeError.setAttribute("role", "status");
       fileSizeError.textContent = "This file is too large";
-      nav.append(uploadError, fileSizeError);\n      document.body.append(aside, nav, composer, protectedContent, expired);
+      nav.append(uploadError, fileSizeError);
+      document.body.append(aside, nav, composer, protectedContent, expired);
     });
     await page.addStyleTag({ content: injectionCss });
     await page.addScriptTag({ content: injectionJs });
