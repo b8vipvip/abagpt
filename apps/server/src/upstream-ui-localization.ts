@@ -72,5 +72,9 @@ export function translateUpstreamUiText(
     return "不支持此文件类型，请选择其他文件。";
   }
 
+  if (/^(?:failed to fetch|network error|network connection (?:lost|failed)|connection (?:lost|interrupted|error)|unable to connect to chatgpt|we couldn['’]t connect to chatgpt)(?:[.!]?\s*(?:reconnecting|trying to reconnect|please try again later)?[.!]?)?$/i.test(normalized)) {
+    return "网络连接中断，请检查网络后重试。";
+  }
+
   return undefined;
 }
