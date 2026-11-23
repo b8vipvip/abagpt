@@ -63,6 +63,17 @@ test.describe("browser / cross-engine Chinese localization", () => {
     await expect(dynamicButton).toHaveAttribute("aria-label", "更多选项");
     await expect(dynamicButton).toHaveAttribute("title", "设置");
 
+    await page.evaluate(() => {
+      const menu = document.createElement("div");
+      menu.setAttribute("role", "menu");
+      const item = document.createElement("div");
+      item.setAttribute("role", "menuitem");
+      item.textContent = "Archive";
+      menu.append(item);
+      document.querySelector("#fixture-nav")?.append(menu);
+    });
+    await expect(page.locator("#fixture-nav [role=menuitem]")).toHaveText("归档");
+
     await page.getByRole("button", { name: "更新会话令牌" }).click();
     await expect(page.locator("#mirror-launcher .mirror-panel")).toHaveClass(/open/);
   });
