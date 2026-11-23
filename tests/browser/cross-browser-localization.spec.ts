@@ -73,7 +73,7 @@ test.describe("browser / cross-engine Chinese localization", () => {
     for (const width of [320, 360, 390, 768]) {
       await page.setViewportSize({ width, height: 844 });
       const hasOverflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
-      expect(hasOverflow, \`unexpected horizontal overflow at \${width}px\`).toBe(false);
+      expect(hasOverflow, "unexpected horizontal overflow at width " + width).toBe(false);
     }
   });
 });
