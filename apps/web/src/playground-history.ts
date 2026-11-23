@@ -30,7 +30,7 @@ export function editPlaygroundMessage(
   hasTrackedConversation: boolean,
 ): HistoryMutation {
   const current = messages[index];
-  if (!current) throw new RangeError(`Message index ${index} is out of bounds`);
+  if (!current) throw new RangeError(`消息索引 ${index} 超出有效范围。`);
   // Assistant output is immutable. Return the original array so callers
   // cannot accidentally mutate it even if an event slips past the read-only
   // Playground control.
@@ -71,7 +71,7 @@ export function removePlaygroundMessage(
   hasTrackedConversation: boolean,
 ): HistoryMutation {
   if (!messages[index])
-    throw new RangeError(`Message index ${index} is out of bounds`);
+    throw new RangeError(`消息索引 ${index} 超出有效范围。`);
   if (messages[index]?.role === "assistant")
     return { messages, invalidatesConversation: false };
 
@@ -101,7 +101,7 @@ export function addPlaygroundAttachment(
   hasTrackedConversation: boolean,
 ): HistoryMutation {
   const current = messages[index];
-  if (!current) throw new RangeError(`Message index ${index} is out of bounds`);
+  if (!current) throw new RangeError(`消息索引 ${index} 超出有效范围。`);
   if (current.role === "assistant")
     return { messages, invalidatesConversation: false };
 
@@ -136,7 +136,7 @@ export function removePlaygroundAttachment(
   hasTrackedConversation: boolean,
 ): HistoryMutation {
   const current = messages[index];
-  if (!current) throw new RangeError(`Message index ${index} is out of bounds`);
+  if (!current) throw new RangeError(`消息索引 ${index} 超出有效范围。`);
   if (current.role === "assistant")
     return { messages, invalidatesConversation: false };
 
