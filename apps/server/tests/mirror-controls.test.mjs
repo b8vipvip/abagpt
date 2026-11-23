@@ -18,6 +18,7 @@ test.describe("server / Mirror control localization", () => {
     assert.equal(localizeMirrorErrorMessage("connect ECONNRESET"), network);
     assert.equal(localizeMirrorErrorMessage("HTTP 401 Unauthorized"), "身份验证失败，请重新连接 ChatGPT 会话。");
     assert.equal(localizeMirrorErrorMessage("HTTP 418"), "服务器请求失败，请稍后重试。");
+    assert.equal(localizeMirrorErrorMessage("HTTP 418 upstream unavailable"), "服务器请求失败，请稍后重试。");
   });
 
   test("uses a safe fallback for empty, unknown, and non-message errors", () => {
